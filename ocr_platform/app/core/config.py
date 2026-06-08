@@ -65,6 +65,15 @@ class Settings(BaseSettings):
     VLM_MAX_PDF_PAGES: int = 50
     VLM_EAGER_LOAD: bool = False
 
+    PADDLE_OCR_ENABLED: bool = True
+    PADDLE_OCR_MODEL_ID: str = "PaddlePaddle/PaddleOCR-VL"
+    PADDLE_OCR_TORCH_DTYPE: str = "bfloat16"
+    PADDLE_OCR_DEVICE: str = "cuda"
+    PADDLE_OCR_MAX_NEW_TOKENS: int = 1024
+    PADDLE_OCR_PDF_DPI: int = 144
+    PADDLE_OCR_MAX_PDF_PAGES: int = 50
+    PADDLE_OCR_EAGER_LOAD: bool = False
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]

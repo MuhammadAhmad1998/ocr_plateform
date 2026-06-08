@@ -32,6 +32,15 @@ async def lifespan(app: FastAPI):
         except RuntimeError as exc:
             logger.warning("VLM preload skipped: %s", exc)
 
+    if settings.PADDLE_OCR_ENABLED and settings.PADDLE_OCR_EAGER_LOAD:
+        from app.paddle_ocr.service import paddle_ocr_service
+
+        try:
+            paddle_ocr_service.load()
+            logger.info("PaddleOCR-VL model preloaded at startup")
+        except RuntimeError as exc:
+            logger.warning("PaddleOCR-VL preload skipped: %s", exc)
+
     yield
 
 

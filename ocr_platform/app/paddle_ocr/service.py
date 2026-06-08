@@ -1,0 +1,156 @@
+import asyncio
+import logging
+import time
+from threading import Lock
+from typing import Literal
+
+from PIL import Image
+
+from app.core.config import get_settings
+
+logger = logging.getLogger(__name__)
+
+PaddleTask = Literal["ocr", "table", "chart", "formula"]
+
+PROMPTS: dict[str, str] = {
+    "ocr": "OCR:",
+    "table": "Table Recognition:",
+    "formula": "Formula Recognition:",
+    "chart": "Chart Recognition:",
+}
+
+
+class PaddleOCRVLService:
+    def __init__(self) -> None:
+        self._model = None
+        self._processor = None
+        self._device = "cpu"
+        self._loaded = False
+        self._load_error: str | None = None
+        self._inference_lock = Lock()
+        self._async_lock = asyncio.Lock()
+
+    @property
+    def is_loaded(self) -> bool:
+        return self._loaded
+
+    @property
+    def load_error(self) -> str | None:
+        return self._load_error
+
+    def load(self) -> None:
+        if self._loaded:
+            return
+        if self._load_error:
+            raise RuntimeError(self._load_error)
+
+        settings = get_settings()
+        try:
+            import torch
+            from transformers import AutoModelForCausalLM, AutoProcessor
+
+            dtype = getattr(torch, settings.PADDLE_OCR_TORCH_DTYPE, torch.bfloat16)
+            device = settings.PADDLE_OCR_DEVICE
+            if device == "cuda" and not torch.cuda.is_available():
+                logger.warning("CUDA unavailable, falling back to CPU")
+                device = "cpu"
+
+            logger.info("Loading PaddleOCR-VL model: %s", settings.PADDLE_OCR_MODEL_ID)
+            model = AutoModelForCausalLM.from_pretrained(
+                settings.PADDLE_OCR_MODEL_ID,
+                trust_remote_code=True,
+                torch_dtype=dtype,
+            )
+            processor = AutoProcessor.from_pretrained(
+                settings.PADDLE_OCR_MODEL_ID,
+                trust_remote_code=True,
+            )
+
+            self._model = model.eval().to(device)
+            self._processor = processor
+            self._device = device
+            self._loaded = True
+            logger.info("PaddleOCR-VL model loaded on %s", device)
+        except Exception as exc:
+            self._load_error = str(exc)
+            logger.exception("Failed to load PaddleOCR-VL model")
+            raise RuntimeError(f"Failed to load PaddleOCR-VL model: {exc}") from exc
+
+    def _ensure_loaded(self) -> None:
+        if not self._loaded:
+            self.load()
+
+    def _run_recognition(
+        self,
+        image: Image.Image,
+        task: str,
+        max_new_tokens: int | None = None,
+    ) -> str:
+        self._ensure_loaded()
+        settings = get_settings()
+        tokens = max_new_tokens or settings.PADDLE_OCR_MAX_NEW_TOKENS
+
+        if task not in PROMPTS:
+            raise ValueError(f"Invalid task '{task}'. Must be one of: {', '.join(PROMPTS)}")
+
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "image", "image": image},
+                    {"type": "text", "text": PROMPTS[task]},
+                ],
+            }
+        ]
+
+        with self._inference_lock:
+            inputs = self._processor.apply_chat_template(
+                messages,
+                tokenize=True,
+                add_generation_prompt=True,
+                return_dict=True,
+                return_tensors="pt",
+            ).to(self._device)
+
+            outputs = self._model.generate(**inputs, max_new_tokens=tokens)
+            return self._processor.batch_decode(outputs, skip_special_tokens=True)[0]
+
+    async def recognize(
+        self,
+        image: Image.Image,
+        task: str = "ocr",
+        max_new_tokens: int | None = None,
+    ) -> tuple[str, float]:
+        start = time.perf_counter()
+        async with self._async_lock:
+            result = await asyncio.to_thread(
+                self._run_recognition,
+                image,
+                task,
+                max_new_tokens,
+            )
+        elapsed_ms = (time.perf_counter() - start) * 1000
+        return result, elapsed_ms
+
+    async def analyze_pdf_pages(
+        self,
+        images: list[Image.Image],
+        task: str = "ocr",
+        max_new_tokens: int | None = None,
+    ) -> list[tuple[int, str, float]]:
+        async def _process_page(page_number: int, image: Image.Image) -> tuple[int, str, float]:
+            result, elapsed_ms = await self.recognize(
+                image=image,
+                task=task,
+                max_new_tokens=max_new_tokens,
+            )
+            return page_number, result, elapsed_ms
+
+        tasks = [
+            _process_page(page_number, image)
+            for page_number, image in enumerate(images, start=1)
+        ]
+        return list(await asyncio.gather(*tasks))
+
+
+paddle_ocr_service = PaddleOCRVLService()

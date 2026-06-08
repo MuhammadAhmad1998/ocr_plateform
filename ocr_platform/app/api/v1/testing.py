@@ -9,6 +9,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.ocr_engine.adapters.base import run_ocr
 from app.registry.models import Engine
+from app.paddle_ocr.service import paddle_ocr_service
 from app.vlm.pdf_utils import image_bytes_to_pil, pdf_bytes_to_images
 from app.vlm.service import vlm_service
 
@@ -82,6 +83,19 @@ def list_testing_models(
             },
         )
 
+    if settings.PADDLE_OCR_ENABLED:
+        insert_at = 1 if settings.VLM_ENABLED else 0
+        models.insert(
+            insert_at,
+            {
+                "slug": "paddle-ocr-vl",
+                "display_name": f"PaddleOCR-VL ({settings.PADDLE_OCR_MODEL_ID})",
+                "type": "paddle_ocr",
+                "adapter_type": "paddle_ocr",
+                "capability_tags": ["vision", "pdf", "images", "ocr", "table", "chart", "formula"],
+            },
+        )
+
     return {"models": models}
 
 
@@ -91,6 +105,7 @@ async def run_testing_ocr(
     model_slug: str = Form(..., min_length=1),
     question: str = Form(DEFAULT_VLM_QUESTION),
     enable_thinking: bool = Form(False),
+    task: str = Form("ocr"),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -107,6 +122,9 @@ async def run_testing_ocr(
 
     if model_slug == "vlm":
         return await _run_vlm(content, content_type, filename, question, enable_thinking)
+
+    if model_slug == "paddle-ocr-vl":
+        return await _run_paddle_ocr(content, content_type, filename, task)
 
     engine = (
         db.query(Engine)
@@ -223,3 +241,88 @@ async def _run_vlm(
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"VLM inference failed: {exc}") from exc
+
+
+async def _run_paddle_ocr(
+    content: bytes,
+    content_type: str,
+    filename: str,
+    task: str,
+) -> dict:
+    if not settings.PADDLE_OCR_ENABLED:
+        raise HTTPException(status_code=503, detail="PaddleOCR-VL service is disabled")
+
+    try:
+        paddle_ocr_service.load()
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    total_start = time.perf_counter()
+
+    try:
+        if _is_pdf(content_type, filename):
+            images = pdf_bytes_to_images(content, dpi=settings.PADDLE_OCR_PDF_DPI)
+            if not images:
+                raise HTTPException(status_code=400, detail="PDF contains no pages")
+            if len(images) > settings.PADDLE_OCR_MAX_PDF_PAGES:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"PDF exceeds maximum of {settings.PADDLE_OCR_MAX_PDF_PAGES} pages",
+                )
+
+            page_results = await paddle_ocr_service.analyze_pdf_pages(
+                images=images,
+                task=task,
+            )
+
+            pages = [
+                {
+                    "page_number": page_number,
+                    "text": result,
+                    "processing_time_ms": round(elapsed_ms, 2),
+                }
+                for page_number, result, elapsed_ms in sorted(page_results, key=lambda item: item[0])
+            ]
+            combined_text = "\n\n".join(
+                f"--- Page {page['page_number']} ---\n{page['text']}" for page in pages
+            )
+            total_elapsed_ms = (time.perf_counter() - total_start) * 1000
+
+            return {
+                "model_slug": "paddle-ocr-vl",
+                "model_name": f"PaddleOCR-VL ({settings.PADDLE_OCR_MODEL_ID})",
+                "model_type": "paddle_ocr",
+                "status": "completed",
+                "filename": filename,
+                "result": {
+                    "text": combined_text,
+                    "timing_ms": round(total_elapsed_ms, 2),
+                    "pages": pages,
+                    "task": task,
+                },
+            }
+
+        image = image_bytes_to_pil(content)
+        result, elapsed_ms = await paddle_ocr_service.recognize(
+            image=image,
+            task=task,
+        )
+
+        return {
+            "model_slug": "paddle-ocr-vl",
+            "model_name": f"PaddleOCR-VL ({settings.PADDLE_OCR_MODEL_ID})",
+            "model_type": "paddle_ocr",
+            "status": "completed",
+            "filename": filename,
+            "result": {
+                "text": result,
+                "timing_ms": round(elapsed_ms, 2),
+                "task": task,
+            },
+        }
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"PaddleOCR-VL inference failed: {exc}") from exc

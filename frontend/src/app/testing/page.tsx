@@ -29,6 +29,7 @@ export default function TestingPage() {
   const [vlmQuestion, setVlmQuestion] = useState(
     "Extract all text from this document. Return only the extracted text, preserving layout where possible."
   );
+  const [paddleTask, setPaddleTask] = useState("ocr");
   const [status, setStatus] = useState<ProcessStatus>("idle");
   const [result, setResult] = useState<TestingResult | null>(null);
 
@@ -55,6 +56,7 @@ export default function TestingPage() {
 
   const selectedModelInfo = models.find((m) => m.slug === selectedModel);
   const isVlm = selectedModelInfo?.type === "vlm";
+  const isPaddleOcr = selectedModelInfo?.type === "paddle_ocr";
 
   function handleFileSelect(selected: File) {
     setFile(selected);
@@ -78,6 +80,7 @@ export default function TestingPage() {
     try {
       const response = await api.runTesting(file, selectedModel, {
         question: isVlm ? vlmQuestion : undefined,
+        task: isPaddleOcr ? paddleTask : undefined,
       });
       setResult(response);
       setStatus("completed");
@@ -198,6 +201,23 @@ export default function TestingPage() {
                       rows={3}
                       placeholder="Question or instruction for the vision model…"
                     />
+                  </div>
+                )}
+
+                {isPaddleOcr && (
+                  <div className="space-y-2">
+                    <Label htmlFor="task">Recognition task</Label>
+                    <select
+                      id="task"
+                      value={paddleTask}
+                      onChange={(e) => setPaddleTask(e.target.value)}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="ocr">OCR (text extraction)</option>
+                      <option value="table">Table recognition</option>
+                      <option value="chart">Chart recognition</option>
+                      <option value="formula">Formula recognition</option>
+                    </select>
                   </div>
                 )}
 

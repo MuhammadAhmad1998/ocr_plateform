@@ -166,13 +166,14 @@ export const api = {
   runTesting: async (
     file: File,
     modelSlug: string,
-    options?: { question?: string; enableThinking?: boolean }
+    options?: { question?: string; enableThinking?: boolean; task?: string }
   ) => {
     const form = new FormData();
     form.append("file", file);
     form.append("model_slug", modelSlug);
     if (options?.question) form.append("question", options.question);
     if (options?.enableThinking) form.append("enable_thinking", "true");
+    if (options?.task) form.append("task", options.task);
     const res = await fetchWithAuth("/testing/run/", { method: "POST", body: form });
     return res.json() as Promise<TestingResult>;
   },
@@ -181,7 +182,7 @@ export const api = {
 export interface TestingModel {
   slug: string;
   display_name: string;
-  type: "ocr" | "vlm";
+  type: "ocr" | "vlm" | "paddle_ocr";
   adapter_type: string;
   capability_tags: string[];
 }
@@ -189,7 +190,7 @@ export interface TestingModel {
 export interface TestingResult {
   model_slug: string;
   model_name: string;
-  model_type: "ocr" | "vlm";
+  model_type: "ocr" | "vlm" | "paddle_ocr";
   status: string;
   filename: string;
   result: {
@@ -199,6 +200,7 @@ export interface TestingResult {
     layout?: Record<string, unknown>;
     pages?: Array<{ page_number: number; text: string; processing_time_ms: number }>;
     question?: string;
+    task?: string;
   };
 }
 
