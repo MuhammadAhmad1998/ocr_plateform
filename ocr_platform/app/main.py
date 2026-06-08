@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.v1.router import api_router
 from app.core.config import get_settings
+from app.core.db_bootstrap import wait_for_database
 from app.core.database import Base, engine
 import app.models  # noqa: F401 — register all models
 from app.seed import seed_database
@@ -18,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    wait_for_database(engine)
     Base.metadata.create_all(bind=engine)
     seed_database()
 
