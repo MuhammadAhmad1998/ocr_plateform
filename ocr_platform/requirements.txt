@@ -23,3 +23,9 @@ pypdf>=4.0.0
 pytesseract>=0.3.10
 python-dotenv>=1.0.0
 sse-starlette>=1.8.0
+
+# VLM (MiniCPM-V)
+torch>=2.1.0
+transformers>=4.40.0
+accelerate>=0.27.0
+pymupdf>=1.24.0

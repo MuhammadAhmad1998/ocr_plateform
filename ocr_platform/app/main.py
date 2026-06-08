@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -12,12 +13,23 @@ import app.models  # noqa: F401 — register all models
 from app.seed import seed_database
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     seed_database()
+
+    if settings.VLM_ENABLED and settings.VLM_EAGER_LOAD:
+        from app.vlm.service import vlm_service
+
+        try:
+            vlm_service.load()
+            logger.info("VLM model preloaded at startup")
+        except RuntimeError as exc:
+            logger.warning("VLM preload skipped: %s", exc)
+
     yield
 
 

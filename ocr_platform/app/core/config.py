@@ -43,6 +43,15 @@ class Settings(BaseSettings):
     DEMO_RUNS_PER_SESSION: int = 1
     UPLOADS_PER_SESSION: int = 1
 
+    VLM_ENABLED: bool = True
+    VLM_MODEL_ID: str = "openbmb/MiniCPM-V-4_5"
+    VLM_ATTN_IMPLEMENTATION: str = "sdpa"
+    VLM_TORCH_DTYPE: str = "bfloat16"
+    VLM_DEVICE: str = "cuda"
+    VLM_PDF_DPI: int = 144
+    VLM_MAX_PDF_PAGES: int = 50
+    VLM_EAGER_LOAD: bool = False
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
