@@ -1,0 +1,70 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ocr
+      POSTGRES_PASSWORD: ocr
+      POSTGRES_DB: ocr_platform
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ocr -d ocr_platform"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./ocr_platform
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://ocr:ocr@postgres:5432/ocr_platform
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: dev-secret-change-in-production
+      USE_LOCAL_STORAGE: "true"
+      LOCAL_STORAGE_PATH: /app/storage
+      CORS_ORIGINS: http://localhost:3000
+      USE_MOCK_RAG: "true"
+    volumes:
+      - ./ocr_platform:/app
+      - ocr_storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ./ocr_platform
+    command: celery -A workers.celery_app worker --loglevel=info
+    environment:
+      DATABASE_URL: postgresql://ocr:ocr@postgres:5432/ocr_platform
+      REDIS_URL: redis://redis:6379/0
+      USE_LOCAL_STORAGE: "true"
+      LOCAL_STORAGE_PATH: /app/storage
+    volumes:
+      - ./ocr_platform:/app
+      - ocr_storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  ocr_storage:
