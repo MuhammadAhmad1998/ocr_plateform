@@ -155,7 +155,52 @@ export const api = {
     });
     return res.json();
   },
+
+  getTestingModels: async () => {
+    const res = await fetchWithAuth("/testing/models/");
+    return res.json() as Promise<{
+      models: TestingModel[];
+    }>;
+  },
+
+  runTesting: async (
+    file: File,
+    modelSlug: string,
+    options?: { question?: string; enableThinking?: boolean }
+  ) => {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("model_slug", modelSlug);
+    if (options?.question) form.append("question", options.question);
+    if (options?.enableThinking) form.append("enable_thinking", "true");
+    const res = await fetchWithAuth("/testing/run/", { method: "POST", body: form });
+    return res.json() as Promise<TestingResult>;
+  },
 };
+
+export interface TestingModel {
+  slug: string;
+  display_name: string;
+  type: "ocr" | "vlm";
+  adapter_type: string;
+  capability_tags: string[];
+}
+
+export interface TestingResult {
+  model_slug: string;
+  model_name: string;
+  model_type: "ocr" | "vlm";
+  status: string;
+  filename: string;
+  result: {
+    text: string;
+    confidence?: number;
+    timing_ms?: number;
+    layout?: Record<string, unknown>;
+    pages?: Array<{ page_number: number; text: string; processing_time_ms: number }>;
+    question?: string;
+  };
+}
 
 export function streamMessage(
   sessionId: string,
