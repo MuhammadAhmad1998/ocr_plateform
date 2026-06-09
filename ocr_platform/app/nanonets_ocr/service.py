@@ -1,6 +1,8 @@
 import asyncio
 import logging
+import tempfile
 import time
+from pathlib import Path
 from threading import Lock
 
 from PIL import Image
@@ -132,43 +134,59 @@ class NanonetsOCRService:
 
         messages = [
             {"role": "system", "content": "You are a helpful assistant."},
-            {
-                "role": "user",
-                "content": [
-                    {"type": "image", "image": image},
-                    {"type": "text", "text": prompt},
-                ],
-            },
         ]
+        temp_path: Path | None = None
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_file:
+                temp_path = Path(temp_file.name)
 
-        text = self._processor.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True,
-        )
-        inputs = self._processor(text=[text], images=[image], padding=True, return_tensors="pt")
-        inputs = inputs.to(self._input_device())
+            image.convert("RGB").save(temp_path)
+            messages.append(
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "image", "image": temp_path.as_uri()},
+                        {"type": "text", "text": prompt},
+                    ],
+                }
+            )
 
-        import torch
+            chat_text = self._processor.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=True,
+            )
+            inputs = self._processor(
+                text=[chat_text],
+                images=[image.convert("RGB")],
+                padding=True,
+                return_tensors="pt",
+            )
+            inputs = inputs.to(self._input_device())
 
-        with self._inference_lock:
-            with torch.no_grad():
-                output_ids = self._model.generate(
-                    **inputs,
-                    max_new_tokens=tokens,
-                    do_sample=False,
-                )
+            import torch
 
-        generated_ids = [
-            output_id[len(input_id) :]
-            for input_id, output_id in zip(inputs.input_ids, output_ids)
-        ]
-        output_text = self._processor.batch_decode(
-            generated_ids,
-            skip_special_tokens=True,
-            clean_up_tokenization_spaces=True,
-        )
-        return output_text[0]
+            with self._inference_lock:
+                with torch.no_grad():
+                    output_ids = self._model.generate(
+                        **inputs,
+                        max_new_tokens=tokens,
+                        do_sample=False,
+                    )
+
+            generated_ids = [
+                output_token_ids[len(input_token_ids) :]
+                for input_token_ids, output_token_ids in zip(inputs.input_ids, output_ids)
+            ]
+            output_text = self._processor.batch_decode(
+                generated_ids,
+                skip_special_tokens=True,
+                clean_up_tokenization_spaces=True,
+            )
+            return output_text[0]
+        finally:
+            if temp_path and temp_path.exists():
+                temp_path.unlink()
 
     def recognize_sync(
         self,
