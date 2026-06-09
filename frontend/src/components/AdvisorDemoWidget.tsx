@@ -85,6 +85,7 @@ export function AdvisorDemoWidget() {
 
   return (
     <div
+      suppressHydrationWarning
       className="advisor-widget-root w-full max-w-2xl overflow-hidden rounded-xl border border-border bg-card shadow-lg"
       style={{ position: "relative" }}
     >
@@ -151,72 +152,6 @@ export function AdvisorDemoWidget() {
           </div>
         )}
       </div>
-
-      <style>{`
-        .advisor-widget-root { isolation: isolate; }
-
-        /* Particle */
-        .advisor-bg-particles {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          overflow: hidden;
-          z-index: 0;
-        }
-        .advisor-bg-particles .particle {
-          position: absolute;
-          bottom: -20px;
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(124,58,237,0.45) 0%, transparent 70%);
-          animation: floatParticle 5s linear infinite;
-        }
-        .advisor-bg-particles .particle:nth-child(1) { left:8%;  animation-delay:0s;    animation-duration:6s; }
-        .advisor-bg-particles .particle:nth-child(2) { left:22%; animation-delay:1.1s;  animation-duration:5s; }
-        .advisor-bg-particles .particle:nth-child(3) { left:40%; animation-delay:2.3s;  animation-duration:7s; }
-        .advisor-bg-particles .particle:nth-child(4) { left:58%; animation-delay:0.8s;  animation-duration:5.5s; }
-        .advisor-bg-particles .particle:nth-child(5) { left:74%; animation-delay:3.2s;  animation-duration:6.5s; }
-        .advisor-bg-particles .particle:nth-child(6) { left:88%; animation-delay:1.7s;  animation-duration:4.8s; }
-
-        @keyframes floatParticle {
-          0%   { transform: translateY(0) scale(1);   opacity: 0.2; }
-          50%  { opacity: 0.35; }
-          100% { transform: translateY(-220px) scale(0.5); opacity: 0; }
-        }
-
-        /* Cursor blink */
-        .cursor-blink {
-          animation: blinkCursor 1s steps(2, start) infinite;
-        }
-        @keyframes blinkCursor {
-          0%, 100% { opacity: 1; }
-          50%       { opacity: 0; }
-        }
-
-        /* Bubble glow + float while streaming */
-        .typing-bubble {
-          animation: glowFloat 2s ease-in-out infinite;
-        }
-        @keyframes glowFloat {
-          0%   { box-shadow: 0 0 6px 2px rgba(124,58,237,0.35); transform: translateY(-1px); }
-          50%  { box-shadow: 0 0 14px 5px rgba(124,58,237,0.65); transform: translateY(1px); }
-          100% { box-shadow: 0 0 6px 2px rgba(124,58,237,0.35); transform: translateY(-1px); }
-        }
-
-        /* Fade in for upload & live messages */
-        @keyframes fadeInMsg {
-          from { opacity: 0; transform: translateY(4px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Live spinner */
-        .live-spinner {
-          display: inline-block;
-          font-variant-numeric: tabular-nums;
-          min-width: 1ch;
-        }
-      `}</style>
     </div>
   );
 }
