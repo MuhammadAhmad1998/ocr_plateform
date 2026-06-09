@@ -154,6 +154,12 @@ class NanonetsOCRService:
         word_count = len(re.findall(r"\b\w+\b", text))
         return alnum_count >= 20 and word_count >= 4
 
+    def _text_score(self, text: str) -> tuple[int, int]:
+        normalized = self._normalize_text(text)
+        alnum_count = sum(char.isalnum() for char in normalized)
+        word_count = len(re.findall(r"\b\w+\b", normalized))
+        return alnum_count, word_count
+
     def _looks_hallucinated(self, text: str) -> bool:
         normalized = self._normalize_text(text)
         if len(normalized) < 80:
@@ -191,6 +197,31 @@ class NanonetsOCRService:
 
         return self._normalize_text(pytesseract.image_to_string(image.convert("RGB")))
 
+    def _extract_image_text(self, image: Image.Image) -> str:
+        import pytesseract
+
+        rgb = image.convert("RGB")
+        enlarged = rgb.resize((rgb.width * 2, rgb.height * 2))
+        grayscale = enlarged.convert("L")
+        threshold = grayscale.point(lambda value: 255 if value > 180 else 0)
+
+        candidates = [
+            pytesseract.image_to_string(enlarged, config="--psm 6"),
+            pytesseract.image_to_string(grayscale, config="--psm 6"),
+            pytesseract.image_to_string(threshold, config="--psm 6"),
+        ]
+
+        best = ""
+        best_score = (-1, -1)
+        for candidate in candidates:
+            normalized = self._normalize_text(candidate)
+            score = self._text_score(normalized)
+            if score > best_score:
+                best = normalized
+                best_score = score
+
+        return best
+
     def _run_recognition(
         self,
         image: Image.Image,
@@ -200,6 +231,15 @@ class NanonetsOCRService:
         self._ensure_loaded()
         settings = get_settings()
         tokens = max_new_tokens or settings.NANONETS_OCR_MAX_NEW_TOKENS
+        primary_ocr = ""
+
+        try:
+            primary_ocr = self._extract_image_text(image)
+        except Exception:
+            primary_ocr = ""
+
+        if self._is_usable_native_text(primary_ocr) and not self._looks_hallucinated(primary_ocr):
+            return primary_ocr
 
         messages = [
             {"role": "system", "content": "You are a helpful assistant."},
@@ -254,9 +294,14 @@ class NanonetsOCRService:
             )
             normalized = self._normalize_text(output_text[0])
 
+            if primary_ocr and self._text_score(primary_ocr) > self._text_score(normalized):
+                if not self._looks_hallucinated(primary_ocr):
+                    logger.warning("Using primary OCR result because it looked more reliable than model output")
+                    return primary_ocr
+
             if not normalized or self._looks_hallucinated(normalized):
                 try:
-                    fallback = self._run_tesseract_fallback(image)
+                    fallback = primary_ocr or self._run_tesseract_fallback(image)
                 except Exception:
                     fallback = ""
                 if fallback and (not normalized or self._looks_hallucinated(normalized)):
