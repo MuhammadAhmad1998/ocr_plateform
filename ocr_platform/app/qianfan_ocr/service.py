@@ -56,17 +56,22 @@ class QianfanOCRService:
                     settings.QIANFAN_OCR_MODEL_ID,
                     torch_dtype=dtype,
                     device_map="auto",
+                    trust_remote_code=True,
                 )
                 self._device = None
             else:
                 model = AutoModelForImageTextToText.from_pretrained(
                     settings.QIANFAN_OCR_MODEL_ID,
                     torch_dtype=dtype,
+                    trust_remote_code=True,
                 )
                 model = model.to(device)
                 self._device = device
 
-            processor = AutoProcessor.from_pretrained(settings.QIANFAN_OCR_MODEL_ID)
+            processor = AutoProcessor.from_pretrained(
+                settings.QIANFAN_OCR_MODEL_ID,
+                trust_remote_code=True,
+            )
 
             self._model = model.eval()
             self._processor = processor

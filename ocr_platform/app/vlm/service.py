@@ -20,8 +20,8 @@ def _patch_minicpm_remote_code() -> None:
 
     original = dmu.get_class_in_module
 
-    def patched_get_class_in_module(class_name, module_path):
-        cls = original(class_name, module_path)
+    def patched_get_class_in_module(class_name, module_path, *args, **kwargs):
+        cls = original(class_name, module_path, *args, **kwargs)
         if class_name == "MiniCPMV":
             original_init = cls.__init__
 
