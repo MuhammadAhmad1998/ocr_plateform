@@ -68,8 +68,6 @@ async def nanonets_ocr_recognize(
             detail=f"File exceeds {settings.MAX_UPLOAD_SIZE_MB}MB limit",
         )
 
-    _ensure_nanonets_ocr_ready()
-
     try:
         image = image_bytes_to_pil(content)
         result, elapsed_ms = await nanonets_ocr_service.recognize(
@@ -77,6 +75,8 @@ async def nanonets_ocr_recognize(
             prompt=prompt,
             max_new_tokens=max_new_tokens,
         )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Nanonets OCR inference failed: {exc}") from exc
 
@@ -111,7 +111,6 @@ async def nanonets_ocr_analyze_pdf(
             detail=f"File exceeds {settings.MAX_UPLOAD_SIZE_MB}MB limit",
         )
 
-    _ensure_nanonets_ocr_ready()
     total_start = time.perf_counter()
 
     try:
@@ -153,6 +152,8 @@ async def nanonets_ocr_analyze_pdf(
             prompt=prompt,
             max_new_tokens=max_new_tokens,
         )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     except HTTPException:
         raise
     except Exception as exc:

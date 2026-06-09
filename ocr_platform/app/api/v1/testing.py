@@ -487,11 +487,6 @@ async def _run_nanonets_ocr(
     if not settings.NANONETS_OCR_ENABLED:
         raise HTTPException(status_code=503, detail="Nanonets OCR service is disabled")
 
-    try:
-        nanonets_ocr_service.load()
-    except RuntimeError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
-
     total_start = time.perf_counter()
 
     try:
@@ -584,6 +579,8 @@ async def _run_nanonets_ocr(
                 "prompt": prompt,
             },
         }
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     except HTTPException:
         raise
     except Exception as exc:

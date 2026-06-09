@@ -154,6 +154,12 @@ class NanonetsOCRService:
         word_count = len(re.findall(r"\b\w+\b", text))
         return alnum_count >= 20 and word_count >= 4
 
+    def _is_usable_image_text(self, text: str) -> bool:
+        alnum_count = sum(char.isalnum() for char in text)
+        word_count = len(re.findall(r"\b\w+\b", text))
+        digit_count = sum(char.isdigit() for char in text)
+        return (alnum_count >= 8 and word_count >= 2) or (alnum_count >= 6 and digit_count >= 2)
+
     def _text_score(self, text: str) -> tuple[int, int]:
         normalized = self._normalize_text(text)
         alnum_count = sum(char.isalnum() for char in normalized)
@@ -228,9 +234,6 @@ class NanonetsOCRService:
         prompt: str,
         max_new_tokens: int | None = None,
     ) -> str:
-        self._ensure_loaded()
-        settings = get_settings()
-        tokens = max_new_tokens or settings.NANONETS_OCR_MAX_NEW_TOKENS
         primary_ocr = ""
 
         try:
@@ -238,8 +241,12 @@ class NanonetsOCRService:
         except Exception:
             primary_ocr = ""
 
-        if self._is_usable_native_text(primary_ocr) and not self._looks_hallucinated(primary_ocr):
+        if self._is_usable_image_text(primary_ocr) and not self._looks_hallucinated(primary_ocr):
             return primary_ocr
+
+        self._ensure_loaded()
+        settings = get_settings()
+        tokens = max_new_tokens or settings.NANONETS_OCR_MAX_NEW_TOKENS
 
         messages = [
             {"role": "system", "content": "You are a helpful assistant."},
@@ -294,10 +301,9 @@ class NanonetsOCRService:
             )
             normalized = self._normalize_text(output_text[0])
 
-            if primary_ocr and self._text_score(primary_ocr) > self._text_score(normalized):
-                if not self._looks_hallucinated(primary_ocr):
-                    logger.warning("Using primary OCR result because it looked more reliable than model output")
-                    return primary_ocr
+            if primary_ocr and self._is_usable_image_text(primary_ocr) and not self._looks_hallucinated(primary_ocr):
+                logger.warning("Using primary OCR result because it looked more reliable than model output")
+                return primary_ocr
 
             if not normalized or self._looks_hallucinated(normalized):
                 try:
