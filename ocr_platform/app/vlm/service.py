@@ -11,6 +11,31 @@ from app.core.config import get_settings
 logger = logging.getLogger(__name__)
 
 
+def _patch_minicpm_remote_code() -> None:
+    """MiniCPM-V remote code omits post_init(), which transformers 5.x requires."""
+    import transformers.dynamic_module_utils as dmu
+
+    if getattr(dmu, "_minicpm_post_init_patch", False):
+        return
+
+    original = dmu.get_class_in_module
+
+    def patched_get_class_in_module(class_name, module_path):
+        cls = original(class_name, module_path)
+        if class_name == "MiniCPMV":
+            original_init = cls.__init__
+
+            def __init__(self, *args, **kwargs):
+                original_init(self, *args, **kwargs)
+                self.post_init()
+
+            cls.__init__ = __init__
+        return cls
+
+    dmu.get_class_in_module = patched_get_class_in_module
+    dmu._minicpm_post_init_patch = True
+
+
 class VLMService:
     def __init__(self) -> None:
         self._model = None
@@ -43,11 +68,13 @@ class VLMService:
             dtype = getattr(torch, settings.VLM_TORCH_DTYPE, torch.bfloat16)
 
             logger.info("Loading VLM model: %s", settings.VLM_MODEL_ID)
+            _patch_minicpm_remote_code()
             model = AutoModel.from_pretrained(
                 settings.VLM_MODEL_ID,
                 trust_remote_code=True,
                 attn_implementation=settings.VLM_ATTN_IMPLEMENTATION,
                 torch_dtype=dtype,
+                low_cpu_mem_usage=False,
             )
             device = settings.VLM_DEVICE
             if device == "cuda" and not torch.cuda.is_available():
