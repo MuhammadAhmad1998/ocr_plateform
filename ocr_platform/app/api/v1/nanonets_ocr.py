@@ -115,6 +115,29 @@ async def nanonets_ocr_analyze_pdf(
     total_start = time.perf_counter()
 
     try:
+        native_pages = nanonets_ocr_service.extract_pdf_text(content)
+        if native_pages:
+            pages = [
+                NanonetsOCRPageResult(
+                    page_number=page_number,
+                    prompt=prompt,
+                    result=page_text,
+                    processing_time_ms=0.0,
+                )
+                for page_number, page_text in enumerate(native_pages, start=1)
+            ]
+            response = NanonetsOCRPdfResponse(
+                filename=file.filename or "document.pdf",
+                total_pages=len(pages),
+                prompt=prompt,
+                pages=pages,
+                total_processing_time_ms=round((time.perf_counter() - total_start) * 1000, 2),
+            )
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content=response.model_dump(),
+            )
+
         images = pdf_bytes_to_images(content, dpi=settings.NANONETS_OCR_PDF_DPI)
         if not images:
             raise HTTPException(status_code=400, detail="PDF contains no pages")

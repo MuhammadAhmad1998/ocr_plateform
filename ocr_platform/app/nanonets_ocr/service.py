@@ -1,25 +1,24 @@
 import asyncio
+import io
 import logging
+import re
 import tempfile
 import time
+from collections import Counter
 from pathlib import Path
 from threading import Lock
 
 from PIL import Image
+from pypdf import PdfReader
 
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_PROMPT = (
-    "Extract the text from the above document as if you were reading it naturally. "
-    "Return the tables in html format. Return the equations in LaTeX representation. "
-    "If there is an image in the document and image caption is not present, add a small "
-    "description of the image inside the <img></img> tag; otherwise, add the image caption "
-    "inside <img></img>. Watermarks should be wrapped in brackets. Ex: "
-    "<watermark>OFFICIAL COPY</watermark>. Page numbers should be wrapped in brackets. Ex: "
-    "<page_number>14</page_number> or <page_number>9/22</page_number>. Prefer using ☐ and ☑ "
-    "for check boxes."
+    "Extract only the text that is explicitly visible in this document. "
+    "Do not add explanations, captions, tags, HTML, Markdown, inferred words, or any content "
+    "that is not present in the document. Preserve line breaks where possible."
 )
 
 
@@ -117,10 +116,80 @@ class NanonetsOCRService:
         if not self._loaded:
             self.load()
 
+    def extract_pdf_text(self, content: bytes) -> list[str] | None:
+        """Prefer the PDF's own text layer when it is present and looks usable."""
+        try:
+            reader = PdfReader(io.BytesIO(content))
+        except Exception:
+            return None
+
+        if not reader.pages:
+            return None
+
+        pages: list[str] = []
+        usable_pages = 0
+        for page in reader.pages:
+            text = self._normalize_text(page.extract_text() or "")
+            pages.append(text)
+            if self._is_usable_native_text(text):
+                usable_pages += 1
+
+        if usable_pages == len(pages) and usable_pages > 0:
+            return pages
+        return None
+
     def _input_device(self):
         if self._model is None:
             return "cpu"
         return getattr(self._model, "device", None) or next(self._model.parameters()).device
+
+    def _normalize_text(self, text: str) -> str:
+        text = text.replace("\r\n", "\n").replace("\r", "\n")
+        text = re.sub(r"[ \t]+", " ", text)
+        text = re.sub(r"\n{3,}", "\n\n", text)
+        return text.strip()
+
+    def _is_usable_native_text(self, text: str) -> bool:
+        alnum_count = sum(char.isalnum() for char in text)
+        word_count = len(re.findall(r"\b\w+\b", text))
+        return alnum_count >= 20 and word_count >= 4
+
+    def _looks_hallucinated(self, text: str) -> bool:
+        normalized = self._normalize_text(text)
+        if len(normalized) < 80:
+            return False
+
+        tokens = re.findall(r"\S+", normalized)
+        if len(tokens) < 12:
+            return False
+
+        counts = Counter(token.lower() for token in tokens)
+        top_ratio = max(counts.values()) / len(tokens)
+        repeated_token_burst = any(count >= 8 for count in counts.values())
+
+        weird_tokens = 0
+        for token in tokens:
+            if len(token) > 24:
+                weird_tokens += 1
+                continue
+
+            symbol_count = sum(not char.isalnum() for char in token)
+            non_ascii_count = sum(not char.isascii() for char in token)
+            ascii_alpha_count = sum(char.isascii() and char.isalpha() for char in token)
+
+            if symbol_count / max(len(token), 1) > 0.35:
+                weird_tokens += 1
+                continue
+            if non_ascii_count and ascii_alpha_count and non_ascii_count / len(token) > 0.25:
+                weird_tokens += 1
+
+        weird_ratio = weird_tokens / len(tokens)
+        return top_ratio > 0.12 or repeated_token_burst or weird_ratio > 0.18
+
+    def _run_tesseract_fallback(self, image: Image.Image) -> str:
+        import pytesseract
+
+        return self._normalize_text(pytesseract.image_to_string(image.convert("RGB")))
 
     def _run_recognition(
         self,
@@ -183,7 +252,18 @@ class NanonetsOCRService:
                 skip_special_tokens=True,
                 clean_up_tokenization_spaces=True,
             )
-            return output_text[0]
+            normalized = self._normalize_text(output_text[0])
+
+            if not normalized or self._looks_hallucinated(normalized):
+                try:
+                    fallback = self._run_tesseract_fallback(image)
+                except Exception:
+                    fallback = ""
+                if fallback and (not normalized or self._looks_hallucinated(normalized)):
+                    logger.warning("Nanonets OCR output looked unreliable, using Tesseract fallback")
+                    return fallback
+
+            return normalized
         finally:
             if temp_path and temp_path.exists():
                 temp_path.unlink()

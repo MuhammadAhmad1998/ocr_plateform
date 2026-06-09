@@ -495,6 +495,35 @@ async def _run_nanonets_ocr(
     total_start = time.perf_counter()
 
     try:
+        native_pages = nanonets_ocr_service.extract_pdf_text(content) if _is_pdf(content_type, filename) else None
+        if native_pages:
+            total_elapsed_ms = (time.perf_counter() - total_start) * 1000
+            pages = [
+                {
+                    "page_number": page_number,
+                    "text": page_text,
+                    "processing_time_ms": 0.0,
+                }
+                for page_number, page_text in enumerate(native_pages, start=1)
+            ]
+            combined_text = "\n\n".join(
+                f"--- Page {page['page_number']} ---\n{page['text']}" for page in pages
+            )
+
+            return {
+                "model_slug": "nanonets-ocr2-3b",
+                "model_name": f"Nanonets OCR 2 3B ({settings.NANONETS_OCR_MODEL_ID})",
+                "model_type": "nanonets_ocr",
+                "status": "completed",
+                "filename": filename,
+                "result": {
+                    "text": combined_text,
+                    "timing_ms": round(total_elapsed_ms, 2),
+                    "pages": pages,
+                    "prompt": prompt,
+                },
+            }
+
         if _is_pdf(content_type, filename):
             images = pdf_bytes_to_images(content, dpi=settings.NANONETS_OCR_PDF_DPI)
             if not images:

@@ -94,21 +94,35 @@ class NanonetsOCRAdapter(BaseAdapter):
         pages: list[dict[str, Any]] = []
 
         if content_type == "application/pdf" or filename.lower().endswith(".pdf"):
-            images = pdf_bytes_to_images(content, dpi=settings.NANONETS_OCR_PDF_DPI)
-            for page_number, image in enumerate(images, start=1):
-                page_text, elapsed_ms = nanonets_ocr_service.recognize_sync(
-                    image=image,
-                    prompt=prompt,
-                    max_new_tokens=settings.NANONETS_OCR_MAX_NEW_TOKENS,
-                )
-                text_parts.append(f"--- Page {page_number} ---\n{page_text}")
-                pages.append(
-                    {
-                        "page_number": page_number,
-                        "text": page_text,
-                        "processing_time_ms": round(elapsed_ms, 2),
-                    }
-                )
+            native_pages = nanonets_ocr_service.extract_pdf_text(content)
+            if native_pages:
+                for page_number, page_text in enumerate(native_pages, start=1):
+                    text_parts.append(f"--- Page {page_number} ---\n{page_text}")
+                    pages.append(
+                        {
+                            "page_number": page_number,
+                            "text": page_text,
+                            "processing_time_ms": 0.0,
+                            "source": "pdf_text_layer",
+                        }
+                    )
+            else:
+                images = pdf_bytes_to_images(content, dpi=settings.NANONETS_OCR_PDF_DPI)
+                for page_number, image in enumerate(images, start=1):
+                    page_text, elapsed_ms = nanonets_ocr_service.recognize_sync(
+                        image=image,
+                        prompt=prompt,
+                        max_new_tokens=settings.NANONETS_OCR_MAX_NEW_TOKENS,
+                    )
+                    text_parts.append(f"--- Page {page_number} ---\n{page_text}")
+                    pages.append(
+                        {
+                            "page_number": page_number,
+                            "text": page_text,
+                            "processing_time_ms": round(elapsed_ms, 2),
+                            "source": "nanonets_or_fallback",
+                        }
+                    )
         else:
             image = image_bytes_to_pil(content)
             page_text, elapsed_ms = nanonets_ocr_service.recognize_sync(
@@ -122,6 +136,7 @@ class NanonetsOCRAdapter(BaseAdapter):
                     "page_number": 1,
                     "text": page_text,
                     "processing_time_ms": round(elapsed_ms, 2),
+                    "source": "nanonets_or_fallback",
                 }
             )
 

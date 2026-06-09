@@ -32,7 +32,7 @@ export default function TestingPage() {
   const [paddleTask, setPaddleTask] = useState("ocr");
   const [qianfanPrompt, setQianfanPrompt] = useState("Parse this document to Markdown.");
   const [nanonetsPrompt, setNanonetsPrompt] = useState(
-    "Extract the text from the above document as if you were reading it naturally. Return the tables in html format. Return the equations in LaTeX representation. If there is an image in the document and image caption is not present, add a small description of the image inside the <img></img> tag; otherwise, add the image caption inside <img></img>. Watermarks should be wrapped in brackets. Ex: <watermark>OFFICIAL COPY</watermark>. Page numbers should be wrapped in brackets. Ex: <page_number>14</page_number> or <page_number>9/22</page_number>. Prefer using ☐ and ☑ for check boxes."
+    "Extract only the text that is explicitly visible in this document. Do not add explanations, captions, tags, HTML, Markdown, inferred words, or any content that is not present in the document. Preserve line breaks where possible."
   );
   const [status, setStatus] = useState<ProcessStatus>("idle");
   const [result, setResult] = useState<TestingResult | null>(null);
