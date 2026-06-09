@@ -83,6 +83,16 @@ class Settings(BaseSettings):
     QIANFAN_OCR_MAX_PDF_PAGES: int = 50
     QIANFAN_OCR_EAGER_LOAD: bool = False
 
+    NANONETS_OCR_ENABLED: bool = True
+    NANONETS_OCR_MODEL_ID: str = "nanonets/Nanonets-OCR2-3B"
+    NANONETS_OCR_ATTN_IMPLEMENTATION: str = "flash_attention_2"
+    NANONETS_OCR_TORCH_DTYPE: str = "auto"
+    NANONETS_OCR_DEVICE: str = "auto"
+    NANONETS_OCR_MAX_NEW_TOKENS: int = 4096
+    NANONETS_OCR_PDF_DPI: int = 144
+    NANONETS_OCR_MAX_PDF_PAGES: int = 50
+    NANONETS_OCR_EAGER_LOAD: bool = False
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]

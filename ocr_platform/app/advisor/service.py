@@ -142,8 +142,21 @@ class AdvisorService:
             )
         if msg_count == 3:
             fingerprint = session.document.fingerprint_json if session.document else {}
-            primary = "pro" if fingerprint.get("has_equations") or fingerprint.get("doc_type") == "scientific" else "basic"
-            alt = "basic" if primary == "pro" else "free"
+            if (
+                fingerprint.get("has_handwriting")
+                or (
+                    fingerprint.get("has_tables")
+                    and fingerprint.get("has_equations")
+                )
+                or fingerprint.get("layout_complexity") == "complex"
+            ):
+                primary = "enterprise"
+            elif fingerprint.get("has_equations") or fingerprint.get("doc_type") == "scientific":
+                primary = "pro"
+            else:
+                primary = "basic"
+
+            alt = "pro" if primary == "enterprise" else ("basic" if primary == "pro" else "free")
             match = registry_service.select_engine_for_document(db, primary, fingerprint)
             engine_slug = match.engine.slug if match else "trocr-base"
 
@@ -153,6 +166,7 @@ class AdvisorService:
                 "primary_reasons": [
                     "Best match for your document complexity",
                     "Supports your required capabilities",
+                    "Optimized for the detected layout and content signals",
                 ],
                 "alternative_reasons": ["Lower cost option if volume is moderate"],
                 "selected_engine": engine_slug,

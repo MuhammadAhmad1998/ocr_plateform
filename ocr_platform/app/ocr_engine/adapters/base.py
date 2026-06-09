@@ -7,6 +7,12 @@ from typing import Any
 from PIL import Image
 from pypdf import PdfReader
 
+from app.core.config import get_settings
+from app.nanonets_ocr.service import DEFAULT_PROMPT, nanonets_ocr_service
+from app.vlm.pdf_utils import image_bytes_to_pil, pdf_bytes_to_images
+
+settings = get_settings()
+
 
 @dataclass
 class OcrOutput:
@@ -77,6 +83,57 @@ class MockNeuralAdapter(BaseAdapter):
         )
 
 
+class NanonetsOCRAdapter(BaseAdapter):
+    adapter_type = "nanonets-ocr2-3b"
+
+    def run(self, content: bytes, content_type: str, options: dict | None = None) -> OcrOutput:
+        start = time.time()
+        filename = (options or {}).get("filename", "")
+        prompt = (options or {}).get("prompt") or DEFAULT_PROMPT
+        text_parts: list[str] = []
+        pages: list[dict[str, Any]] = []
+
+        if content_type == "application/pdf" or filename.lower().endswith(".pdf"):
+            images = pdf_bytes_to_images(content, dpi=settings.NANONETS_OCR_PDF_DPI)
+            for page_number, image in enumerate(images, start=1):
+                page_text, elapsed_ms = nanonets_ocr_service.recognize_sync(
+                    image=image,
+                    prompt=prompt,
+                    max_new_tokens=settings.NANONETS_OCR_MAX_NEW_TOKENS,
+                )
+                text_parts.append(f"--- Page {page_number} ---\n{page_text}")
+                pages.append(
+                    {
+                        "page_number": page_number,
+                        "text": page_text,
+                        "processing_time_ms": round(elapsed_ms, 2),
+                    }
+                )
+        else:
+            image = image_bytes_to_pil(content)
+            page_text, elapsed_ms = nanonets_ocr_service.recognize_sync(
+                image=image,
+                prompt=prompt,
+                max_new_tokens=settings.NANONETS_OCR_MAX_NEW_TOKENS,
+            )
+            text_parts.append(page_text)
+            pages.append(
+                {
+                    "page_number": 1,
+                    "text": page_text,
+                    "processing_time_ms": round(elapsed_ms, 2),
+                }
+            )
+
+        elapsed = int((time.time() - start) * 1000)
+        return OcrOutput(
+            text="\n\n".join(text_parts),
+            layout={"pages": len(pages), "engine": self.adapter_type, "pages_detail": pages},
+            confidence=0.97,
+            timing_ms=elapsed,
+        )
+
+
 ADAPTERS: dict[str, BaseAdapter] = {
     "tesseract": TesseractAdapter(),
     "trocr-base": TesseractAdapter(),
@@ -85,6 +142,7 @@ ADAPTERS: dict[str, BaseAdapter] = {
     "trocr-handwritten": MockNeuralAdapter(),
     "pix2struct": MockNeuralAdapter(),
     "doctr": MockNeuralAdapter(),
+    "nanonets-ocr2-3b": NanonetsOCRAdapter(),
 }
 
 

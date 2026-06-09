@@ -8,112 +8,143 @@ from app.registry.models import Engine, Tier
 def seed_database() -> None:
     db: Session = SessionLocal()
     try:
-        if db.query(Tier).count() > 0:
-            return
-
-        tiers = [
-            Tier(
-                slug="free",
-                public_name="Starter",
-                description="PDF text extraction; 50 pages/month; no API",
-                quota_limit=50,
-            ),
-            Tier(
-                slug="basic",
-                public_name="Essential",
-                description="Printed text + tables; 500 pages/month; API included",
-                quota_limit=500,
-            ),
-            Tier(
-                slug="pro",
-                public_name="Professional",
-                description="Equations, multi-language, handwriting; 5,000 pages/month",
-                quota_limit=5000,
-            ),
-            Tier(
-                slug="enterprise",
-                public_name="Enterprise",
-                description="All capabilities + custom fine-tuning; unlimited",
-                quota_limit=999999,
-            ),
+        existing_tiers = {tier.slug: tier for tier in db.query(Tier).all()}
+        tier_specs = [
+            ("free", "Starter", "PDF text extraction; 50 pages/month; no API", 50),
+            ("basic", "Essential", "Printed text + tables; 500 pages/month; API included", 500),
+            ("pro", "Professional", "Equations, multi-language, handwriting; 5,000 pages/month", 5000),
+            ("enterprise", "Enterprise", "All capabilities + custom fine-tuning; unlimited", 999999),
         ]
-        db.add_all(tiers)
-        db.flush()
 
-        tier_map = {t.slug: t for t in tiers}
-        engines = [
-            Engine(
+        for slug, public_name, description, quota_limit in tier_specs:
+            if slug not in existing_tiers:
+                db.add(
+                    Tier(
+                        slug=slug,
+                        public_name=public_name,
+                        description=description,
+                        quota_limit=quota_limit,
+                    )
+                )
+
+        db.flush()
+        tier_map = {t.slug: t for t in db.query(Tier).all()}
+
+        existing_engines = {engine.slug: engine for engine in db.query(Engine).all()}
+        engine_specs = [
+            dict(
                 slug="trocr-base",
-                tier_id=tier_map["basic"].id,
+                tier_slug="basic",
                 display_name="TrOCR Base",
                 adapter_type="trocr-base",
                 capability_tags=["printed_text", "forms"],
                 benchmark_scores={"form": 0.9, "unknown": 0.8},
                 cost_profile="low",
             ),
-            Engine(
+            dict(
                 slug="donut-base",
-                tier_id=tier_map["basic"].id,
+                tier_slug="basic",
                 display_name="Donut Base",
                 adapter_type="tesseract",
                 capability_tags=["printed_text", "tables"],
                 benchmark_scores={"form": 0.85},
                 cost_profile="low",
             ),
-            Engine(
+            dict(
                 slug="nougat-base",
-                tier_id=tier_map["pro"].id,
+                tier_slug="pro",
                 display_name="Nougat Base",
                 adapter_type="nougat-base",
                 capability_tags=["equations", "scientific_pdf", "multi_column"],
                 benchmark_scores={"scientific": 0.95, "pdf": 0.9},
                 cost_profile="medium",
             ),
-            Engine(
+            dict(
                 slug="trocr-handwritten",
-                tier_id=tier_map["pro"].id,
+                tier_slug="pro",
                 display_name="TrOCR Handwritten",
                 adapter_type="trocr-handwritten",
                 capability_tags=["handwriting", "printed_text"],
                 benchmark_scores={"image": 0.88},
                 cost_profile="medium",
             ),
-            Engine(
+            dict(
                 slug="pix2struct",
-                tier_id=tier_map["enterprise"].id,
+                tier_slug="enterprise",
                 display_name="Pix2Struct",
                 adapter_type="pix2struct",
                 capability_tags=["multi_column", "diagrams", "tables"],
                 benchmark_scores={"complex": 0.92},
                 cost_profile="high",
             ),
-            Engine(
+            dict(
                 slug="doctr",
-                tier_id=tier_map["enterprise"].id,
+                tier_slug="enterprise",
                 display_name="docTR",
                 adapter_type="doctr",
                 capability_tags=["printed_text", "tables", "multi_column"],
                 benchmark_scores={"form": 0.91},
                 cost_profile="high",
             ),
+            dict(
+                slug="nanonets-ocr2-3b",
+                tier_slug="enterprise",
+                display_name="Nanonets OCR 2 3B",
+                adapter_type="nanonets-ocr2-3b",
+                capability_tags=[
+                    "printed_text",
+                    "tables",
+                    "equations",
+                    "handwriting",
+                    "multi_column",
+                ],
+                benchmark_scores={"pdf": 0.95, "form": 0.96, "scientific": 0.9},
+                cost_profile="high",
+            ),
         ]
-        db.add_all(engines)
 
-        knowledge = [
-            KnowledgeDocument(
+        for spec in engine_specs:
+            if spec["slug"] in existing_engines:
+                continue
+            db.add(
+                Engine(
+                    slug=spec["slug"],
+                    tier_id=tier_map[spec["tier_slug"]].id,
+                    display_name=spec["display_name"],
+                    adapter_type=spec["adapter_type"],
+                    capability_tags=spec["capability_tags"],
+                    benchmark_scores=spec["benchmark_scores"],
+                    cost_profile=spec["cost_profile"],
+                )
+            )
+
+        existing_knowledge = {doc.title for doc in db.query(KnowledgeDocument).all()}
+        knowledge_specs = [
+            dict(
                 title="TrOCR Architecture Overview",
                 doc_type="research_paper",
                 capability_tags=["printed_text", "forms"],
                 content="TrOCR models excel at printed text recognition with transformer architecture.",
             ),
-            KnowledgeDocument(
+            dict(
                 title="Professional Tier Spec",
                 doc_type="tier_spec",
                 capability_tags=["equations", "handwriting"],
                 content="Professional tier supports equations, multi-language, and handwriting.",
             ),
         ]
-        db.add_all(knowledge)
+        for spec in knowledge_specs:
+            if spec["title"] in existing_knowledge:
+                continue
+            db.add(
+                KnowledgeDocument(
+                    title=spec["title"],
+                    doc_type=spec["doc_type"],
+                    capability_tags=spec["capability_tags"],
+                    content=spec["content"],
+                )
+            )
+
         db.commit()
     finally:
         db.close()

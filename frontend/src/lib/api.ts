@@ -183,7 +183,7 @@ export const api = {
 export interface TestingModel {
   slug: string;
   display_name: string;
-  type: "ocr" | "vlm" | "paddle_ocr" | "qianfan_ocr";
+  type: "ocr" | "vlm" | "paddle_ocr" | "qianfan_ocr" | "nanonets_ocr";
   adapter_type: string;
   capability_tags: string[];
 }
@@ -191,7 +191,7 @@ export interface TestingModel {
 export interface TestingResult {
   model_slug: string;
   model_name: string;
-  model_type: "ocr" | "vlm" | "paddle_ocr" | "qianfan_ocr";
+  model_type: "ocr" | "vlm" | "paddle_ocr" | "qianfan_ocr" | "nanonets_ocr";
   status: string;
   filename: string;
   result: {

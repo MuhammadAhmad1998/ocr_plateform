@@ -31,6 +31,9 @@ export default function TestingPage() {
   );
   const [paddleTask, setPaddleTask] = useState("ocr");
   const [qianfanPrompt, setQianfanPrompt] = useState("Parse this document to Markdown.");
+  const [nanonetsPrompt, setNanonetsPrompt] = useState(
+    "Extract the text from the above document as if you were reading it naturally. Return the tables in html format. Return the equations in LaTeX representation. If there is an image in the document and image caption is not present, add a small description of the image inside the <img></img> tag; otherwise, add the image caption inside <img></img>. Watermarks should be wrapped in brackets. Ex: <watermark>OFFICIAL COPY</watermark>. Page numbers should be wrapped in brackets. Ex: <page_number>14</page_number> or <page_number>9/22</page_number>. Prefer using ☐ and ☑ for check boxes."
+  );
   const [status, setStatus] = useState<ProcessStatus>("idle");
   const [result, setResult] = useState<TestingResult | null>(null);
 
@@ -59,6 +62,7 @@ export default function TestingPage() {
   const isVlm = selectedModelInfo?.type === "vlm";
   const isPaddleOcr = selectedModelInfo?.type === "paddle_ocr";
   const isQianfanOcr = selectedModelInfo?.type === "qianfan_ocr";
+  const isNanonetsOcr = selectedModelInfo?.type === "nanonets_ocr";
 
   function handleFileSelect(selected: File) {
     setFile(selected);
@@ -82,7 +86,7 @@ export default function TestingPage() {
     try {
       const response = await api.runTesting(file, selectedModel, {
         question: isVlm ? vlmQuestion : undefined,
-        prompt: isQianfanOcr ? qianfanPrompt : undefined,
+        prompt: isNanonetsOcr ? nanonetsPrompt : isQianfanOcr ? qianfanPrompt : undefined,
         task: isPaddleOcr ? paddleTask : undefined,
       });
       setResult(response);
@@ -215,6 +219,19 @@ export default function TestingPage() {
                       value={qianfanPrompt}
                       onChange={(e) => setQianfanPrompt(e.target.value)}
                       rows={3}
+                      placeholder="Instruction for document parsing…"
+                    />
+                  </div>
+                )}
+
+                {isNanonetsOcr && (
+                  <div className="space-y-2">
+                    <Label htmlFor="nanonets-prompt">Nanonets prompt (optional)</Label>
+                    <Textarea
+                      id="nanonets-prompt"
+                      value={nanonetsPrompt}
+                      onChange={(e) => setNanonetsPrompt(e.target.value)}
+                      rows={5}
                       placeholder="Instruction for document parsing…"
                     />
                   </div>
