@@ -11,72 +11,72 @@
   }
 
   :root {
-    --background: #f4fbfc;
-    --foreground: #293241;
+    --background: #eef8ff;
+    --foreground: #1a1235;
     --card: #ffffff;
-    --card-foreground: #293241;
+    --card-foreground: #1a1235;
     --popover: #ffffff;
-    --popover-foreground: #293241;
-    --primary: #3d5a80;
+    --popover-foreground: #1a1235;
+    --primary: #7d53de;
     --primary-foreground: #ffffff;
-    --secondary: #e8f4f8;
-    --secondary-foreground: #293241;
-    --muted: #edf6f9;
-    --muted-foreground: #5a6b7d;
-    --accent: #ee6c4d;
-    --accent-foreground: #ffffff;
+    --secondary: #d1f5ff;
+    --secondary-foreground: #1a1235;
+    --muted: #d1f5ff;
+    --muted-foreground: #5c4d8a;
+    --accent: #34f6f2;
+    --accent-foreground: #1a1235;
     --destructive: #dc2626;
-    --border: #c5dce8;
-    --input: #c5dce8;
-    --ring: #3d5a80;
+    --border: #a8ddf5;
+    --input: #a8ddf5;
+    --ring: #7d53de;
     --radius: 0.75rem;
-    --chart-1: #3d5a80;
-    --chart-2: #98c1d9;
-    --chart-3: #ee6c4d;
-    --chart-4: #293241;
-    --chart-5: #e0fbfc;
+    --chart-1: #7d53de;
+    --chart-2: #78e3fd;
+    --chart-3: #34f6f2;
+    --chart-4: #1a1235;
+    --chart-5: #d1f5ff;
     --sidebar: #ffffff;
-    --sidebar-foreground: #293241;
-    --sidebar-primary: #3d5a80;
+    --sidebar-foreground: #1a1235;
+    --sidebar-primary: #7d53de;
     --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #e8f4f8;
-    --sidebar-accent-foreground: #293241;
-    --sidebar-border: #c5dce8;
-    --sidebar-ring: #3d5a80;
+    --sidebar-accent: #d1f5ff;
+    --sidebar-accent-foreground: #1a1235;
+    --sidebar-border: #a8ddf5;
+    --sidebar-ring: #7d53de;
   }
 
   .dark {
-    --background: #1a2332;
-    --foreground: #e8f4f8;
-    --card: #293241;
-    --card-foreground: #e8f4f8;
-    --popover: #293241;
-    --popover-foreground: #e8f4f8;
-    --primary: #98c1d9;
-    --primary-foreground: #293241;
-    --secondary: #3d5a80;
-    --secondary-foreground: #e8f4f8;
-    --muted: #243041;
-    --muted-foreground: #98c1d9;
-    --accent: #ee6c4d;
-    --accent-foreground: #ffffff;
+    --background: #12102a;
+    --foreground: #eef8ff;
+    --card: #1a1838;
+    --card-foreground: #eef8ff;
+    --popover: #1a1838;
+    --popover-foreground: #eef8ff;
+    --primary: #78e3fd;
+    --primary-foreground: #12102a;
+    --secondary: #2d2360;
+    --secondary-foreground: #d1f5ff;
+    --muted: #1e1a42;
+    --muted-foreground: #78e3fd;
+    --accent: #34f6f2;
+    --accent-foreground: #12102a;
     --destructive: #f87171;
-    --border: rgba(152, 193, 217, 0.18);
-    --input: rgba(152, 193, 217, 0.22);
-    --ring: #98c1d9;
-    --chart-1: #98c1d9;
-    --chart-2: #3d5a80;
-    --chart-3: #ee6c4d;
-    --chart-4: #e0fbfc;
-    --chart-5: #5a6b7d;
-    --sidebar: #293241;
-    --sidebar-foreground: #e8f4f8;
-    --sidebar-primary: #98c1d9;
-    --sidebar-primary-foreground: #293241;
-    --sidebar-accent: #3d5a80;
-    --sidebar-accent-foreground: #e8f4f8;
-    --sidebar-border: rgba(152, 193, 217, 0.18);
-    --sidebar-ring: #98c1d9;
+    --border: rgba(120, 227, 253, 0.18);
+    --input: rgba(120, 227, 253, 0.22);
+    --ring: #78e3fd;
+    --chart-1: #78e3fd;
+    --chart-2: #7d53de;
+    --chart-3: #34f6f2;
+    --chart-4: #d1f5ff;
+    --chart-5: #5c4d8a;
+    --sidebar: #1a1838;
+    --sidebar-foreground: #eef8ff;
+    --sidebar-primary: #78e3fd;
+    --sidebar-primary-foreground: #12102a;
+    --sidebar-accent: #2d2360;
+    --sidebar-accent-foreground: #d1f5ff;
+    --sidebar-border: rgba(120, 227, 253, 0.18);
+    --sidebar-ring: #78e3fd;
   }
 
   * {
@@ -99,15 +99,15 @@
 
   .gradient-mesh {
     background-image:
-      radial-gradient(at 20% 20%, rgba(152, 193, 217, 0.25) 0, transparent 50%),
-      radial-gradient(at 80% 0%, rgba(61, 90, 128, 0.12) 0, transparent 45%),
-      radial-gradient(at 50% 100%, rgba(238, 108, 77, 0.08) 0, transparent 40%);
+      radial-gradient(at 20% 20%, rgba(120, 227, 253, 0.3) 0, transparent 50%),
+      radial-gradient(at 80% 0%, rgba(125, 83, 222, 0.12) 0, transparent 45%),
+      radial-gradient(at 50% 100%, rgba(52, 246, 242, 0.1) 0, transparent 40%);
   }
 
   .dark .gradient-mesh {
     background-image:
-      radial-gradient(at 20% 20%, rgba(152, 193, 217, 0.08) 0, transparent 50%),
-      radial-gradient(at 80% 0%, rgba(61, 90, 128, 0.2) 0, transparent 45%),
-      radial-gradient(at 50% 100%, rgba(238, 108, 77, 0.06) 0, transparent 40%);
+      radial-gradient(at 20% 20%, rgba(120, 227, 253, 0.08) 0, transparent 50%),
+      radial-gradient(at 80% 0%, rgba(125, 83, 222, 0.2) 0, transparent 45%),
+      radial-gradient(at 50% 100%, rgba(52, 246, 242, 0.06) 0, transparent 40%);
   }
 }

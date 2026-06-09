@@ -7,11 +7,13 @@ const config: Config = {
     extend: {
       colors: {
         klarix: {
-          dusk: "#3D5A80",
-          powder: "#98C1D9",
-          cyan: "#E0FBFC",
-          peach: "#EE6C4D",
-          jet: "#293241",
+          "neon-ice": "#34F6F2",
+          "frosted-blue": "#78E3FD",
+          "light-cyan": "#D1F5FF",
+          "alice-blue": "#EEF8FF",
+          "slate-blue": "#7D53DE",
+          cyan: "#34F6F2",
+          jet: "#1A1235",
         },
         border: "var(--border)",
         input: "var(--input)",
