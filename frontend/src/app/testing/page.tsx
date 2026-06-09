@@ -30,6 +30,7 @@ export default function TestingPage() {
     "Extract all text from this document. Return only the extracted text, preserving layout where possible."
   );
   const [paddleTask, setPaddleTask] = useState("ocr");
+  const [qianfanPrompt, setQianfanPrompt] = useState("Parse this document to Markdown.");
   const [status, setStatus] = useState<ProcessStatus>("idle");
   const [result, setResult] = useState<TestingResult | null>(null);
 
@@ -57,6 +58,7 @@ export default function TestingPage() {
   const selectedModelInfo = models.find((m) => m.slug === selectedModel);
   const isVlm = selectedModelInfo?.type === "vlm";
   const isPaddleOcr = selectedModelInfo?.type === "paddle_ocr";
+  const isQianfanOcr = selectedModelInfo?.type === "qianfan_ocr";
 
   function handleFileSelect(selected: File) {
     setFile(selected);
@@ -80,6 +82,7 @@ export default function TestingPage() {
     try {
       const response = await api.runTesting(file, selectedModel, {
         question: isVlm ? vlmQuestion : undefined,
+        prompt: isQianfanOcr ? qianfanPrompt : undefined,
         task: isPaddleOcr ? paddleTask : undefined,
       });
       setResult(response);
@@ -200,6 +203,19 @@ export default function TestingPage() {
                       onChange={(e) => setVlmQuestion(e.target.value)}
                       rows={3}
                       placeholder="Question or instruction for the vision model…"
+                    />
+                  </div>
+                )}
+
+                {isQianfanOcr && (
+                  <div className="space-y-2">
+                    <Label htmlFor="qianfan-prompt">Qianfan-OCR prompt (optional)</Label>
+                    <Textarea
+                      id="qianfan-prompt"
+                      value={qianfanPrompt}
+                      onChange={(e) => setQianfanPrompt(e.target.value)}
+                      rows={3}
+                      placeholder="Instruction for document parsing…"
                     />
                   </div>
                 )}

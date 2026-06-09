@@ -41,6 +41,15 @@ async def lifespan(app: FastAPI):
         except RuntimeError as exc:
             logger.warning("PaddleOCR-VL preload skipped: %s", exc)
 
+    if settings.QIANFAN_OCR_ENABLED and settings.QIANFAN_OCR_EAGER_LOAD:
+        from app.qianfan_ocr.service import qianfan_ocr_service
+
+        try:
+            qianfan_ocr_service.load()
+            logger.info("Qianfan-OCR model preloaded at startup")
+        except RuntimeError as exc:
+            logger.warning("Qianfan-OCR preload skipped: %s", exc)
+
     yield
 
 

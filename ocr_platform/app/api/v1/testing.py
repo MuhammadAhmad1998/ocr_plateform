@@ -10,6 +10,8 @@ from app.core.dependencies import get_current_user
 from app.ocr_engine.adapters.base import run_ocr
 from app.registry.models import Engine
 from app.paddle_ocr.service import paddle_ocr_service
+from app.qianfan_ocr.service import DEFAULT_PROMPT as QIANFAN_DEFAULT_PROMPT
+from app.qianfan_ocr.service import qianfan_ocr_service
 from app.vlm.pdf_utils import image_bytes_to_pil, pdf_bytes_to_images
 from app.vlm.service import vlm_service
 
@@ -96,6 +98,21 @@ def list_testing_models(
             },
         )
 
+    if settings.QIANFAN_OCR_ENABLED:
+        insert_at = sum(
+            1 for flag in (settings.VLM_ENABLED, settings.PADDLE_OCR_ENABLED) if flag
+        )
+        models.insert(
+            insert_at,
+            {
+                "slug": "qianfan-ocr",
+                "display_name": f"Qianfan-OCR ({settings.QIANFAN_OCR_MODEL_ID})",
+                "type": "qianfan_ocr",
+                "adapter_type": "qianfan_ocr",
+                "capability_tags": ["vision", "pdf", "images", "ocr", "markdown"],
+            },
+        )
+
     return {"models": models}
 
 
@@ -104,6 +121,7 @@ async def run_testing_ocr(
     file: UploadFile = File(...),
     model_slug: str = Form(..., min_length=1),
     question: str = Form(DEFAULT_VLM_QUESTION),
+    prompt: str = Form(""),
     enable_thinking: bool = Form(False),
     task: str = Form("ocr"),
     user: User = Depends(get_current_user),
@@ -125,6 +143,14 @@ async def run_testing_ocr(
 
     if model_slug == "paddle-ocr-vl":
         return await _run_paddle_ocr(content, content_type, filename, task)
+
+    if model_slug == "qianfan-ocr":
+        return await _run_qianfan_ocr(
+            content,
+            content_type,
+            filename,
+            prompt or QIANFAN_DEFAULT_PROMPT,
+        )
 
     engine = (
         db.query(Engine)
@@ -326,3 +352,86 @@ async def _run_paddle_ocr(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"PaddleOCR-VL inference failed: {exc}") from exc
+
+
+async def _run_qianfan_ocr(
+    content: bytes,
+    content_type: str,
+    filename: str,
+    prompt: str,
+) -> dict:
+    if not settings.QIANFAN_OCR_ENABLED:
+        raise HTTPException(status_code=503, detail="Qianfan-OCR service is disabled")
+
+    try:
+        qianfan_ocr_service.load()
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    total_start = time.perf_counter()
+
+    try:
+        if _is_pdf(content_type, filename):
+            images = pdf_bytes_to_images(content, dpi=settings.QIANFAN_OCR_PDF_DPI)
+            if not images:
+                raise HTTPException(status_code=400, detail="PDF contains no pages")
+            if len(images) > settings.QIANFAN_OCR_MAX_PDF_PAGES:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"PDF exceeds maximum of {settings.QIANFAN_OCR_MAX_PDF_PAGES} pages",
+                )
+
+            page_results = await qianfan_ocr_service.analyze_pdf_pages(
+                images=images,
+                prompt=prompt,
+            )
+
+            pages = [
+                {
+                    "page_number": page_number,
+                    "text": result,
+                    "processing_time_ms": round(elapsed_ms, 2),
+                }
+                for page_number, result, elapsed_ms in sorted(page_results, key=lambda item: item[0])
+            ]
+            combined_text = "\n\n".join(
+                f"--- Page {page['page_number']} ---\n{page['text']}" for page in pages
+            )
+            total_elapsed_ms = (time.perf_counter() - total_start) * 1000
+
+            return {
+                "model_slug": "qianfan-ocr",
+                "model_name": f"Qianfan-OCR ({settings.QIANFAN_OCR_MODEL_ID})",
+                "model_type": "qianfan_ocr",
+                "status": "completed",
+                "filename": filename,
+                "result": {
+                    "text": combined_text,
+                    "timing_ms": round(total_elapsed_ms, 2),
+                    "pages": pages,
+                    "prompt": prompt,
+                },
+            }
+
+        image = image_bytes_to_pil(content)
+        result, elapsed_ms = await qianfan_ocr_service.recognize(
+            image=image,
+            prompt=prompt,
+        )
+
+        return {
+            "model_slug": "qianfan-ocr",
+            "model_name": f"Qianfan-OCR ({settings.QIANFAN_OCR_MODEL_ID})",
+            "model_type": "qianfan_ocr",
+            "status": "completed",
+            "filename": filename,
+            "result": {
+                "text": result,
+                "timing_ms": round(elapsed_ms, 2),
+                "prompt": prompt,
+            },
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Qianfan-OCR inference failed: {exc}") from exc

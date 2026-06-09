@@ -74,6 +74,15 @@ class Settings(BaseSettings):
     PADDLE_OCR_MAX_PDF_PAGES: int = 50
     PADDLE_OCR_EAGER_LOAD: bool = False
 
+    QIANFAN_OCR_ENABLED: bool = True
+    QIANFAN_OCR_MODEL_ID: str = "baidu/Qianfan-OCR"
+    QIANFAN_OCR_TORCH_DTYPE: str = "bfloat16"
+    QIANFAN_OCR_DEVICE: str = "auto"
+    QIANFAN_OCR_MAX_NEW_TOKENS: int = 512
+    QIANFAN_OCR_PDF_DPI: int = 144
+    QIANFAN_OCR_MAX_PDF_PAGES: int = 50
+    QIANFAN_OCR_EAGER_LOAD: bool = False
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
