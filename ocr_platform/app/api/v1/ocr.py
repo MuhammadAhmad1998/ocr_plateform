@@ -182,3 +182,68 @@ def _job_response(job: OcrJob, db: Session) -> OcrJobResponse:
         result=result,
         error_message=job.error_message,
     )
+import torch
+from transformers import AutoProcessor, HunYuanVLForConditionalGeneration
+from fastapi import File, UploadFile
+from PIL import Image
+
+
+def clean_repeated_substrings(text: str) -> str:
+    """Clean repeated substrings in text"""
+    n = len(text)
+    if n < 8000:
+        return text
+    for length in range(2, n // 10 + 1):
+        candidate = text[-length:]
+        count = 0
+        i = n - length
+        while i >= 0 and text[i:i + length] == candidate:
+            count += 1
+            i -= length
+        if count >= 10:
+            return text[:n - length * (count - 1)]
+    return text
+
+# Load model globally
+model_name_or_path = "tencent/HunyuanOCR"
+processor = AutoProcessor.from_pretrained(model_name_or_path, use_fast=False)
+model = HunYuanVLForConditionalGeneration.from_pretrained(
+    model_name_or_path,
+    attn_implementation="eager",
+    dtype=torch.bfloat16,
+    device_map="auto",
+)
+
+@router.post("/ocr/hunyuan/", response_model=dict)
+async def hunyuan_ocr(
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    image = Image.open(file.file)
+    messages = [
+        {"role": "system", "content": ""},
+        {
+            "role": "user",
+            "content": [
+                {"type": "image", "image": file.filename},
+                {"type": "text", "text": "检测并识别图片中的文字，将文本坐标格式化输出。"},
+            ],
+        },
+    ]
+    texts = [processor.apply_chat_template(msg, tokenize=False, add_generation_prompt=True) for msg in [messages]]
+    inputs = processor(text=texts, images=image, padding=True, return_tensors="pt")
+    # Move to device
+    device = next(model.parameters()).device
+    inputs = inputs.to(device)
+    generated_ids = model.generate(**inputs, max_new_tokens=16384, do_sample=False)
+    if "input_ids" in inputs:
+        input_ids = inputs.input_ids
+    else:
+        input_ids = inputs.inputs
+    generated_ids_trimmed = [out_ids[len(in_ids):] for in_ids, out_ids in zip(input_ids, generated_ids)]
+    output_texts = clean_repeated_substrings(
+        processor.batch_decode(generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+    )
+    return {"text": output_texts}
+

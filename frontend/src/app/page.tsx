@@ -9,6 +9,7 @@ import {
   Sparkles,
   Zap,
 } from "lucide-react";
+import { AdvisorDemoWidget } from "@/components/AdvisorDemoWidget";
 import { FadeIn } from "@/components/fade-in";
 import { Navbar } from "@/components/Navbar";
 import { SiteFooter } from "@/components/site-footer";
@@ -129,29 +130,7 @@ export default function HomePage() {
             </div>
 
             <FadeIn delay={0.4} className="mt-10 flex justify-center">
-              <Card className="w-full max-w-2xl overflow-hidden border-border bg-card shadow-lg">
-                <CardContent className="p-0">
-                  <div className="border-b border-border bg-muted/50 px-5 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="size-2.5 rounded-full bg-accent/80" />
-                      <div className="size-2.5 rounded-full bg-primary/40" />
-                      <div className="size-2.5 rounded-full bg-muted-foreground/30" />
-                      <span className="ml-2 text-xs text-muted-foreground">Advisor session</span>
-                    </div>
-                  </div>
-                  <div className="space-y-3 p-5 text-sm">
-                    <div className="rounded-xl bg-muted px-4 py-3 text-muted-foreground">
-                      Invoice_Q3.pdf uploaded · 4 pages · mixed tables detected
-                    </div>
-                    <div className="ml-auto max-w-[85%] rounded-xl bg-primary px-4 py-3 text-primary-foreground">
-                      Based on your tables and multi-column layout, Professional tier is the best fit.
-                    </div>
-                    <div className="rounded-xl border border-dashed border-border bg-background px-4 py-3 text-muted-foreground">
-                      Live demo running… 94% confidence · 1.2s
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <AdvisorDemoWidget />
             </FadeIn>
           </div>
         </section>

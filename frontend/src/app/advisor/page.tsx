@@ -22,7 +22,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api, getToken, streamMessage } from "@/lib/api";
+import "@/app/advisor/animation.css";
 import { useAdvisorStore } from "@/lib/store";
 import { TIER_NAMES, cn } from "@/lib/utils";
 
@@ -200,7 +200,7 @@ export default function AdvisorPage() {
         <WizardStepper steps={WIZARD_STEPS} currentStep={wizardStep} />
 
         <div className="grid flex-1 gap-6 lg:grid-cols-[1fr_320px]">
-          <Card className="flex min-h-[560px] flex-col border-border/80 shadow-sm">
+          
             <CardHeader className="border-b border-border pb-4">
               <CardTitle className="text-lg">{WIZARD_STEPS[wizardStep].label}</CardTitle>
               <CardDescription>{WIZARD_STEPS[wizardStep].description}</CardDescription>
@@ -268,9 +268,9 @@ export default function AdvisorPage() {
                           ))}
                           {isStreaming && streamingContent && (
                             <div className="flex justify-start">
-                              <div className="max-w-[85%] rounded-2xl bg-muted px-4 py-2.5 text-sm">
-                                <ChatMessageContent content={streamingContent} />
-                                <span className="ml-1 inline-block h-4 w-1 animate-pulse bg-accent" />
+                              <div className="max-w-[85%] rounded-2xl bg-muted px-4 py-2.5 text-sm typing-bubble" style={{ '--chars': streamingContent.length } as React.CSSProperties}>
+                                <span className="typing-text">{streamingContent}</span>
+                                <span className="cursor-blink ml-1 inline-block h-4 w-1 bg-accent" />
                               </div>
                             </div>
                           )}
