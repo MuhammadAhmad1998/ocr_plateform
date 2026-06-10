@@ -38,24 +38,20 @@ class PaddleOCRVLService:
         
         logger.info("Unloading PaddleOCR-VL model and clearing GPU memory")
         
-        # Clear model and processor references
+        from app.core.model_manager import _strip_accelerate_hooks
+        _strip_accelerate_hooks(self._model)
+
+        if self._model is not None:
+            del self._model
+        if self._processor is not None:
+            del self._processor
         self._model = None
         self._processor = None
         self._loaded = False
+        self._load_error = None
         
-        # Force garbage collection
-        import gc
-        gc.collect()
-        
-        # Clear CUDA cache if available
-        try:
-            import torch
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
-                torch.cuda.synchronize()
-                logger.info("GPU memory cleared successfully")
-        except Exception as exc:
-            logger.warning("Failed to clear GPU cache: %s", exc)
+        from app.core.model_manager import _force_free_gpu_memory
+        _force_free_gpu_memory()
 
     @property
     def is_loaded(self) -> bool:
@@ -71,13 +67,14 @@ class PaddleOCRVLService:
             import gc
             import torch
             
-            # Force garbage collection
-            gc.collect()
+            for _ in range(3):
+                gc.collect()
             
-            # Clear CUDA cache if available
             if torch.cuda.is_available():
+                torch.cuda.synchronize()
                 torch.cuda.empty_cache()
                 torch.cuda.synchronize()
+                torch.cuda.reset_peak_memory_stats()
                 logger.info("GPU memory cleared before loading model")
         except Exception as exc:
             logger.warning("Failed to clear GPU memory: %s", exc)

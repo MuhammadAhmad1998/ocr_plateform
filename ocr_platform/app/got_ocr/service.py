@@ -123,21 +123,23 @@ class GotOCRService:
 
         logger.info("Unloading GOT-OCR model and clearing GPU memory")
 
+        # Strip accelerate dispatch hooks BEFORE deleting — these keep GPU refs alive
+        from app.core.model_manager import _strip_accelerate_hooks
+        _strip_accelerate_hooks(self._model)
+
+        # Explicitly delete model and tokenizer to break all references
+        if self._model is not None:
+            del self._model
+        if self._tokenizer is not None:
+            del self._tokenizer
         self._model = None
         self._tokenizer = None
         self._loaded = False
+        self._load_error = None
 
-        import gc
-        gc.collect()
-
-        try:
-            import torch
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
-                torch.cuda.synchronize()
-                logger.info("GPU memory cleared successfully")
-        except Exception as exc:
-            logger.warning("Failed to clear GPU cache: %s", exc)
+        # Aggressive GC + CUDA cleanup
+        from app.core.model_manager import _force_free_gpu_memory
+        _force_free_gpu_memory()
 
     @property
     def is_loaded(self) -> bool:
@@ -153,11 +155,14 @@ class GotOCRService:
             import gc
             import torch
 
-            gc.collect()
+            for _ in range(3):
+                gc.collect()
 
             if torch.cuda.is_available():
+                torch.cuda.synchronize()
                 torch.cuda.empty_cache()
                 torch.cuda.synchronize()
+                torch.cuda.reset_peak_memory_stats()
                 logger.info("GPU memory cleared before loading model")
         except Exception as exc:
             logger.warning("Failed to clear GPU memory: %s", exc)
@@ -172,6 +177,19 @@ class GotOCRService:
         model_manager.before_load("got_ocr")
 
         self._clear_gpu_memory()
+
+        # Log memory state before loading
+        try:
+            import torch
+            if torch.cuda.is_available():
+                logger.info(
+                    "Pre-load GPU state: allocated=%.2f GB, reserved=%.2f GB, free=%.2f GB",
+                    torch.cuda.memory_allocated() / (1024**3),
+                    torch.cuda.memory_reserved() / (1024**3),
+                    (torch.cuda.get_device_properties(0).total_mem - torch.cuda.memory_reserved()) / (1024**3),
+                )
+        except Exception:
+            pass
 
         settings = get_settings()
         try:
@@ -192,24 +210,41 @@ class GotOCRService:
                 trust_remote_code=True,
             )
 
-            model = AutoModel.from_pretrained(
-                settings.GOT_OCR_MODEL_ID,
+            device = settings.GOT_OCR_DEVICE
+            if device == "cuda" and not torch.cuda.is_available():
+                logger.warning("CUDA unavailable, falling back to CPU")
+                device = "cpu"
+
+            # Load directly to target device to avoid CPU→GPU memory doubling.
+            # device_map places weights on the target device immediately.
+            load_kwargs: dict = dict(
                 trust_remote_code=True,
                 low_cpu_mem_usage=True,
                 use_safetensors=True,
                 pad_token_id=tokenizer.eos_token_id,
                 dtype=model_dtype,
             )
+            if device in ("cuda", "auto") and torch.cuda.is_available():
+                load_kwargs["device_map"] = "cuda:0"
+            
+            model = AutoModel.from_pretrained(
+                settings.GOT_OCR_MODEL_ID,
+                **load_kwargs,
+            )
 
-            device = settings.GOT_OCR_DEVICE
-            if device == "cuda" and not torch.cuda.is_available():
-                logger.warning("CUDA unavailable, falling back to CPU")
-                device = "cpu"
-
-            if device == "auto":
-                model = model.eval().cuda()
-            else:
+            # Only call .to(device) if not already placed via device_map
+            if "device_map" not in load_kwargs:
                 model = model.eval().to(device)
+            else:
+                model.eval()
+
+            # Log memory usage after loading
+            if device in ("cuda", "auto") and torch.cuda.is_available():
+                logger.info(
+                    "GOT-OCR loaded. GPU allocated: %.2f GB, reserved: %.2f GB",
+                    torch.cuda.memory_allocated() / (1024**3),
+                    torch.cuda.memory_reserved() / (1024**3),
+                )
 
             self._model = model
             self._tokenizer = tokenizer

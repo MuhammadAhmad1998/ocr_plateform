@@ -1,6 +1,11 @@
 import logging
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
+
+# Must be set BEFORE any torch import to reduce CUDA memory fragmentation.
+# This helps avoid OOM when switching between large models.
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -66,8 +71,8 @@ app = FastAPI(
     title=settings.APP_NAME,
     version="1.0.0",
     lifespan=lifespan,
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
+    docs_url="/docs",
+    redoc_url="/redoc",
 )
 
 app.add_middleware(
