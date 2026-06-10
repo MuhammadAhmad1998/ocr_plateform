@@ -10,8 +10,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.ocr_engine.adapters.base import run_ocr
 from app.registry.models import Engine
-from app.nanonets_ocr.service import DEFAULT_PROMPT as NANONETS_DEFAULT_PROMPT
-from app.nanonets_ocr.service import nanonets_ocr_service
+from app.got_ocr.service import got_ocr_service
 from app.paddle_ocr.service import paddle_ocr_service
 from app.qianfan_ocr.service import DEFAULT_PROMPT as QIANFAN_DEFAULT_PROMPT
 from app.qianfan_ocr.service import qianfan_ocr_service
@@ -117,7 +116,7 @@ def list_testing_models(
             },
         )
 
-    if settings.NANONETS_OCR_ENABLED:
+    if settings.GOT_OCR_ENABLED:
         insert_at = sum(
             1
             for flag in (
@@ -130,20 +129,17 @@ def list_testing_models(
         models.insert(
             insert_at,
             {
-                "slug": "nanonets-ocr2-3b",
-                "display_name": f"Nanonets OCR 2 3B ({settings.NANONETS_OCR_MODEL_ID})",
-                "type": "nanonets_ocr",
-                "adapter_type": "nanonets-ocr2-3b",
+                "slug": "got-ocr2",
+                "display_name": f"GOT-OCR 2.0 ({settings.GOT_OCR_MODEL_ID})",
+                "type": "got_ocr",
+                "adapter_type": "got-ocr2",
                 "capability_tags": [
                     "vision",
                     "pdf",
                     "images",
                     "ocr",
-                    "tables",
-                    "equations",
-                    "handwriting",
-                    "html",
-                    "latex",
+                    "format",
+                    "plain_text",
                 ],
             },
         )
@@ -187,12 +183,12 @@ async def run_testing_ocr(
             prompt or QIANFAN_DEFAULT_PROMPT,
         )
 
-    if model_slug == "nanonets-ocr2-3b":
-        return await _run_nanonets_ocr(
+    if model_slug == "got-ocr2":
+        return await _run_got_ocr(
             content,
             content_type,
             filename,
-            prompt or NANONETS_DEFAULT_PROMPT,
+            prompt or "ocr",
         )
 
     engine = (
@@ -482,60 +478,36 @@ async def _run_qianfan_ocr(
         raise HTTPException(status_code=500, detail=f"Qianfan-OCR inference failed: {exc}") from exc
 
 
-async def _run_nanonets_ocr(
+async def _run_got_ocr(
     content: bytes,
     content_type: str,
     filename: str,
-    prompt: str,
+    ocr_type: str,
 ) -> dict:
-    if not settings.NANONETS_OCR_ENABLED:
-        raise HTTPException(status_code=503, detail="Nanonets OCR service is disabled")
+    if not settings.GOT_OCR_ENABLED:
+        raise HTTPException(status_code=503, detail="GOT-OCR service is disabled")
+
+    try:
+        got_ocr_service.load()
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     total_start = time.perf_counter()
 
     try:
-        native_pages = nanonets_ocr_service.extract_pdf_text(content) if _is_pdf(content_type, filename) else None
-        if native_pages:
-            total_elapsed_ms = (time.perf_counter() - total_start) * 1000
-            pages = [
-                {
-                    "page_number": page_number,
-                    "text": page_text,
-                    "processing_time_ms": 0.0,
-                }
-                for page_number, page_text in enumerate(native_pages, start=1)
-            ]
-            combined_text = "\n\n".join(
-                f"--- Page {page['page_number']} ---\n{page['text']}" for page in pages
-            )
-
-            return {
-                "model_slug": "nanonets-ocr2-3b",
-                "model_name": f"Nanonets OCR 2 3B ({settings.NANONETS_OCR_MODEL_ID})",
-                "model_type": "nanonets_ocr",
-                "status": "completed",
-                "filename": filename,
-                "result": {
-                    "text": combined_text,
-                    "timing_ms": round(total_elapsed_ms, 2),
-                    "pages": pages,
-                    "prompt": prompt,
-                },
-            }
-
         if _is_pdf(content_type, filename):
-            images = pdf_bytes_to_images(content, dpi=settings.NANONETS_OCR_PDF_DPI)
+            images = pdf_bytes_to_images(content, dpi=settings.GOT_OCR_PDF_DPI)
             if not images:
                 raise HTTPException(status_code=400, detail="PDF contains no pages")
-            if len(images) > settings.NANONETS_OCR_MAX_PDF_PAGES:
+            if len(images) > settings.GOT_OCR_MAX_PDF_PAGES:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"PDF exceeds maximum of {settings.NANONETS_OCR_MAX_PDF_PAGES} pages",
+                    detail=f"PDF exceeds maximum of {settings.GOT_OCR_MAX_PDF_PAGES} pages",
                 )
 
-            page_results = await nanonets_ocr_service.analyze_pdf_pages(
+            page_results = await got_ocr_service.analyze_pdf_pages(
                 images=images,
-                prompt=prompt,
+                ocr_type=ocr_type,
             )
 
             pages = [
@@ -552,35 +524,35 @@ async def _run_nanonets_ocr(
             total_elapsed_ms = (time.perf_counter() - total_start) * 1000
 
             return {
-                "model_slug": "nanonets-ocr2-3b",
-                "model_name": f"Nanonets OCR 2 3B ({settings.NANONETS_OCR_MODEL_ID})",
-                "model_type": "nanonets_ocr",
+                "model_slug": "got-ocr2",
+                "model_name": f"GOT-OCR 2.0 ({settings.GOT_OCR_MODEL_ID})",
+                "model_type": "got_ocr",
                 "status": "completed",
                 "filename": filename,
                 "result": {
                     "text": combined_text,
                     "timing_ms": round(total_elapsed_ms, 2),
                     "pages": pages,
-                    "prompt": prompt,
+                    "ocr_type": ocr_type,
                 },
             }
 
         image = image_bytes_to_pil(content)
-        result, elapsed_ms = await nanonets_ocr_service.recognize(
+        result, elapsed_ms = await got_ocr_service.recognize(
             image=image,
-            prompt=prompt,
+            ocr_type=ocr_type,
         )
 
         return {
-            "model_slug": "nanonets-ocr2-3b",
-            "model_name": f"Nanonets OCR 2 3B ({settings.NANONETS_OCR_MODEL_ID})",
-            "model_type": "nanonets_ocr",
+            "model_slug": "got-ocr2",
+            "model_name": f"GOT-OCR 2.0 ({settings.GOT_OCR_MODEL_ID})",
+            "model_type": "got_ocr",
             "status": "completed",
             "filename": filename,
             "result": {
                 "text": result,
                 "timing_ms": round(elapsed_ms, 2),
-                "prompt": prompt,
+                "ocr_type": ocr_type,
             },
         }
     except RuntimeError as exc:
@@ -588,4 +560,5 @@ async def _run_nanonets_ocr(
     except HTTPException:
         raise
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Nanonets OCR inference failed: {exc}") from exc
+        logger.exception("GOT-OCR inference failed with exception")
+        raise HTTPException(status_code=500, detail=f"GOT-OCR inference failed: {exc}") from exc

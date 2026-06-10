@@ -50,6 +50,15 @@ async def lifespan(app: FastAPI):
         except RuntimeError as exc:
             logger.warning("Qianfan-OCR preload skipped: %s", exc)
 
+    if settings.GOT_OCR_ENABLED and settings.GOT_OCR_EAGER_LOAD:
+        from app.got_ocr.service import got_ocr_service
+
+        try:
+            got_ocr_service.load()
+            logger.info("GOT-OCR model preloaded at startup")
+        except RuntimeError as exc:
+            logger.warning("GOT-OCR preload skipped: %s", exc)
+
     yield
 
 

@@ -8,7 +8,7 @@ from PIL import Image
 from pypdf import PdfReader
 
 from app.core.config import get_settings
-from app.nanonets_ocr.service import DEFAULT_PROMPT, nanonets_ocr_service
+from app.got_ocr.service import got_ocr_service
 from app.vlm.pdf_utils import image_bytes_to_pil, pdf_bytes_to_images
 
 settings = get_settings()
@@ -83,52 +83,48 @@ class MockNeuralAdapter(BaseAdapter):
         )
 
 
-class NanonetsOCRAdapter(BaseAdapter):
-    adapter_type = "nanonets-ocr2-3b"
+class GotOCRAdapter(BaseAdapter):
+    adapter_type = "got-ocr2"
 
     def run(self, content: bytes, content_type: str, options: dict | None = None) -> OcrOutput:
+        import asyncio
+
         start = time.time()
         filename = (options or {}).get("filename", "")
-        prompt = (options or {}).get("prompt") or DEFAULT_PROMPT
+        ocr_type = (options or {}).get("ocr_type") or "ocr"
         text_parts: list[str] = []
         pages: list[dict[str, Any]] = []
 
+        def _run_async(coro):
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    import concurrent.futures
+                    with concurrent.futures.ThreadPoolExecutor() as pool:
+                        return pool.submit(asyncio.run, coro).result()
+                return loop.run_until_complete(coro)
+            except RuntimeError:
+                return asyncio.run(coro)
+
         if content_type == "application/pdf" or filename.lower().endswith(".pdf"):
-            native_pages = nanonets_ocr_service.extract_pdf_text(content)
-            if native_pages:
-                for page_number, page_text in enumerate(native_pages, start=1):
-                    text_parts.append(f"--- Page {page_number} ---\n{page_text}")
-                    pages.append(
-                        {
-                            "page_number": page_number,
-                            "text": page_text,
-                            "processing_time_ms": 0.0,
-                            "source": "pdf_text_layer",
-                        }
-                    )
-            else:
-                images = pdf_bytes_to_images(content, dpi=settings.NANONETS_OCR_PDF_DPI)
-                for page_number, image in enumerate(images, start=1):
-                    page_text, elapsed_ms = nanonets_ocr_service.recognize_sync(
-                        image=image,
-                        prompt=prompt,
-                        max_new_tokens=settings.NANONETS_OCR_MAX_NEW_TOKENS,
-                    )
-                    text_parts.append(f"--- Page {page_number} ---\n{page_text}")
-                    pages.append(
-                        {
-                            "page_number": page_number,
-                            "text": page_text,
-                            "processing_time_ms": round(elapsed_ms, 2),
-                            "source": "nanonets_or_fallback",
-                        }
-                    )
+            images = pdf_bytes_to_images(content, dpi=settings.GOT_OCR_PDF_DPI)
+            for page_number, image in enumerate(images, start=1):
+                page_text, elapsed_ms = _run_async(
+                    got_ocr_service.recognize(image=image, ocr_type=ocr_type)
+                )
+                text_parts.append(f"--- Page {page_number} ---\n{page_text}")
+                pages.append(
+                    {
+                        "page_number": page_number,
+                        "text": page_text,
+                        "processing_time_ms": round(elapsed_ms, 2),
+                        "source": "got_ocr",
+                    }
+                )
         else:
             image = image_bytes_to_pil(content)
-            page_text, elapsed_ms = nanonets_ocr_service.recognize_sync(
-                image=image,
-                prompt=prompt,
-                max_new_tokens=settings.NANONETS_OCR_MAX_NEW_TOKENS,
+            page_text, elapsed_ms = _run_async(
+                got_ocr_service.recognize(image=image, ocr_type=ocr_type)
             )
             text_parts.append(page_text)
             pages.append(
@@ -136,7 +132,7 @@ class NanonetsOCRAdapter(BaseAdapter):
                     "page_number": 1,
                     "text": page_text,
                     "processing_time_ms": round(elapsed_ms, 2),
-                    "source": "nanonets_or_fallback",
+                    "source": "got_ocr",
                 }
             )
 
@@ -144,7 +140,7 @@ class NanonetsOCRAdapter(BaseAdapter):
         return OcrOutput(
             text="\n\n".join(text_parts),
             layout={"pages": len(pages), "engine": self.adapter_type, "pages_detail": pages},
-            confidence=0.97,
+            confidence=0.95,
             timing_ms=elapsed,
         )
 
@@ -157,7 +153,8 @@ ADAPTERS: dict[str, BaseAdapter] = {
     "trocr-handwritten": MockNeuralAdapter(),
     "pix2struct": MockNeuralAdapter(),
     "doctr": MockNeuralAdapter(),
-    "nanonets-ocr2-3b": NanonetsOCRAdapter(),
+    "nanonets-ocr2-3b": GotOCRAdapter(),
+    "got-ocr2": GotOCRAdapter(),
 }
 
 

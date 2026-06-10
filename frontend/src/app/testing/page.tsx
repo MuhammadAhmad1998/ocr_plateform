@@ -31,9 +31,7 @@ export default function TestingPage() {
   );
   const [paddleTask, setPaddleTask] = useState("ocr");
   const [qianfanPrompt, setQianfanPrompt] = useState("Parse this document to Markdown.");
-  const [nanonetsPrompt, setNanonetsPrompt] = useState(
-    "Extract only the text that is explicitly visible in this document. Do not add explanations, captions, tags, HTML, Markdown, inferred words, or any content that is not present in the document. Preserve line breaks where possible."
-  );
+  const [gotOcrType, setGotOcrType] = useState("ocr");
   const [status, setStatus] = useState<ProcessStatus>("idle");
   const [result, setResult] = useState<TestingResult | null>(null);
 
@@ -46,9 +44,15 @@ export default function TestingPage() {
     api
       .getTestingModels()
       .then((data) => {
-        setModels(data.models);
-        if (data.models.length > 0) {
-          setSelectedModel(data.models[0].slug);
+        // Filter to only show got_ocr, qianfan, and vlm (minicpm) models
+        const filteredModels = data.models.filter((model) => 
+          model.type === "got_ocr" || 
+          model.type === "qianfan_ocr" || 
+          model.type === "vlm"
+        );
+        setModels(filteredModels);
+        if (filteredModels.length > 0) {
+          setSelectedModel(filteredModels[0].slug);
         }
       })
       .catch(() => {
@@ -62,7 +66,7 @@ export default function TestingPage() {
   const isVlm = selectedModelInfo?.type === "vlm";
   const isPaddleOcr = selectedModelInfo?.type === "paddle_ocr";
   const isQianfanOcr = selectedModelInfo?.type === "qianfan_ocr";
-  const isNanonetsOcr = selectedModelInfo?.type === "nanonets_ocr";
+  const isGotOcr = selectedModelInfo?.type === "got_ocr";
 
   function handleFileSelect(selected: File) {
     setFile(selected);
@@ -86,8 +90,9 @@ export default function TestingPage() {
     try {
       const response = await api.runTesting(file, selectedModel, {
         question: isVlm ? vlmQuestion : undefined,
-        prompt: isNanonetsOcr ? nanonetsPrompt : isQianfanOcr ? qianfanPrompt : undefined,
+        prompt: isQianfanOcr ? qianfanPrompt : undefined,
         task: isPaddleOcr ? paddleTask : undefined,
+        ocrType: isGotOcr ? gotOcrType : undefined,
       });
       setResult(response);
       setStatus("completed");
@@ -224,16 +229,18 @@ export default function TestingPage() {
                   </div>
                 )}
 
-                {isNanonetsOcr && (
+                {isGotOcr && (
                   <div className="space-y-2">
-                    <Label htmlFor="nanonets-prompt">Nanonets prompt (optional)</Label>
-                    <Textarea
-                      id="nanonets-prompt"
-                      value={nanonetsPrompt}
-                      onChange={(e) => setNanonetsPrompt(e.target.value)}
-                      rows={5}
-                      placeholder="Instruction for document parsing…"
-                    />
+                    <Label htmlFor="got-ocr-type">GOT-OCR recognition type</Label>
+                    <select
+                      id="got-ocr-type"
+                      value={gotOcrType}
+                      onChange={(e) => setGotOcrType(e.target.value)}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="ocr">Plain text OCR</option>
+                      <option value="format">Format OCR (preserves layout &amp; structure)</option>
+                    </select>
                   </div>
                 )}
 

@@ -7,6 +7,7 @@ from typing import Literal
 from PIL import Image
 
 from app.core.config import get_settings
+from app.core.model_manager import model_manager
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,32 @@ class PaddleOCRVLService:
         self._inference_lock = Lock()
         self._async_lock = asyncio.Lock()
 
+    def unload(self) -> None:
+        """Explicitly unload the model and free GPU memory."""
+        if not self._loaded:
+            return
+        
+        logger.info("Unloading PaddleOCR-VL model and clearing GPU memory")
+        
+        # Clear model and processor references
+        self._model = None
+        self._processor = None
+        self._loaded = False
+        
+        # Force garbage collection
+        import gc
+        gc.collect()
+        
+        # Clear CUDA cache if available
+        try:
+            import torch
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                torch.cuda.synchronize()
+                logger.info("GPU memory cleared successfully")
+        except Exception as exc:
+            logger.warning("Failed to clear GPU cache: %s", exc)
+
     @property
     def is_loaded(self) -> bool:
         return self._loaded
@@ -38,11 +65,34 @@ class PaddleOCRVLService:
     def load_error(self) -> str | None:
         return self._load_error
 
+    def _clear_gpu_memory(self) -> None:
+        """Clear GPU memory before loading a new model."""
+        try:
+            import gc
+            import torch
+            
+            # Force garbage collection
+            gc.collect()
+            
+            # Clear CUDA cache if available
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                torch.cuda.synchronize()
+                logger.info("GPU memory cleared before loading model")
+        except Exception as exc:
+            logger.warning("Failed to clear GPU memory: %s", exc)
+
     def load(self) -> None:
         if self._loaded:
             return
         if self._load_error:
             raise RuntimeError(self._load_error)
+
+        # Notify model manager to unload other models if needed
+        model_manager.before_load("paddle_ocr")
+
+        # Clear GPU memory before loading new model
+        self._clear_gpu_memory()
 
         settings = get_settings()
         try:
@@ -165,3 +215,6 @@ class PaddleOCRVLService:
 
 
 paddle_ocr_service = PaddleOCRVLService()
+
+# Register with model manager
+model_manager.register_service("paddle_ocr", paddle_ocr_service)

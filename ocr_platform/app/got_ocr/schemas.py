@@ -1,23 +1,23 @@
 from pydantic import BaseModel, Field
 
 
-class NanonetsOCRResponse(BaseModel):
+class GotOCRResponse(BaseModel):
     filename: str | None = None
-    prompt: str
+    ocr_type: str
     result: str
     processing_time_ms: float
 
 
-class NanonetsOCRPageResult(BaseModel):
+class GotOCRPageResult(BaseModel):
     page_number: int = Field(ge=1)
-    prompt: str
+    ocr_type: str
     result: str
     processing_time_ms: float
 
 
-class NanonetsOCRPdfResponse(BaseModel):
+class GotOCRPdfResponse(BaseModel):
     filename: str
     total_pages: int = Field(ge=1)
-    prompt: str
-    pages: list[NanonetsOCRPageResult]
+    ocr_type: str
+    pages: list[GotOCRPageResult]
     total_processing_time_ms: float

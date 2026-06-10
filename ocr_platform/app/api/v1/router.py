@@ -5,7 +5,7 @@ from app.api.v1 import (
     auth,
     billing,
     demo,
-    nanonets_ocr,
+    got_ocr,
     ocr,
     paddle_ocr,
     qianfan_ocr,
@@ -23,4 +23,4 @@ api_router.include_router(testing.router)
 api_router.include_router(vlm.router)
 api_router.include_router(paddle_ocr.router)
 api_router.include_router(qianfan_ocr.router)
-api_router.include_router(nanonets_ocr.router)
+api_router.include_router(got_ocr.router)

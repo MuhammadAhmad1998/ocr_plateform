@@ -83,15 +83,15 @@ class Settings(BaseSettings):
     QIANFAN_OCR_MAX_PDF_PAGES: int = 50
     QIANFAN_OCR_EAGER_LOAD: bool = False
 
-    NANONETS_OCR_ENABLED: bool = True
-    NANONETS_OCR_MODEL_ID: str = "nanonets/Nanonets-OCR2-3B"
-    NANONETS_OCR_ATTN_IMPLEMENTATION: str = "flash_attention_2"
-    NANONETS_OCR_TORCH_DTYPE: str = "auto"
-    NANONETS_OCR_DEVICE: str = "auto"
-    NANONETS_OCR_MAX_NEW_TOKENS: int = 4096
-    NANONETS_OCR_PDF_DPI: int = 144
-    NANONETS_OCR_MAX_PDF_PAGES: int = 50
-    NANONETS_OCR_EAGER_LOAD: bool = False
+    GOT_OCR_ENABLED: bool = True
+    GOT_OCR_MODEL_ID: str = "ucaslcl/GOT-OCR2_0"
+    GOT_OCR_DEVICE: str = "cuda"
+    GOT_OCR_PDF_DPI: int = 144
+    GOT_OCR_MAX_PDF_PAGES: int = 50
+    GOT_OCR_EAGER_LOAD: bool = False
+
+    # Model memory management
+    AUTO_UNLOAD_MODELS: bool = True  # Automatically unload models when switching
 
     @property
     def cors_origins_list(self) -> list[str]:

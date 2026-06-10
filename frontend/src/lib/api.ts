@@ -166,7 +166,7 @@ export const api = {
   runTesting: async (
     file: File,
     modelSlug: string,
-    options?: { question?: string; prompt?: string; enableThinking?: boolean; task?: string }
+    options?: { question?: string; prompt?: string; enableThinking?: boolean; task?: string; ocrType?: string }
   ) => {
     const form = new FormData();
     form.append("file", file);
@@ -175,6 +175,7 @@ export const api = {
     if (options?.prompt) form.append("prompt", options.prompt);
     if (options?.enableThinking) form.append("enable_thinking", "true");
     if (options?.task) form.append("task", options.task);
+    if (options?.ocrType) form.append("prompt", options.ocrType);
     const res = await fetchWithAuth("/testing/run/", { method: "POST", body: form });
     return res.json() as Promise<TestingResult>;
   },
@@ -183,7 +184,7 @@ export const api = {
 export interface TestingModel {
   slug: string;
   display_name: string;
-  type: "ocr" | "vlm" | "paddle_ocr" | "qianfan_ocr" | "nanonets_ocr";
+  type: "ocr" | "vlm" | "paddle_ocr" | "qianfan_ocr" | "got_ocr";
   adapter_type: string;
   capability_tags: string[];
 }
@@ -191,7 +192,7 @@ export interface TestingModel {
 export interface TestingResult {
   model_slug: string;
   model_name: string;
-  model_type: "ocr" | "vlm" | "paddle_ocr" | "qianfan_ocr" | "nanonets_ocr";
+  model_type: "ocr" | "vlm" | "paddle_ocr" | "qianfan_ocr" | "got_ocr";
   status: string;
   filename: string;
   result: {
@@ -203,6 +204,7 @@ export interface TestingResult {
     question?: string;
     prompt?: string;
     task?: string;
+    ocr_type?: string;
   };
 }
 
