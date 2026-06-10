@@ -1,3 +1,4 @@
+import logging
 import time
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
@@ -17,6 +18,7 @@ from app.qianfan_ocr.service import qianfan_ocr_service
 from app.vlm.pdf_utils import image_bytes_to_pil, pdf_bytes_to_images
 from app.vlm.service import vlm_service
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/testing", tags=["testing"])
 settings = get_settings()
 
@@ -237,6 +239,7 @@ async def _run_vlm(
     try:
         vlm_service.load()
     except RuntimeError as exc:
+        logger.exception("VLM service load failed")
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     total_start = time.perf_counter()
@@ -307,6 +310,7 @@ async def _run_vlm(
     except HTTPException:
         raise
     except Exception as exc:
+        logger.exception("VLM inference failed with exception")
         raise HTTPException(status_code=500, detail=f"VLM inference failed: {exc}") from exc
 
 

@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import "@/app/advisor/animation.css";
+import { api, getToken, streamMessage } from "@/lib/api";
 import { useAdvisorStore } from "@/lib/store";
 import { TIER_NAMES, cn } from "@/lib/utils";
 
@@ -200,7 +201,7 @@ export default function AdvisorPage() {
         <WizardStepper steps={WIZARD_STEPS} currentStep={wizardStep} />
 
         <div className="grid flex-1 gap-6 lg:grid-cols-[1fr_320px]">
-          
+          <Card className="flex flex-col">
             <CardHeader className="border-b border-border pb-4">
               <CardTitle className="text-lg">{WIZARD_STEPS[wizardStep].label}</CardTitle>
               <CardDescription>{WIZARD_STEPS[wizardStep].description}</CardDescription>

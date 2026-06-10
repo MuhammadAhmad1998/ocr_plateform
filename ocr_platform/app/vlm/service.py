@@ -63,6 +63,28 @@ class VLMService:
         try:
             import torch
             from transformers import AutoModel, AutoTokenizer
+            from transformers.tokenization_utils_base import PreTrainedTokenizerBase
+
+            # Monkey-patch tokenizer base class to add special token ID attributes
+            original_getattr = PreTrainedTokenizerBase.__getattr__
+            
+            def patched_getattr(self, key):
+                # Intercept special token ID requests and provide them from vocab
+                if key in ("im_start_id", "im_end_id", "slice_start_id", "slice_end_id"):
+                    if not hasattr(self, f"_{key}"):
+                        vocab = self.get_vocab()
+                        token_map = {
+                            "im_start_id": "<image>",
+                            "im_end_id": "</image>",
+                            "slice_start_id": "<slice>",
+                            "slice_end_id": "</slice>",
+                        }
+                        token_id = vocab.get(token_map[key], -1)
+                        setattr(self, f"_{key}", token_id)
+                    return getattr(self, f"_{key}")
+                return original_getattr(self, key)
+            
+            PreTrainedTokenizerBase.__getattr__ = patched_getattr
 
             torch.manual_seed(100)
             dtype = getattr(torch, settings.VLM_TORCH_DTYPE, torch.bfloat16)
@@ -73,7 +95,7 @@ class VLMService:
                 settings.VLM_MODEL_ID,
                 trust_remote_code=True,
                 attn_implementation=settings.VLM_ATTN_IMPLEMENTATION,
-                torch_dtype=dtype,
+                dtype=dtype,
                 low_cpu_mem_usage=False,
             )
             device = settings.VLM_DEVICE

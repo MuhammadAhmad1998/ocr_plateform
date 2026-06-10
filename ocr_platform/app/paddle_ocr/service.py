@@ -59,7 +59,10 @@ class PaddleOCRVLService:
             model = AutoModelForCausalLM.from_pretrained(
                 settings.PADDLE_OCR_MODEL_ID,
                 trust_remote_code=True,
-                torch_dtype=dtype,
+                dtype=dtype,
+                attn_implementation="eager",
+                rope_scaling=None,
+                revision=getattr(settings, "PADDLE_OCR_MODEL_REVISION", None),
             )
             processor = AutoProcessor.from_pretrained(
                 settings.PADDLE_OCR_MODEL_ID,
@@ -71,6 +74,14 @@ class PaddleOCRVLService:
             self._device = device
             self._loaded = True
             logger.info("PaddleOCR-VL model loaded on %s", device)
+        except KeyError as exc:
+            if "'default'" in str(exc):
+                self._load_error = "Model compatibility issue: RoPE configuration not supported. Try updating transformers or using a different model version."
+                logger.exception("Failed to load PaddleOCR-VL model - RoPE config issue")
+                raise RuntimeError(self._load_error) from exc
+            self._load_error = str(exc)
+            logger.exception("Failed to load PaddleOCR-VL model")
+            raise RuntimeError(f"Failed to load PaddleOCR-VL model: {exc}") from exc
         except Exception as exc:
             self._load_error = str(exc)
             logger.exception("Failed to load PaddleOCR-VL model")

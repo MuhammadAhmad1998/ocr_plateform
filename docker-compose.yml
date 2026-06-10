@@ -2,15 +2,15 @@ services:
   postgres:
     image: postgres:15-alpine
     environment:
-      POSTGRES_USER: ocr
-      POSTGRES_PASSWORD: ocr
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
       POSTGRES_DB: ocr_platform
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ocr -d ocr_platform"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ocr_platform"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -31,7 +31,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://ocr:ocr@postgres:5432/ocr_platform
+      DATABASE_URL: postgresql://postgres:root@postgres:5432/ocr_platform
       REDIS_URL: redis://redis:6379/0
       SECRET_KEY: dev-secret-change-in-production
       USE_LOCAL_STORAGE: "true"
@@ -52,7 +52,7 @@ services:
       context: ./ocr_platform
     command: celery -A workers.celery_app worker --loglevel=info
     environment:
-      DATABASE_URL: postgresql://ocr:ocr@postgres:5432/ocr_platform
+      DATABASE_URL: postgresql://postgres:root@postgres:5432/ocr_platform
       REDIS_URL: redis://redis:6379/0
       USE_LOCAL_STORAGE: "true"
       LOCAL_STORAGE_PATH: /app/storage

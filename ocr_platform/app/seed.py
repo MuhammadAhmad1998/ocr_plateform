@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
 
+from app.accounts.models import SubscriptionProfile, User
 from app.core.database import SessionLocal
+from app.core.security import hash_password
 from app.ocr_engine.models import KnowledgeDocument
 from app.registry.models import Engine, Tier
 
@@ -144,6 +146,26 @@ def seed_database() -> None:
                     content=spec["content"],
                 )
             )
+
+        # Create test user if not exists
+        test_email = "test@example.com"
+        existing_user = db.query(User).filter(User.email == test_email).first()
+        if not existing_user:
+            test_user = User(
+                email=test_email,
+                password_hash=hash_password("password123"),
+                full_name="Test User",
+            )
+            db.add(test_user)
+            db.flush()
+            
+            free_tier = db.query(Tier).filter(Tier.slug == "free").first()
+            test_sub = SubscriptionProfile(
+                user_id=test_user.id,
+                tier_id=free_tier.id if free_tier else None,
+                quota_limit=free_tier.quota_limit if free_tier else 50,
+            )
+            db.add(test_sub)
 
         db.commit()
     finally:

@@ -54,7 +54,7 @@ class QianfanOCRService:
             if use_device_map:
                 model = AutoModelForImageTextToText.from_pretrained(
                     settings.QIANFAN_OCR_MODEL_ID,
-                    torch_dtype=dtype,
+                    dtype=dtype,
                     device_map="auto",
                     trust_remote_code=True,
                 )
@@ -62,7 +62,7 @@ class QianfanOCRService:
             else:
                 model = AutoModelForImageTextToText.from_pretrained(
                     settings.QIANFAN_OCR_MODEL_ID,
-                    torch_dtype=dtype,
+                    dtype=dtype,
                     trust_remote_code=True,
                 )
                 model = model.to(device)

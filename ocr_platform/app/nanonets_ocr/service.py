@@ -53,7 +53,7 @@ class NanonetsOCRService:
 
             device = settings.NANONETS_OCR_DEVICE
             dtype_value = settings.NANONETS_OCR_TORCH_DTYPE
-            torch_dtype = (
+            model_dtype = (
                 "auto"
                 if dtype_value == "auto"
                 else getattr(torch, dtype_value, torch.bfloat16)
@@ -61,7 +61,7 @@ class NanonetsOCRService:
 
             kwargs: dict = {
                 "trust_remote_code": True,
-                "torch_dtype": torch_dtype,
+                "dtype": model_dtype,
             }
             if device == "auto":
                 kwargs["device_map"] = "auto"
