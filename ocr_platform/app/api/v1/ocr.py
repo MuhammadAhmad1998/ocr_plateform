@@ -1,7 +1,8 @@
 import uuid
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Body, Depends, Request, status
+from fastapi.responses import JSONResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -9,23 +10,61 @@ from app.accounts.models import ApiKey, User
 from app.advisor.models import Document
 from app.billing.service import generate_api_key
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
-from app.core.exceptions import NotFoundError, QuotaExceededError
+from app.core.dependencies import (
+    DEFAULT_API_KEY_SCOPES,
+    VALID_API_KEY_SCOPES,
+    get_current_user,
+    get_current_user_or_api_key,
+    require_api_key_scope,
+)
+from app.core.exceptions import NotFoundError, QuotaExceededError, ValidationError
+from app.core.idempotency import (
+    check_idempotency,
+    hash_request_body,
+    normalize_idempotency_key,
+    save_idempotency,
+)
 from app.ocr_engine.models import OcrJob, UsageEvent
 from app.ocr_engine.schemas import OcrJobCreate, OcrJobResponse
-from app.ocr_engine.service import create_demo_job, get_job_result, process_ocr_job
+from app.ocr_engine.service import get_job_result, process_ocr_job
 from app.registry.models import Tier
 from app.registry.service import registry_service
 
 router = APIRouter(tags=["ocr", "dashboard"])
 
+OCR_JOBS_ENDPOINT = "POST /api/v1/ocr/jobs/"
+
 
 @router.post("/ocr/jobs/", response_model=OcrJobResponse, status_code=status.HTTP_202_ACCEPTED)
 def submit_ocr_job(
     data: OcrJobCreate,
-    user: User = Depends(get_current_user),
+    request: Request,
+    user: User = Depends(get_current_user_or_api_key),
     db: Session = Depends(get_db),
 ):
+    request_id = getattr(request.state, "request_id", None)
+    idempotency_key = normalize_idempotency_key(request.headers.get("Idempotency-Key"))
+    request_body = data.model_dump(exclude_none=True)
+    request_hash = hash_request_body(request_body)
+
+    if idempotency_key:
+        replay = check_idempotency(
+            db,
+            user_id=user.id,
+            endpoint=OCR_JOBS_ENDPOINT,
+            key=idempotency_key,
+            request_hash=request_hash,
+        )
+        if replay:
+            body, status_code = replay
+            return JSONResponse(
+                content=body,
+                status_code=status_code,
+                headers=_quota_headers(user),
+            )
+
+    require_api_key_scope(request, "ocr:write")
+
     doc = (
         db.query(Document)
         .filter(Document.id == uuid.UUID(data.document_id), Document.user_id == user.id)
@@ -53,6 +92,7 @@ def submit_ocr_job(
         engine_id=match.engine.id if match else None,
         job_type="production",
         status="queued",
+        webhook_url=data.webhook_url,
     )
     db.add(job)
     db.commit()
@@ -69,13 +109,29 @@ def submit_ocr_job(
         sub.quota_used += doc.page_count or 1
         db.commit()
 
-    return _job_response(job, db)
+    response = _job_response(job, db, request_id=request_id)
+    if idempotency_key:
+        save_idempotency(
+            db,
+            user_id=user.id,
+            endpoint=OCR_JOBS_ENDPOINT,
+            key=idempotency_key,
+            request_hash=request_hash,
+            response_body=response.model_dump(),
+            status_code=status.HTTP_202_ACCEPTED,
+        )
+    return JSONResponse(
+        content=response.model_dump(),
+        status_code=status.HTTP_202_ACCEPTED,
+        headers=_quota_headers(user),
+    )
 
 
 @router.get("/ocr/jobs/{job_id}/", response_model=OcrJobResponse)
 def get_ocr_job(
     job_id: str,
-    user: User = Depends(get_current_user),
+    request: Request,
+    user: User = Depends(get_current_user_or_api_key),
     db: Session = Depends(get_db),
 ):
     job = (
@@ -85,7 +141,9 @@ def get_ocr_job(
     )
     if not job:
         raise NotFoundError("Job not found")
-    return _job_response(job, db)
+    require_api_key_scope(request, "ocr:read")
+    request_id = getattr(request.state, "request_id", None)
+    return _job_response(job, db, request_id=request_id)
 
 
 @router.get("/dashboard/usage/")
@@ -144,6 +202,7 @@ def list_api_keys(user: User = Depends(get_current_user), db: Session = Depends(
             "id": str(k.id),
             "name": k.name,
             "key_prefix": k.key_prefix,
+            "scopes": k.scopes or list(DEFAULT_API_KEY_SCOPES),
             "is_active": k.is_active,
             "created_at": k.created_at.isoformat(),
         }
@@ -151,14 +210,31 @@ def list_api_keys(user: User = Depends(get_current_user), db: Session = Depends(
     ]
 
 
+def _normalize_api_key_scopes(scopes: list[str] | None) -> list[str]:
+    if scopes is None:
+        return list(DEFAULT_API_KEY_SCOPES)
+    invalid = set(scopes) - VALID_API_KEY_SCOPES
+    if invalid:
+        raise ValidationError(f"Invalid scopes: {', '.join(sorted(invalid))}")
+    return scopes
+
+
 @router.post("/dashboard/api-keys/", status_code=status.HTTP_201_CREATED)
 def create_api_key(
     name: str = "Default",
+    scopes: list[str] | None = Body(default=None),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    normalized_scopes = _normalize_api_key_scopes(scopes)
     raw, key_hash, prefix = generate_api_key()
-    api_key = ApiKey(user_id=user.id, key_hash=key_hash, key_prefix=prefix, name=name)
+    api_key = ApiKey(
+        user_id=user.id,
+        key_hash=key_hash,
+        key_prefix=prefix,
+        name=name,
+        scopes=normalized_scopes,
+    )
     db.add(api_key)
     db.commit()
     return {
@@ -166,12 +242,44 @@ def create_api_key(
         "name": api_key.name,
         "key_prefix": prefix,
         "key": raw,
+        "scopes": normalized_scopes,
         "is_active": True,
         "created_at": api_key.created_at.isoformat(),
     }
 
 
-def _job_response(job: OcrJob, db: Session) -> OcrJobResponse:
+@router.post("/dashboard/api-keys/{key_id}/revoke/")
+def revoke_api_key(
+    key_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    api_key = (
+        db.query(ApiKey)
+        .filter(ApiKey.id == uuid.UUID(key_id), ApiKey.user_id == user.id)
+        .first()
+    )
+    if not api_key:
+        raise NotFoundError("API key not found")
+    api_key.is_active = False
+    db.commit()
+    return {
+        "id": str(api_key.id),
+        "is_active": False,
+    }
+
+
+def _quota_headers(user: User) -> dict[str, str]:
+    sub = user.subscription
+    if not sub:
+        return {}
+    return {
+        "X-Quota-Used": str(sub.quota_used),
+        "X-Quota-Limit": str(sub.quota_limit),
+    }
+
+
+def _job_response(job: OcrJob, db: Session, *, request_id: str | None = None) -> OcrJobResponse:
     result = None
     if job.status == "completed":
         result = get_job_result(db, job.id)
@@ -182,72 +290,6 @@ def _job_response(job: OcrJob, db: Session) -> OcrJobResponse:
         pages_processed=job.pages_processed,
         result=result,
         error_message=job.error_message,
+        request_id=request_id,
+        created_at=job.created_at.isoformat() if job.created_at else None,
     )
-# Hunyuan OCR endpoint temporarily disabled - requires specific transformers version or custom model
-# Uncomment and configure when HunYuanVLForConditionalGeneration is available
-
-# import torch
-# from transformers import AutoProcessor, HunYuanVLForConditionalGeneration
-# from fastapi import File, UploadFile
-# from PIL import Image
-#
-#
-# def clean_repeated_substrings(text: str) -> str:
-#     """Clean repeated substrings in text"""
-#     n = len(text)
-#     if n < 8000:
-#         return text
-#     for length in range(2, n // 10 + 1):
-#         candidate = text[-length:]
-#         count = 0
-#         i = n - length
-#         while i >= 0 and text[i:i + length] == candidate:
-#             count += 1
-#             i -= length
-#         if count >= 10:
-#             return text[:n - length * (count - 1)]
-#     return text
-#
-# # Load model globally
-# model_name_or_path = "tencent/HunyuanOCR"
-# processor = AutoProcessor.from_pretrained(model_name_or_path, use_fast=False)
-# model = HunYuanVLForConditionalGeneration.from_pretrained(
-#     model_name_or_path,
-#     attn_implementation="eager",
-#     dtype=torch.bfloat16,
-#     device_map="auto",
-# )
-#
-# @router.post("/ocr/hunyuan/", response_model=dict)
-# async def hunyuan_ocr(
-#     file: UploadFile = File(...),
-#     user: User = Depends(get_current_user),
-#     db: Session = Depends(get_db),
-# ):
-#     image = Image.open(file.file)
-#     messages = [
-#         {"role": "system", "content": ""},
-#         {
-#             "role": "user",
-#             "content": [
-#                 {"type": "image", "image": file.filename},
-#                 {"type": "text", "text": "检测并识别图片中的文字，将文本坐标格式化输出。"},
-#             ],
-#         },
-#     ]
-#     texts = [processor.apply_chat_template(msg, tokenize=False, add_generation_prompt=True) for msg in [messages]]
-#     inputs = processor(text=texts, images=image, padding=True, return_tensors="pt")
-#     # Move to device
-#     device = next(model.parameters()).device
-#     inputs = inputs.to(device)
-#     generated_ids = model.generate(**inputs, max_new_tokens=16384, do_sample=False)
-#     if "input_ids" in inputs:
-#         input_ids = inputs.input_ids
-#     else:
-#         input_ids = inputs.inputs
-#     generated_ids_trimmed = [out_ids[len(in_ids):] for in_ids, out_ids in zip(input_ids, generated_ids)]
-#     output_texts = clean_repeated_substrings(
-#         processor.batch_decode(generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
-#     )
-#     return {"text": output_texts}
-

@@ -22,6 +22,7 @@ class OcrJob(Base):
     error_message: Mapped[str | None] = mapped_column(Text)
     pages_processed: Mapped[int] = mapped_column(Integer, default=0)
     compute_seconds: Mapped[float] = mapped_column(Float, default=0.0)
+    webhook_url: Mapped[str | None] = mapped_column(String(2048))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 

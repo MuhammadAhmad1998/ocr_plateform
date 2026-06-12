@@ -59,15 +59,31 @@ def process_ocr_job(db: Session, job_id: str) -> None:
         )
         db.add(usage)
         db.commit()
+        _notify_job_webhook(db, job)
     except Exception as e:
         job.status = "failed"
         job.error_message = str(e)
         job.completed_at = datetime.now(UTC)
         db.commit()
+        _notify_job_webhook(db, job)
         raise
 
 
-def create_demo_job(db: Session, user_id: uuid.UUID, session: ChatSession) -> OcrJob:
+def _notify_job_webhook(db: Session, job: OcrJob) -> None:
+    if not job.webhook_url:
+        return
+    from app.webhooks.service import enqueue_job_webhook
+
+    enqueue_job_webhook(db, job)
+
+
+def create_demo_job(
+    db: Session,
+    user_id: uuid.UUID,
+    session: ChatSession,
+    *,
+    webhook_url: str | None = None,
+) -> OcrJob:
     if session.demo_run_count >= settings.DEMO_RUNS_PER_SESSION:
         raise BadRequestError("Demo run limit reached for this session")
 
@@ -98,6 +114,7 @@ def create_demo_job(db: Session, user_id: uuid.UUID, session: ChatSession) -> Oc
         engine_id=engine.id if engine else None,
         job_type="demo",
         status="queued",
+        webhook_url=webhook_url,
     )
     db.add(job)
     session.demo_run_count += 1

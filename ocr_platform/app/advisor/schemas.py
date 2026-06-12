@@ -37,7 +37,46 @@ class DocumentResponse(BaseModel):
     page_count: int
     preview_url: str | None = None
 
-    model_config = {"from_attributes": True}
+    model_config = {
+        "from_attributes": True,
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "id": "550e8400-e29b-41d4-a716-446655440000",
+                    "filename": "invoice.pdf",
+                    "content_type": "application/pdf",
+                    "fingerprint": {"type": "pdf", "page_count": 2},
+                    "page_count": 2,
+                    "preview_url": "http://localhost:8000/storage/uploads/abc_invoice.pdf",
+                }
+            ]
+        },
+    }
+
+
+class DocumentListResponse(BaseModel):
+    data: list[DocumentResponse]
+    has_more: bool
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "data": [
+                        {
+                            "id": "550e8400-e29b-41d4-a716-446655440000",
+                            "filename": "invoice.pdf",
+                            "content_type": "application/pdf",
+                            "fingerprint": {"type": "pdf", "page_count": 2},
+                            "page_count": 2,
+                            "preview_url": "http://localhost:8000/storage/uploads/abc_invoice.pdf",
+                        }
+                    ],
+                    "has_more": False,
+                }
+            ]
+        },
+    }
 
 
 class RecommendationPayload(BaseModel):

@@ -38,3 +38,29 @@ def process_ocr_job_task(self, job_id: str) -> dict:
         raise self.retry(exc=exc) from exc
     finally:
         db.close()
+
+
+@celery_app.task(bind=True, max_retries=3, default_retry_delay=30)
+def deliver_webhook_task(self, delivery_id: str) -> dict:
+    import uuid as uuid_mod
+
+    from app.core.database import SessionLocal
+    from app.webhooks.models import WebhookDelivery
+    from app.webhooks.service import MAX_WEBHOOK_ATTEMPTS, deliver_webhook
+
+    db = SessionLocal()
+    try:
+        success = deliver_webhook(db, delivery_id)
+        if success:
+            return {"delivery_id": delivery_id, "status": "delivered"}
+
+        delivery = (
+            db.query(WebhookDelivery)
+            .filter(WebhookDelivery.id == uuid_mod.UUID(delivery_id))
+            .first()
+        )
+        if delivery and delivery.status != "failed" and delivery.attempts < MAX_WEBHOOK_ATTEMPTS:
+            raise self.retry(exc=RuntimeError(delivery.last_error or "webhook delivery failed"))
+        return {"delivery_id": delivery_id, "status": delivery.status if delivery else "unknown"}
+    finally:
+        db.close()

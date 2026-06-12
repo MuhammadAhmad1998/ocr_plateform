@@ -49,6 +49,7 @@ class ApiKey(Base):
     key_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     key_prefix: Mapped[str] = mapped_column(String(12), nullable=False)
     name: Mapped[str] = mapped_column(String(100), default="Default")
+    scopes: Mapped[list] = mapped_column(JSON, default=list)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 

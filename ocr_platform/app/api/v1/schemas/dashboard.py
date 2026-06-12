@@ -11,12 +11,14 @@ class UsageResponse(BaseModel):
 
 class ApiKeyCreate(BaseModel):
     name: str = "Default"
+    scopes: list[str] | None = None
 
 
 class ApiKeyResponse(BaseModel):
     id: str
     name: str
     key_prefix: str
+    scopes: list[str]
     is_active: bool
     created_at: str
 

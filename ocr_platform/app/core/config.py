@@ -21,7 +21,9 @@ class Settings(BaseSettings):
     APP_NAME: str = "Unified OCR Platform"
     DEBUG: bool = False
     API_V1_PREFIX: str = "/api/v1"
+    API_V2_PREFIX: str = "/api/v2"
 
+    DEFAULT_SECRET_KEY: str = "change-me-in-production-use-openssl-rand-hex-32"
     SECRET_KEY: str = "change-me-in-production-use-openssl-rand-hex-32"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
@@ -29,6 +31,14 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "postgresql://ocr:ocr@localhost:5432/ocr_platform"
     REDIS_URL: str = "redis://localhost:6379/0"
+
+    RATE_LIMIT_ENABLED: bool = False
+    RATE_LIMIT_REQUESTS: int = 60
+    RATE_LIMIT_WINDOW_SECONDS: int = 60
+    RATE_LIMIT_REQUESTS_FREE: int = 30
+    RATE_LIMIT_REQUESTS_BASIC: int = 60
+    RATE_LIMIT_REQUESTS_PRO: int = 120
+    RATE_LIMIT_REQUESTS_ENTERPRISE: int = 300
 
     AWS_ACCESS_KEY_ID: str = ""
     AWS_SECRET_ACCESS_KEY: str = ""

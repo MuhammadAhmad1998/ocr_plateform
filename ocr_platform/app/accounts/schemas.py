@@ -6,10 +6,28 @@ class RegisterRequest(BaseModel):
     password: str = Field(min_length=8)
     full_name: str | None = None
 
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "email": "user@example.com",
+                    "password": "securepass123",
+                    "full_name": "Jane Doe",
+                }
+            ]
+        }
+    }
+
 
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [{"email": "user@example.com", "password": "securepass123"}]
+        }
+    }
 
 
 class TokenResponse(BaseModel):

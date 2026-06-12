@@ -29,11 +29,7 @@ DEFAULT_VLM_QUESTION = (
 )
 
 
-@router.get("/models/")
-def list_testing_models(
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
+def build_models_list(db: Session) -> dict:
     engines = (
         db.query(Engine)
         .filter(Engine.is_active.is_(True))
@@ -121,6 +117,14 @@ def list_testing_models(
         )
 
     return {"models": models}
+
+
+@router.get("/models/")
+def list_testing_models(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return build_models_list(db)
 
 
 @router.post("/run/")
