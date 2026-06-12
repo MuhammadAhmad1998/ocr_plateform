@@ -26,6 +26,39 @@ export interface Recommendation {
   demo_tier: string;
 }
 
+export interface ApiErrorBody {
+  error?: string;
+  message?: string;
+  detail?: string | { msg: string }[];
+  request_id?: string;
+  details?: unknown;
+}
+
+export class ApiError extends Error {
+  status: number;
+  code: string;
+  requestId?: string;
+  details?: unknown;
+
+  constructor(status: number, body: ApiErrorBody, fallback = "Request failed") {
+    const message =
+      (typeof body.message === "string" && body.message) ||
+      (typeof body.detail === "string" && body.detail) ||
+      fallback;
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.code = body.error || "HTTP_ERROR";
+    this.requestId = body.request_id;
+    this.details = body.details ?? (Array.isArray(body.detail) ? body.detail : undefined);
+  }
+}
+
+export async function parseApiError(res: Response, fallback = "Request failed"): Promise<ApiError> {
+  const body = (await res.json().catch(() => ({}))) as ApiErrorBody;
+  return new ApiError(res.status, body, fallback);
+}
+
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("access_token");
@@ -51,37 +84,53 @@ async function fetchWithAuth(path: string, options: RequestInit = {}) {
     headers["Content-Type"] = headers["Content-Type"] || "application/json";
   }
 
-  const res = await fetch(`${API_URL}${path}`, { ...options, headers });
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, { ...options, headers });
+  } catch {
+    throw new ApiError(0, { error: "NETWORK_ERROR", message: "Network error. Check your connection." });
+  }
+
   if (res.status === 401) {
     clearTokens();
     if (typeof window !== "undefined") window.location.href = "/login";
-    throw new Error("Unauthorized");
+    throw await parseApiError(res, "Unauthorized");
   }
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail || "Request failed");
+    throw await parseApiError(res);
+  }
+  return res;
+}
+
+async function fetchPublic(path: string, options: RequestInit = {}) {
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, options);
+  } catch {
+    throw new ApiError(0, { error: "NETWORK_ERROR", message: "Network error. Check your connection." });
+  }
+  if (!res.ok) {
+    throw await parseApiError(res);
   }
   return res;
 }
 
 export const api = {
   register: async (email: string, password: string, fullName?: string) => {
-    const res = await fetch(`${API_URL}/auth/register/`, {
+    const res = await fetchPublic("/auth/register/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, full_name: fullName }),
     });
-    if (!res.ok) throw new Error((await res.json()).detail);
     return res.json() as Promise<TokenResponse>;
   },
 
   login: async (email: string, password: string) => {
-    const res = await fetch(`${API_URL}/auth/login/`, {
+    const res = await fetchPublic("/auth/login/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
-    if (!res.ok) throw new Error((await res.json()).detail);
     return res.json() as Promise<TokenResponse>;
   },
 
@@ -229,7 +278,9 @@ export function streamMessage(
     signal: controller.signal,
   })
     .then(async (res) => {
-      if (!res.ok) throw new Error("Stream failed");
+      if (!res.ok) {
+        throw await parseApiError(res, "Stream failed");
+      }
       const reader = res.body?.getReader();
       if (!reader) throw new Error("No reader");
 
@@ -248,7 +299,6 @@ export function streamMessage(
           if (line.startsWith("event:")) {
             eventType = line.slice(6).trim();
           } else if (line.startsWith("data:")) {
-            // Preserve whitespace in streamed tokens — only strip the SSE separator space.
             let data = line.slice(5);
             if (data.startsWith(" ")) data = data.slice(1);
             if (eventType === "message" && data) onChunk(data);
