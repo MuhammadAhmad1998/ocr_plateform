@@ -1,9 +1,12 @@
 import time
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, Form, UploadFile, status
 from fastapi.responses import JSONResponse
 
 from app.core.config import get_settings
+from app.core.exceptions import AppException
+from app.core.inference_helpers import ensure_model_service_ready, map_inference_error, validate_pdf_images
+from app.core.uploads import check_payload_size, reject_pdf_for_image_endpoint, require_pdf_only, validate_media_upload
 from app.qianfan_ocr.schemas import (
     QianfanOCRPageResult,
     QianfanOCRPdfResponse,
@@ -15,33 +18,13 @@ from app.vlm.pdf_utils import image_bytes_to_pil, pdf_bytes_to_images
 router = APIRouter(prefix="/qianfan-ocr", tags=["qianfan-ocr"])
 settings = get_settings()
 
-ALLOWED_IMAGE_TYPES = {"image/png", "image/jpeg", "image/jpg", "image/webp"}
-ALLOWED_PDF_TYPES = {"application/pdf"}
-
-
-def _validate_upload(filename: str | None, content_type: str) -> None:
-    if not filename:
-        raise HTTPException(status_code=400, detail="No filename provided")
-
-    lower_name = filename.lower()
-    is_pdf = content_type in ALLOWED_PDF_TYPES or lower_name.endswith(".pdf")
-    is_image = content_type in ALLOWED_IMAGE_TYPES or lower_name.endswith(
-        (".png", ".jpg", ".jpeg", ".webp")
-    )
-    if not is_pdf and not is_image:
-        raise HTTPException(
-            status_code=400,
-            detail="Only PDF and image files (PNG, JPG, WEBP) are supported",
-        )
-
 
 def _ensure_qianfan_ocr_ready() -> None:
-    if not settings.QIANFAN_OCR_ENABLED:
-        raise HTTPException(status_code=503, detail="Qianfan-OCR service is disabled")
-    try:
-        qianfan_ocr_service.load()
-    except RuntimeError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    ensure_model_service_ready(
+        enabled=settings.QIANFAN_OCR_ENABLED,
+        service_name="Qianfan-OCR",
+        load_fn=qianfan_ocr_service.load,
+    )
 
 
 @router.post("/recognize/", response_model=QianfanOCRResponse)
@@ -52,22 +35,11 @@ async def qianfan_ocr_recognize(
 ):
     """Run Qianfan-OCR on a single uploaded image."""
     content_type = file.content_type or "application/octet-stream"
-    _validate_upload(file.filename, content_type)
-
-    if content_type in ALLOWED_PDF_TYPES or (file.filename and file.filename.lower().endswith(".pdf")):
-        raise HTTPException(
-            status_code=400,
-            detail="Use POST /qianfan-ocr/pdf/analyze/ for PDF uploads",
-        )
+    validate_media_upload(file.filename, content_type)
+    reject_pdf_for_image_endpoint(file.filename, content_type, endpoint="POST /qianfan-ocr/pdf/analyze/")
 
     content = await file.read()
-    max_bytes = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
-    if len(content) > max_bytes:
-        raise HTTPException(
-            status_code=400,
-            detail=f"File exceeds {settings.MAX_UPLOAD_SIZE_MB}MB limit",
-        )
-
+    check_payload_size(content)
     _ensure_qianfan_ocr_ready()
 
     try:
@@ -77,8 +49,10 @@ async def qianfan_ocr_recognize(
             prompt=prompt,
             max_new_tokens=max_new_tokens,
         )
+    except AppException:
+        raise
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Qianfan-OCR inference failed: {exc}") from exc
+        raise map_inference_error(exc, operation="Qianfan-OCR inference") from exc
 
     return QianfanOCRResponse(
         filename=file.filename,
@@ -96,44 +70,26 @@ async def qianfan_ocr_analyze_pdf(
 ):
     """Convert each PDF page to an image and run Qianfan-OCR inference per page."""
     content_type = file.content_type or "application/octet-stream"
-    _validate_upload(file.filename, content_type)
-
-    if content_type not in ALLOWED_PDF_TYPES and not (
-        file.filename and file.filename.lower().endswith(".pdf")
-    ):
-        raise HTTPException(status_code=400, detail="Only PDF files are supported")
+    validate_media_upload(file.filename, content_type)
+    require_pdf_only(file.filename, content_type)
 
     content = await file.read()
-    max_bytes = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
-    if len(content) > max_bytes:
-        raise HTTPException(
-            status_code=400,
-            detail=f"File exceeds {settings.MAX_UPLOAD_SIZE_MB}MB limit",
-        )
-
+    check_payload_size(content)
     _ensure_qianfan_ocr_ready()
     total_start = time.perf_counter()
 
     try:
         images = pdf_bytes_to_images(content, dpi=settings.QIANFAN_OCR_PDF_DPI)
-        if not images:
-            raise HTTPException(status_code=400, detail="PDF contains no pages")
-
-        if len(images) > settings.QIANFAN_OCR_MAX_PDF_PAGES:
-            raise HTTPException(
-                status_code=400,
-                detail=f"PDF exceeds maximum of {settings.QIANFAN_OCR_MAX_PDF_PAGES} pages",
-            )
-
+        validate_pdf_images(images, max_pages=settings.QIANFAN_OCR_MAX_PDF_PAGES)
         page_results = await qianfan_ocr_service.analyze_pdf_pages(
             images=images,
             prompt=prompt,
             max_new_tokens=max_new_tokens,
         )
-    except HTTPException:
+    except AppException:
         raise
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"PDF analysis failed: {exc}") from exc
+        raise map_inference_error(exc, operation="PDF analysis") from exc
 
     total_elapsed_ms = (time.perf_counter() - total_start) * 1000
     pages = [

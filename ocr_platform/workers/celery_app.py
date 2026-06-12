@@ -1,6 +1,7 @@
 from celery import Celery
 
 from app.core.config import get_settings
+from app.core.exceptions import is_client_error
 
 settings = get_settings()
 
@@ -31,6 +32,9 @@ def process_ocr_job_task(self, job_id: str) -> dict:
         return {"job_id": job_id, "status": "completed"}
     except Exception as exc:
         db.rollback()
+        if is_client_error(exc):
+            message = exc.message if hasattr(exc, "message") else str(exc)
+            return {"job_id": job_id, "status": "failed", "error": message}
         raise self.retry(exc=exc) from exc
     finally:
         db.close()

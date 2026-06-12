@@ -1,7 +1,7 @@
 import uuid
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -10,6 +10,7 @@ from app.advisor.models import Document
 from app.billing.service import generate_api_key
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
+from app.core.exceptions import NotFoundError, QuotaExceededError
 from app.ocr_engine.models import OcrJob, UsageEvent
 from app.ocr_engine.schemas import OcrJobCreate, OcrJobResponse
 from app.ocr_engine.service import create_demo_job, get_job_result, process_ocr_job
@@ -31,11 +32,11 @@ def submit_ocr_job(
         .first()
     )
     if not doc:
-        raise HTTPException(status_code=404, detail="Document not found")
+        raise NotFoundError("Document not found")
 
     sub = user.subscription
     if sub and sub.quota_used >= sub.quota_limit:
-        raise HTTPException(status_code=403, detail="Quota exceeded")
+        raise QuotaExceededError("Quota exceeded")
 
     tier_slug = data.tier_slug or "basic"
     if not data.tier_slug and sub and sub.tier_id:
@@ -83,7 +84,7 @@ def get_ocr_job(
         .first()
     )
     if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise NotFoundError("Job not found")
     return _job_response(job, db)
 
 

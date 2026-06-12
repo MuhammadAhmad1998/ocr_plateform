@@ -2,6 +2,7 @@ import uuid
 from pathlib import Path
 
 from app.core.config import get_settings
+from app.core.exceptions import NotFoundError, StorageError
 
 settings = get_settings()
 
@@ -41,12 +42,18 @@ class StorageService:
 
     def download(self, key: str) -> bytes:
         if self.use_local:
-            return (self.local_path / key).read_bytes()
+            path = self.local_path / key
+            if not path.exists():
+                raise NotFoundError(f"File not found: {key}")
+            return path.read_bytes()
         try:
             obj = self.s3.get_object(Bucket=settings.S3_BUCKET, Key=key)
             return obj["Body"].read()
         except self._ClientError as e:
-            raise FileNotFoundError(key) from e
+            error_code = e.response.get("Error", {}).get("Code", "")
+            if error_code in {"NoSuchKey", "404", "NotFound"}:
+                raise NotFoundError(f"File not found: {key}") from e
+            raise StorageError("Failed to download file from storage") from e
 
     def get_url(self, key: str) -> str:
         if self.use_local:

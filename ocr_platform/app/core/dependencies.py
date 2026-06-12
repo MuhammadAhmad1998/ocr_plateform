@@ -1,9 +1,10 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.accounts.models import User
 from app.core.database import get_db
+from app.core.exceptions import AuthenticationError
 from app.core.security import decode_token
 
 security = HTTPBearer(auto_error=False)
@@ -14,11 +15,13 @@ def get_current_user(
     db: Session = Depends(get_db),
 ) -> User:
     if not credentials:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+        raise AuthenticationError("Not authenticated")
     payload = decode_token(credentials.credentials)
     if not payload or payload.get("type") != "access":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        raise AuthenticationError("Invalid token")
     user = db.query(User).filter(User.email == payload.get("sub")).first()
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+        raise AuthenticationError("User not found")
+    if not user.is_active:
+        raise AuthenticationError("Account is inactive")
     return user

@@ -1,12 +1,13 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.accounts.models import SubscriptionProfile, User
 from app.accounts.schemas import LoginRequest, RefreshRequest, RegisterRequest, TokenResponse, UserResponse
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
+from app.core.exceptions import AuthenticationError, ConflictError
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -22,7 +23,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post("/register/", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 def register(data: RegisterRequest, db: Session = Depends(get_db)):
     if db.query(User).filter(User.email == data.email).first():
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise ConflictError("Email already registered")
 
     user = User(
         email=data.email,
@@ -51,7 +52,7 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
 def login(data: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == data.email).first()
     if not user or not verify_password(data.password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise AuthenticationError("Invalid credentials")
     return TokenResponse(
         access_token=create_access_token(user.email),
         refresh_token=create_refresh_token(user.email),
@@ -62,11 +63,11 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
 def refresh(data: RefreshRequest, db: Session = Depends(get_db)):
     payload = decode_token(data.refresh_token)
     if not payload or payload.get("type") != "refresh":
-        raise HTTPException(status_code=401, detail="Invalid refresh token")
+        raise AuthenticationError("Invalid refresh token")
     email = payload.get("sub")
     user = db.query(User).filter(User.email == email).first()
     if not user:
-        raise HTTPException(status_code=401, detail="User not found")
+        raise AuthenticationError("User not found")
     return TokenResponse(
         access_token=create_access_token(user.email),
         refresh_token=create_refresh_token(user.email),

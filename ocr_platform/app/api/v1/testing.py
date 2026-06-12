@@ -1,19 +1,22 @@
 import logging
 import time
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, UploadFile
 from sqlalchemy.orm import Session
 
 from app.accounts.models import User
 from app.core.config import get_settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.ocr_engine.adapters.base import run_ocr
-from app.registry.models import Engine
+from app.core.exceptions import AppException, NotFoundError
+from app.core.inference_helpers import ensure_model_service_ready, map_inference_error, validate_pdf_images
+from app.core.uploads import check_payload_size, is_pdf, validate_media_upload
 from app.got_ocr.service import got_ocr_service
+from app.ocr_engine.adapters.base import run_ocr
 from app.paddle_ocr.service import paddle_ocr_service
 from app.qianfan_ocr.service import DEFAULT_PROMPT as QIANFAN_DEFAULT_PROMPT
 from app.qianfan_ocr.service import qianfan_ocr_service
+from app.registry.models import Engine
 from app.vlm.pdf_utils import image_bytes_to_pil, pdf_bytes_to_images
 from app.vlm.service import vlm_service
 
@@ -21,36 +24,9 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/testing", tags=["testing"])
 settings = get_settings()
 
-ALLOWED_TYPES = {
-    "application/pdf",
-    "image/png",
-    "image/jpeg",
-    "image/jpg",
-    "image/webp",
-}
-ALLOWED_EXTENSIONS = (".pdf", ".png", ".jpg", ".jpeg", ".webp")
-
 DEFAULT_VLM_QUESTION = (
     "Extract all text from this document. Return only the extracted text, preserving layout where possible."
 )
-
-
-def _validate_file(filename: str | None, content_type: str) -> str:
-    if not filename:
-        raise HTTPException(status_code=400, detail="No filename provided")
-
-    lower_name = filename.lower()
-    is_allowed = content_type in ALLOWED_TYPES or lower_name.endswith(ALLOWED_EXTENSIONS)
-    if not is_allowed:
-        raise HTTPException(
-            status_code=400,
-            detail="Only PDF and image files (PNG, JPG, WEBP) are supported",
-        )
-    return lower_name
-
-
-def _is_pdf(content_type: str, filename: str) -> bool:
-    return content_type == "application/pdf" or filename.endswith(".pdf")
 
 
 @router.get("/models/")
@@ -159,15 +135,10 @@ async def run_testing_ocr(
     db: Session = Depends(get_db),
 ):
     content_type = file.content_type or "application/octet-stream"
-    filename = _validate_file(file.filename, content_type)
+    filename = validate_media_upload(file.filename, content_type)
 
     content = await file.read()
-    max_bytes = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
-    if len(content) > max_bytes:
-        raise HTTPException(
-            status_code=400,
-            detail=f"File exceeds {settings.MAX_UPLOAD_SIZE_MB}MB limit",
-        )
+    check_payload_size(content)
 
     if model_slug == "vlm":
         return await _run_vlm(content, content_type, filename, question, enable_thinking)
@@ -197,13 +168,15 @@ async def run_testing_ocr(
         .first()
     )
     if not engine:
-        raise HTTPException(status_code=404, detail=f"Model '{model_slug}' not found")
+        raise NotFoundError(f"Model '{model_slug}' not found")
 
     start = time.perf_counter()
     try:
         result = run_ocr(content, content_type, engine.adapter_type, file.filename or filename)
+    except AppException:
+        raise
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"OCR processing failed: {exc}") from exc
+        raise map_inference_error(exc, operation="OCR processing") from exc
 
     elapsed_ms = int((time.perf_counter() - start) * 1000)
 
@@ -229,27 +202,18 @@ async def _run_vlm(
     question: str,
     enable_thinking: bool,
 ) -> dict:
-    if not settings.VLM_ENABLED:
-        raise HTTPException(status_code=503, detail="VLM service is disabled")
-
-    try:
-        vlm_service.load()
-    except RuntimeError as exc:
-        logger.exception("VLM service load failed")
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    ensure_model_service_ready(
+        enabled=settings.VLM_ENABLED,
+        service_name="VLM",
+        load_fn=vlm_service.load,
+    )
 
     total_start = time.perf_counter()
 
     try:
-        if _is_pdf(content_type, filename):
+        if is_pdf(content_type, filename):
             images = pdf_bytes_to_images(content, dpi=settings.VLM_PDF_DPI)
-            if not images:
-                raise HTTPException(status_code=400, detail="PDF contains no pages")
-            if len(images) > settings.VLM_MAX_PDF_PAGES:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"PDF exceeds maximum of {settings.VLM_MAX_PDF_PAGES} pages",
-                )
+            validate_pdf_images(images, max_pages=settings.VLM_MAX_PDF_PAGES)
 
             page_results = await vlm_service.analyze_pdf_pages(
                 images=images,
@@ -303,11 +267,11 @@ async def _run_vlm(
                 "question": question,
             },
         }
-    except HTTPException:
+    except AppException:
         raise
     except Exception as exc:
-        logger.exception("VLM inference failed with exception")
-        raise HTTPException(status_code=500, detail=f"VLM inference failed: {exc}") from exc
+        logger.exception("VLM inference failed")
+        raise map_inference_error(exc, operation="VLM inference") from exc
 
 
 async def _run_paddle_ocr(
@@ -316,26 +280,18 @@ async def _run_paddle_ocr(
     filename: str,
     task: str,
 ) -> dict:
-    if not settings.PADDLE_OCR_ENABLED:
-        raise HTTPException(status_code=503, detail="PaddleOCR-VL service is disabled")
-
-    try:
-        paddle_ocr_service.load()
-    except RuntimeError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    ensure_model_service_ready(
+        enabled=settings.PADDLE_OCR_ENABLED,
+        service_name="PaddleOCR-VL",
+        load_fn=paddle_ocr_service.load,
+    )
 
     total_start = time.perf_counter()
 
     try:
-        if _is_pdf(content_type, filename):
+        if is_pdf(content_type, filename):
             images = pdf_bytes_to_images(content, dpi=settings.PADDLE_OCR_PDF_DPI)
-            if not images:
-                raise HTTPException(status_code=400, detail="PDF contains no pages")
-            if len(images) > settings.PADDLE_OCR_MAX_PDF_PAGES:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"PDF exceeds maximum of {settings.PADDLE_OCR_MAX_PDF_PAGES} pages",
-                )
+            validate_pdf_images(images, max_pages=settings.PADDLE_OCR_MAX_PDF_PAGES)
 
             page_results = await paddle_ocr_service.analyze_pdf_pages(
                 images=images,
@@ -387,12 +343,10 @@ async def _run_paddle_ocr(
                 "task": task,
             },
         }
-    except HTTPException:
+    except AppException:
         raise
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"PaddleOCR-VL inference failed: {exc}") from exc
+        raise map_inference_error(exc, operation="PaddleOCR-VL inference") from exc
 
 
 async def _run_qianfan_ocr(
@@ -401,26 +355,18 @@ async def _run_qianfan_ocr(
     filename: str,
     prompt: str,
 ) -> dict:
-    if not settings.QIANFAN_OCR_ENABLED:
-        raise HTTPException(status_code=503, detail="Qianfan-OCR service is disabled")
-
-    try:
-        qianfan_ocr_service.load()
-    except RuntimeError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    ensure_model_service_ready(
+        enabled=settings.QIANFAN_OCR_ENABLED,
+        service_name="Qianfan-OCR",
+        load_fn=qianfan_ocr_service.load,
+    )
 
     total_start = time.perf_counter()
 
     try:
-        if _is_pdf(content_type, filename):
+        if is_pdf(content_type, filename):
             images = pdf_bytes_to_images(content, dpi=settings.QIANFAN_OCR_PDF_DPI)
-            if not images:
-                raise HTTPException(status_code=400, detail="PDF contains no pages")
-            if len(images) > settings.QIANFAN_OCR_MAX_PDF_PAGES:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"PDF exceeds maximum of {settings.QIANFAN_OCR_MAX_PDF_PAGES} pages",
-                )
+            validate_pdf_images(images, max_pages=settings.QIANFAN_OCR_MAX_PDF_PAGES)
 
             page_results = await qianfan_ocr_service.analyze_pdf_pages(
                 images=images,
@@ -472,10 +418,10 @@ async def _run_qianfan_ocr(
                 "prompt": prompt,
             },
         }
-    except HTTPException:
+    except AppException:
         raise
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Qianfan-OCR inference failed: {exc}") from exc
+        raise map_inference_error(exc, operation="Qianfan-OCR inference") from exc
 
 
 async def _run_got_ocr(
@@ -484,26 +430,18 @@ async def _run_got_ocr(
     filename: str,
     ocr_type: str,
 ) -> dict:
-    if not settings.GOT_OCR_ENABLED:
-        raise HTTPException(status_code=503, detail="GOT-OCR service is disabled")
-
-    try:
-        got_ocr_service.load()
-    except RuntimeError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    ensure_model_service_ready(
+        enabled=settings.GOT_OCR_ENABLED,
+        service_name="GOT-OCR",
+        load_fn=got_ocr_service.load,
+    )
 
     total_start = time.perf_counter()
 
     try:
-        if _is_pdf(content_type, filename):
+        if is_pdf(content_type, filename):
             images = pdf_bytes_to_images(content, dpi=settings.GOT_OCR_PDF_DPI)
-            if not images:
-                raise HTTPException(status_code=400, detail="PDF contains no pages")
-            if len(images) > settings.GOT_OCR_MAX_PDF_PAGES:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"PDF exceeds maximum of {settings.GOT_OCR_MAX_PDF_PAGES} pages",
-                )
+            validate_pdf_images(images, max_pages=settings.GOT_OCR_MAX_PDF_PAGES)
 
             page_results = await got_ocr_service.analyze_pdf_pages(
                 images=images,
@@ -555,10 +493,8 @@ async def _run_got_ocr(
                 "ocr_type": ocr_type,
             },
         }
-    except RuntimeError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
-    except HTTPException:
+    except AppException:
         raise
     except Exception as exc:
-        logger.exception("GOT-OCR inference failed with exception")
-        raise HTTPException(status_code=500, detail=f"GOT-OCR inference failed: {exc}") from exc
+        logger.exception("GOT-OCR inference failed")
+        raise map_inference_error(exc, operation="GOT-OCR inference") from exc

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.advisor.models import ChatSession, Document
 from app.core.config import get_settings
+from app.core.exceptions import BadRequestError
 from app.core.storage import storage
 from app.ocr_engine.adapters.base import result_to_json, run_ocr
 from app.ocr_engine.models import OcrJob, UsageEvent
@@ -68,10 +69,10 @@ def process_ocr_job(db: Session, job_id: str) -> None:
 
 def create_demo_job(db: Session, user_id: uuid.UUID, session: ChatSession) -> OcrJob:
     if session.demo_run_count >= settings.DEMO_RUNS_PER_SESSION:
-        raise ValueError("Demo run limit reached for this session")
+        raise BadRequestError("Demo run limit reached for this session")
 
     if not session.document_id:
-        raise ValueError("No document uploaded for session")
+        raise BadRequestError("No document uploaded for session")
 
     tier = None
     engine = None

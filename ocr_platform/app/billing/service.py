@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.accounts.models import SubscriptionProfile, User
 from app.core.config import get_settings
+from app.core.exceptions import BadRequestError, ExternalServiceError
 from app.registry.models import Tier
 
 settings = get_settings()
@@ -22,7 +23,7 @@ class BillingService:
     def create_checkout(self, db: Session, user: User, tier_slug: str) -> dict:
         tier = db.query(Tier).filter(Tier.slug == tier_slug).first()
         if not tier:
-            raise ValueError("Invalid tier")
+            raise BadRequestError("Invalid tier")
 
         if not self.stripe or not tier.stripe_price_id:
             return {
@@ -39,14 +40,17 @@ class BillingService:
                 sub.stripe_customer_id = customer_id
                 db.commit()
 
-        session = self.stripe.checkout.Session.create(
-            customer=customer_id,
-            mode="subscription",
-            line_items=[{"price": tier.stripe_price_id, "quantity": 1}],
-            success_url="http://localhost:3000/dashboard?checkout=success",
-            cancel_url="http://localhost:3000/checkout?cancelled=true",
-            metadata={"user_id": str(user.id), "tier_slug": tier_slug},
-        )
+        try:
+            session = self.stripe.checkout.Session.create(
+                customer=customer_id,
+                mode="subscription",
+                line_items=[{"price": tier.stripe_price_id, "quantity": 1}],
+                success_url="http://localhost:3000/dashboard?checkout=success",
+                cancel_url="http://localhost:3000/checkout?cancelled=true",
+                metadata={"user_id": str(user.id), "tier_slug": tier_slug},
+            )
+        except Exception as exc:
+            raise ExternalServiceError("Payment provider is temporarily unavailable") from exc
         return {"checkout_url": session.url, "session_id": session.id}
 
     def get_portal_url(self, db: Session, user: User) -> str:

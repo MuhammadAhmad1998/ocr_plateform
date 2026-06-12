@@ -1,15 +1,17 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.accounts.models import User
 from app.advisor.models import ChatSession
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
+from app.core.exceptions import NotFoundError
 from app.ocr_engine.models import OcrJob
 from app.ocr_engine.schemas import DemoRunRequest, DemoRunResponse, OcrResultResponse
 from app.ocr_engine.service import create_demo_job, get_job_result
+
 try:
     from workers.celery_app import process_ocr_job_task
 except ImportError:
@@ -30,12 +32,9 @@ def run_demo(
         .first()
     )
     if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise NotFoundError("Session not found")
 
-    try:
-        job = create_demo_job(db, user.id, session)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+    job = create_demo_job(db, user.id, session)
 
     if process_ocr_job_task:
         try:
@@ -62,7 +61,7 @@ def get_demo_result(
         .first()
     )
     if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise NotFoundError("Job not found")
 
     if job.status in ("queued", "processing"):
         return OcrResultResponse(job_id=str(job.id), status=job.status)

@@ -13,6 +13,8 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.v1.router import api_router
 from app.core.config import get_settings
+from app.core.exception_handlers import register_exception_handlers
+from app.core.middleware import RequestIdMiddleware
 from app.core.db_bootstrap import wait_for_database
 from app.core.database import Base, engine
 import app.models  # noqa: F401 — register all models
@@ -75,6 +77,8 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+register_exception_handlers(app)
+app.add_middleware(RequestIdMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,

@@ -1,6 +1,4 @@
-import uuid
-
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.accounts.models import User
@@ -18,10 +16,7 @@ def create_checkout(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    try:
-        result = billing_service.create_checkout(db, user, data.tier_slug)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+    result = billing_service.create_checkout(db, user, data.tier_slug)
     return CheckoutResponse(**result)
 
 

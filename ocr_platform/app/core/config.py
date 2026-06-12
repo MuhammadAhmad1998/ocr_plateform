@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     )
 
     APP_NAME: str = "Unified OCR Platform"
-    DEBUG: bool = True
+    DEBUG: bool = False
     API_V1_PREFIX: str = "/api/v1"
 
     SECRET_KEY: str = "change-me-in-production-use-openssl-rand-hex-32"

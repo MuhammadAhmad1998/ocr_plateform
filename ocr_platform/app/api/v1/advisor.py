@@ -1,21 +1,21 @@
 import uuid
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Query, UploadFile, status
 from sqlalchemy.orm import Session
+from sse_starlette.sse import EventSourceResponse
 
 from app.accounts.models import User
 from app.advisor.fingerprint import fingerprint_document
 from app.advisor.models import ChatMessage, ChatSession, Document
 from app.advisor.schemas import DocumentResponse, MessageRequest, SessionCreate, SessionResponse
 from app.advisor.service import advisor_service
-from app.core.config import get_settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
+from app.core.exceptions import ConflictError, NotFoundError
 from app.core.storage import storage
-from sse_starlette.sse import EventSourceResponse
+from app.core.uploads import check_payload_size, validate_advisor_upload
 
 router = APIRouter(prefix="/advisor", tags=["advisor"])
-settings = get_settings()
 
 
 @router.post("/session/", response_model=SessionResponse, status_code=status.HTTP_201_CREATED)
@@ -32,7 +32,7 @@ def create_session(
             .first()
         )
         if not doc:
-            raise HTTPException(status_code=404, detail="Document not found")
+            raise NotFoundError("Document not found")
         session.document_id = doc.id
     db.add(session)
     db.commit()
@@ -41,7 +41,7 @@ def create_session(
     greeting = (
         "Hello! I'm your OCR advisor. Upload a sample document and I'll help you find the perfect tier."
         if not session.document_id
-        else f"I see your document is ready. Let's discuss your OCR needs."
+        else "I see your document is ready. Let's discuss your OCR needs."
     )
     db.add(ChatMessage(session_id=session.id, role="assistant", content=greeting))
     db.commit()
@@ -56,19 +56,13 @@ async def upload_document(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    if not file.filename:
-        raise HTTPException(status_code=400, detail="No filename")
-
-    allowed = {"application/pdf", "image/png", "image/jpeg", "image/jpg"}
     content_type = file.content_type or "application/octet-stream"
-    if content_type not in allowed and not file.filename.lower().endswith((".pdf", ".png", ".jpg", ".jpeg")):
-        raise HTTPException(status_code=400, detail="Only PDF, PNG, JPG allowed")
+    validate_advisor_upload(file.filename, content_type)
 
     content = await file.read()
-    max_bytes = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
-    if len(content) > max_bytes:
-        raise HTTPException(status_code=400, detail=f"File exceeds {settings.MAX_UPLOAD_SIZE_MB}MB limit")
+    check_payload_size(content)
 
+    session = None
     if session_id:
         session = (
             db.query(ChatSession)
@@ -76,7 +70,7 @@ async def upload_document(
             .first()
         )
         if session and session.document_id:
-            raise HTTPException(status_code=400, detail="Session already has a document")
+            raise ConflictError("Session already has a document")
 
     s3_key = storage.upload(content, "uploads", file.filename, content_type)
     fingerprint = fingerprint_document(content, content_type, file.filename)
@@ -121,7 +115,7 @@ async def send_message(
         .first()
     )
     if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise NotFoundError("Session not found")
 
     db.add(ChatMessage(session_id=session.id, role="user", content=data.content))
     db.commit()
@@ -157,7 +151,7 @@ def get_session(
         .first()
     )
     if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise NotFoundError("Session not found")
     return _session_response(session, db)
 
 
