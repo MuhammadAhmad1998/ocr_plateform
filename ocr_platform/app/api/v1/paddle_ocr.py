@@ -37,7 +37,7 @@ def _ensure_paddle_ocr_ready() -> None:
 @router.post("/recognize/", response_model=PaddleOCRResponse)
 async def paddle_ocr_recognize(
     file: UploadFile = File(..., description="Image file (PNG, JPG, WEBP)"),
-    task: PaddleTaskType = Form("ocr", description="Recognition task: ocr, table, chart, formula"),
+    task: PaddleTaskType = Form("ocr", description="Recognition task: ocr, table, chart, formula, spotting, seal"),
     max_new_tokens: int | None = Form(None, ge=1, le=4096, description="Max generation tokens"),
 ):
     """Run PaddleOCR-VL on a single uploaded image."""

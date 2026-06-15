@@ -11,14 +11,30 @@ from app.core.model_manager import model_manager
 
 logger = logging.getLogger(__name__)
 
-PaddleTask = Literal["ocr", "table", "chart", "formula"]
+PaddleTask = Literal["ocr", "table", "chart", "formula", "spotting", "seal"]
 
 PROMPTS: dict[str, str] = {
     "ocr": "OCR:",
     "table": "Table Recognition:",
     "formula": "Formula Recognition:",
     "chart": "Chart Recognition:",
+    "spotting": "Spotting:",
+    "seal": "Seal Recognition:",
 }
+
+
+def _preprocess_for_spotting(
+    image: Image.Image, upscale_threshold: int
+) -> Image.Image:
+    """Upscale small images 2× for the spotting task to improve accuracy."""
+    orig_w, orig_h = image.size
+    if orig_w < upscale_threshold and orig_h < upscale_threshold:
+        try:
+            resample = Image.Resampling.LANCZOS
+        except AttributeError:
+            resample = Image.LANCZOS  # type: ignore[attr-defined]
+        image = image.resize((orig_w * 2, orig_h * 2), resample)
+    return image
 
 
 class PaddleOCRVLService:
@@ -35,9 +51,9 @@ class PaddleOCRVLService:
         """Explicitly unload the model and free GPU memory."""
         if not self._loaded:
             return
-        
+
         logger.info("Unloading PaddleOCR-VL model and clearing GPU memory")
-        
+
         from app.core.model_manager import _strip_accelerate_hooks
         _strip_accelerate_hooks(self._model)
 
@@ -49,7 +65,7 @@ class PaddleOCRVLService:
         self._processor = None
         self._loaded = False
         self._load_error = None
-        
+
         from app.core.model_manager import _force_free_gpu_memory
         _force_free_gpu_memory()
 
@@ -66,10 +82,10 @@ class PaddleOCRVLService:
         try:
             import gc
             import torch
-            
+
             for _ in range(3):
                 gc.collect()
-            
+
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
                 torch.cuda.empty_cache()
@@ -94,7 +110,7 @@ class PaddleOCRVLService:
         settings = get_settings()
         try:
             import torch
-            from transformers import AutoModelForCausalLM, AutoProcessor
+            from transformers import AutoModelForImageTextToText, AutoProcessor
 
             dtype = getattr(torch, settings.PADDLE_OCR_TORCH_DTYPE, torch.bfloat16)
             device = settings.PADDLE_OCR_DEVICE
@@ -103,17 +119,12 @@ class PaddleOCRVLService:
                 device = "cpu"
 
             logger.info("Loading PaddleOCR-VL model: %s", settings.PADDLE_OCR_MODEL_ID)
-            model = AutoModelForCausalLM.from_pretrained(
+            model = AutoModelForImageTextToText.from_pretrained(
                 settings.PADDLE_OCR_MODEL_ID,
-                trust_remote_code=True,
                 dtype=dtype,
-                attn_implementation="eager",
-                rope_scaling=None,
-                revision=getattr(settings, "PADDLE_OCR_MODEL_REVISION", None),
             )
             processor = AutoProcessor.from_pretrained(
                 settings.PADDLE_OCR_MODEL_ID,
-                trust_remote_code=True,
             )
 
             self._model = model.eval().to(device)
@@ -121,14 +132,6 @@ class PaddleOCRVLService:
             self._device = device
             self._loaded = True
             logger.info("PaddleOCR-VL model loaded on %s", device)
-        except KeyError as exc:
-            if "'default'" in str(exc):
-                self._load_error = "Model compatibility issue: RoPE configuration not supported. Try updating transformers or using a different model version."
-                logger.exception("Failed to load PaddleOCR-VL model - RoPE config issue")
-                raise RuntimeError(self._load_error) from exc
-            self._load_error = str(exc)
-            logger.exception("Failed to load PaddleOCR-VL model")
-            raise RuntimeError(f"Failed to load PaddleOCR-VL model: {exc}") from exc
         except Exception as exc:
             self._load_error = str(exc)
             logger.exception("Failed to load PaddleOCR-VL model")
@@ -151,6 +154,22 @@ class PaddleOCRVLService:
         if task not in PROMPTS:
             raise ValueError(f"Invalid task '{task}'. Must be one of: {', '.join(PROMPTS)}")
 
+        # Ensure image is RGB
+        image = image.convert("RGB")
+
+        # Spotting-specific preprocessing: upscale small images
+        if task == "spotting":
+            image = _preprocess_for_spotting(
+                image, settings.PADDLE_OCR_SPOTTING_UPSCALE_THRESHOLD
+            )
+
+        # Pixel budget: higher for spotting, standard for other tasks
+        max_pixels = (
+            settings.PADDLE_OCR_SPOTTING_MAX_PIXELS
+            if task == "spotting"
+            else settings.PADDLE_OCR_DEFAULT_MAX_PIXELS
+        )
+
         messages = [
             {
                 "role": "user",
@@ -162,16 +181,27 @@ class PaddleOCRVLService:
         ]
 
         with self._inference_lock:
-            inputs = self._processor.apply_chat_template(
+            processor = self._processor
+            min_pixels = getattr(processor.image_processor, "min_pixels", 224)
+
+            inputs = processor.apply_chat_template(
                 messages,
-                tokenize=True,
                 add_generation_prompt=True,
+                tokenize=True,
                 return_dict=True,
                 return_tensors="pt",
-            ).to(self._device)
+                images_kwargs={
+                    "size": {
+                        "shortest_edge": min_pixels,
+                        "longest_edge": max_pixels,
+                    }
+                },
+            ).to(self._model.device)
 
+            input_len = inputs["input_ids"].shape[-1]
             outputs = self._model.generate(**inputs, max_new_tokens=tokens)
-            return self._processor.batch_decode(outputs, skip_special_tokens=True)[0]
+            # Decode only the generated tokens (skip the prompt)
+            return processor.decode(outputs[0][input_len:-1])
 
     async def recognize(
         self,

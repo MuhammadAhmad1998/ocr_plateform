@@ -76,15 +76,19 @@ class Settings(BaseSettings):
     VLM_EAGER_LOAD: bool = False
 
     PADDLE_OCR_ENABLED: bool = True
-    PADDLE_OCR_MODEL_ID: str = "PaddlePaddle/PaddleOCR-VL"
+    PADDLE_OCR_MODEL_ID: str = "PaddlePaddle/PaddleOCR-VL-1.6"
     PADDLE_OCR_TORCH_DTYPE: str = "bfloat16"
     PADDLE_OCR_DEVICE: str = "cuda"
-    PADDLE_OCR_MAX_NEW_TOKENS: int = 1024
+    PADDLE_OCR_MAX_NEW_TOKENS: int = 512
     PADDLE_OCR_PDF_DPI: int = 144
     PADDLE_OCR_MAX_PDF_PAGES: int = 50
     PADDLE_OCR_EAGER_LOAD: bool = False
+    # Spotting task: upscale small images and use more pixels for better accuracy
+    PADDLE_OCR_SPOTTING_UPSCALE_THRESHOLD: int = 1500
+    PADDLE_OCR_SPOTTING_MAX_PIXELS: int = 2048 * 28 * 28  # ~1.6M pixels
+    PADDLE_OCR_DEFAULT_MAX_PIXELS: int = 1280 * 28 * 28    # ~1.0M pixels
 
-    QIANFAN_OCR_ENABLED: bool = False  # Requires transformers>=5.8.0
+    QIANFAN_OCR_ENABLED: bool = True  # Requires transformers>=5.8.0
     QIANFAN_OCR_MODEL_ID: str = "baidu/Qianfan-OCR"
     QIANFAN_OCR_TORCH_DTYPE: str = "bfloat16"
     QIANFAN_OCR_DEVICE: str = "auto"

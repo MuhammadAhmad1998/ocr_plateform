@@ -69,7 +69,7 @@ def build_models_list(db: Session) -> dict:
                 "display_name": f"PaddleOCR-VL ({settings.PADDLE_OCR_MODEL_ID})",
                 "type": "paddle_ocr",
                 "adapter_type": "paddle_ocr",
-                "capability_tags": ["vision", "pdf", "images", "ocr", "table", "chart", "formula"],
+                "capability_tags": ["vision", "pdf", "images", "ocr", "table", "chart", "formula", "spotting", "seal"],
             },
         )
 

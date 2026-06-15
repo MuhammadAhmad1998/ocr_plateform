@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-PaddleTaskType = Literal["ocr", "table", "chart", "formula"]
+PaddleTaskType = Literal["ocr", "table", "chart", "formula", "spotting", "seal"]
 
 
 class PaddleOCRResponse(BaseModel):
