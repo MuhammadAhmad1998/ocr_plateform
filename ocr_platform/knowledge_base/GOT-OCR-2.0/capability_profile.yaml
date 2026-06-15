@@ -1,0 +1,197 @@
+# GOT-OCR 2.0 Capability Profile
+# Confidence: documented
+# Source: https://arxiv.org/abs/2409.01704, https://huggingface.co/ucaslcl/GOT-OCR2_0
+
+model_info:
+  model_id: "ucaslcl/GOT-OCR2_0"
+  display_name: "GOT-OCR 2.0"
+  full_name: "General OCR Theory 2.0"
+  developer: "UCAS & Stepfun AI"
+  parameters: "580M"
+  architecture: "Encoder-decoder (high-compression encoder + long-context decoder)"
+  paper: "https://arxiv.org/abs/2409.01704"
+  release_date: "September 2024"
+
+core_concept:
+  ocr_generation: "OCR-2.0"
+  philosophy: "Unified end-to-end model for all optical character recognition tasks"
+  definition_of_characters: "All artificial optical signals: text, formulas, tables, charts, sheet music, geometric shapes"
+
+strengths:
+  primary:
+    - "Unified end-to-end architecture handles all OCR tasks in one model"
+    - "Excellent formatted output (Markdown, LaTeX, TikZ, SMILES, Kern)"
+    - "Interactive region-level OCR guided by coordinates or colors"
+    - "Dynamic resolution for ultra-high-resolution images (>2K)"
+    - "Multi-page document processing without pagination loops"
+    - "Smallest model size (580M) among the three engines"
+  
+  output_formats:
+    plain_text: "Excellent"
+    markdown: "Excellent - native support"
+    latex: "Excellent - for formulas"
+    tikz: "Supported - for geometric shapes"
+    smiles: "Supported - for molecular formulas"
+    kern: "Supported - for sheet music"
+
+capabilities:
+  
+  plain_document_ocr:
+    performance: "excellent"
+    benchmark:
+      fox_pdf_en: "F1=0.972, Edit Distance=0.035"
+      fox_pdf_zh: "F1=0.980, Edit Distance=0.038"
+    notes: "Excellent for both English and Chinese PDFs"
+  
+  scene_text_ocr:
+    performance: "excellent"
+    use_cases:
+      - "Street signs and outdoor text"
+      - "Product labels"
+      - "Natural scene text"
+      - "Photos with embedded text"
+  
+  formatted_document_ocr:
+    performance: "excellent"
+    supported_formats:
+      - "Markdown"
+      - "Mathpix Markdown"
+      - "LaTeX for formulas"
+      - "TikZ for diagrams"
+    use_cases:
+      - "Academic papers requiring LaTeX output"
+      - "Technical documentation"
+      - "Documents needing structure preservation"
+  
+  mathematical_formulas:
+    performance: "excellent"
+    types:
+      - "Inline formulas"
+      - "Display equations"
+      - "Complex multi-line expressions"
+    output: "LaTeX format"
+    notes: "Part of formatted OCR capability"
+  
+  tables:
+    performance: "excellent"
+    types:
+      - "Simple bordered tables"
+      - "Complex tables"
+      - "Borderless tables"
+    output: "Markdown or structured format"
+    notes: "Integrated into unified architecture"
+  
+  charts_and_plots:
+    performance: "excellent"
+    benchmark:
+      chartqa_strict_ap: 0.747
+      plotqa_strict_ap: 0.133
+    types:
+      - "Bar charts"
+      - "Line plots"
+      - "Pie charts"
+      - "Complex scientific plots"
+    notes: "Outperforms chart-specific models on structure extraction"
+  
+  interactive_ocr:
+    performance: "unique feature"
+    modes:
+      coordinate_based:
+        description: "Specify bounding box coordinates to extract specific region"
+        format: "x1,y1,x2,y2"
+      color_based:
+        description: "Specify colored box to indicate region of interest"
+        format: "color value"
+    use_cases:
+      - "Extracting specific sections from complex documents"
+      - "Region-of-interest workflows"
+      - "Interactive document parsing"
+    benchmark: "Better than Fox on fine-grained OCR (F1=0.970 vs 0.957)"
+  
+  multi_page_ocr:
+    performance: "excellent"
+    features:
+      - "Process multiple pages at once without for-loop"
+      - "Maintains formatting across page breaks"
+      - "Continuous text output"
+      - "Decoder supports 8K max length tokens"
+    use_cases:
+      - "Academic papers spanning multiple pages"
+      - "Books and long documents"
+      - "PDF documents with continuous content"
+  
+  dynamic_resolution:
+    performance: "excellent"
+    features:
+      - "Handles ultra-high-resolution images (>2K)"
+      - "Automatically crops into patches"
+      - "Processes all patches at once"
+      - "Merges results for accuracy"
+    use_cases:
+      - "Horizontally stitched two-page PDFs"
+      - "High-resolution scans"
+      - "Images with unusual aspect ratios"
+  
+  geometric_shapes:
+    performance: "good"
+    output: "TikZ format"
+    notes: "Part of general OCR capability"
+  
+  molecular_formulas:
+    performance: "good"
+    output: "SMILES format"
+    notes: "Specialized chemistry notation"
+  
+  sheet_music:
+    performance: "good"
+    output: "Kern format"
+    notes: "Musical notation recognition"
+  
+  handwriting:
+    performance: "moderate"
+    notes: "Not the primary focus; better options available (Qianfan, TrOCR-handwritten)"
+
+input_specifications:
+  resolution:
+    standard: "1024×1024"
+    dynamic: "Up to 2K+ with dynamic resolution"
+  
+  formats:
+    images: ["PNG", "JPEG", "JPG"]
+    documents: ["PDF"]
+  
+  styles:
+    - "Scene-style images"
+    - "Document-style images"
+    - "Slice (single region)"
+    - "Whole-page"
+
+architecture_details:
+  encoder:
+    parameters: "~80M"
+    resolution: "1024×1024 input"
+    output: "256×1024 dimension tokens"
+    compression: "High compression rate"
+  
+  decoder:
+    parameters: "~500M"
+    max_length: "8K tokens"
+    purpose: "Long-context OCR results"
+
+training_strategy:
+  stages:
+    - "Decoupled pre-training of encoder"
+    - "Joint-training of encoder with new decoder"
+    - "Post-training of decoder for specialized capabilities"
+  
+  data: "Extensive synthetic data engines for each training stage"
+
+ideal_use_cases:
+  - "Academic and research papers requiring LaTeX output"
+  - "Documents needing formatted output (Markdown, structured)"
+  - "Interactive workflows with region-specific extraction"
+  - "Multi-page complex documents"
+  - "High-resolution scans and unusual aspect ratios"
+  - "Chart and diagram extraction from scientific papers"
+  - "Documents with mixed content (text, formulas, tables, charts)"
+  - "Use cases prioritizing speed and efficiency"

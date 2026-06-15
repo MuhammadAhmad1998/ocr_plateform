@@ -1,20 +1,6 @@
 /* frontend/src/app/advisor/animation.css */
 
-/* ---------- Typing animation ---------- */
-.typing-text {
-  display: inline-block;
-  overflow: hidden;
-  white-space: nowrap;
-  /* width will be animated according to number of characters */
-  animation: typing 0.018s steps(var(--chars)) forwards;
-}
-
-@keyframes typing {
-  from { width: 0; }
-  to { width: 100%; }
-}
-
-/* ---------- Cursor blink ---------- */
+/* ---------- Cursor blink (streaming indicator) ---------- */
 .cursor-blink {
   animation: blink 1s steps(2) infinite;
 }
@@ -22,27 +8,6 @@
 @keyframes blink {
   0%, 49% { opacity: 1; }
   50%, 100% { opacity: 0; }
-}
-
-/* ---------- Bubble glow and float ---------- */
-.typing-bubble {
-  position: relative;
-  animation: glowPulse 2s ease-in-out infinite;
-}
-
-@keyframes glowPulse {
-  0% {
-    box-shadow: 0 0 5px 2px rgba(138, 92, 255, 0.3);
-    transform: translateY(-2px);
-  }
-  50% {
-    box-shadow: 0 0 12px 4px rgba(138, 92, 255, 0.6);
-    transform: translateY(2px);
-  }
-  100% {
-    box-shadow: 0 0 5px 2px rgba(138, , 255, 0.3);
-    transform: translateY(-2px);
-  }
 }
 
 /* ---------- Background particle shimmer ---------- */

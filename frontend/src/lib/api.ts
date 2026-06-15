@@ -1,3 +1,5 @@
+import { parseSSEBuffer } from "./sse";
+
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
 export interface TokenResponse {
@@ -23,7 +25,32 @@ export interface Recommendation {
   primary_reasons: string[];
   alternative_reasons: string[];
   selected_engine: string;
+  selected_engine_name?: string;
   demo_tier: string;
+}
+
+export function formatEngineName(recommendation: Recommendation): string {
+  if (recommendation.selected_engine_name) return recommendation.selected_engine_name;
+  return recommendation.selected_engine
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+export interface ResponseMeta {
+  rag_mode: "mock" | "vector";
+  llm_mode: "llm" | "scripted";
+  rag_chunk_count: number;
+  rag_sources: string[];
+  indexed_chunks: number;
+}
+
+export interface AdvisorCapabilities {
+  rag_mode: "mock" | "vector";
+  llm_mode: "llm" | "scripted";
+  indexed_chunks: number;
+  use_mock_rag: boolean;
+  llm_provider: string;
 }
 
 export interface ApiErrorBody {
@@ -147,6 +174,11 @@ export const api = {
     return res.json();
   },
 
+  getAdvisorCapabilities: async () => {
+    const res = await fetchWithAuth("/advisor/capabilities/");
+    return res.json() as Promise<AdvisorCapabilities>;
+  },
+
   uploadDocument: async (file: File, sessionId?: string) => {
     const form = new FormData();
     form.append("file", file);
@@ -263,7 +295,8 @@ export function streamMessage(
   onChunk: (text: string) => void,
   onRecommendation: (rec: Recommendation) => void,
   onDone: () => void,
-  onError: (err: Error) => void
+  onError: (err: Error) => void,
+  onMeta?: (meta: ResponseMeta) => void
 ) {
   const token = getToken();
   const controller = new AbortController();
@@ -286,33 +319,47 @@ export function streamMessage(
 
       const decoder = new TextDecoder();
       let buffer = "";
+      let finished = false;
+
+      const handleEvent = (eventType: string, data: string) => {
+        if (eventType === "message" && data) onChunk(data);
+        if (eventType === "meta" && data && onMeta) {
+          try {
+            onMeta(JSON.parse(data) as ResponseMeta);
+          } catch {}
+        }
+        if (eventType === "recommendation" && data) {
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.recommendation) onRecommendation(parsed.recommendation);
+          } catch {}
+        }
+        if (eventType === "done" && !finished) {
+          finished = true;
+          onDone();
+        }
+      };
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
 
-        let eventType = "message";
-        for (const line of lines) {
-          if (line.startsWith("event:")) {
-            eventType = line.slice(6).trim();
-          } else if (line.startsWith("data:")) {
-            let data = line.slice(5);
-            if (data.startsWith(" ")) data = data.slice(1);
-            if (eventType === "message" && data) onChunk(data);
-            if (eventType === "recommendation" && data) {
-              try {
-                const parsed = JSON.parse(data);
-                if (parsed.recommendation) onRecommendation(parsed.recommendation);
-              } catch {}
-            }
-            if (eventType === "done") onDone();
-          }
+        const parsed = parseSSEBuffer(buffer);
+        buffer = parsed.remainder;
+        for (const evt of parsed.events) {
+          handleEvent(evt.event, evt.data);
         }
       }
-      onDone();
+
+      if (buffer.trim()) {
+        const parsed = parseSSEBuffer(`${buffer}\n\n`);
+        for (const evt of parsed.events) {
+          handleEvent(evt.event, evt.data);
+        }
+      }
+
+      if (!finished) onDone();
     })
     .catch(onError);
 

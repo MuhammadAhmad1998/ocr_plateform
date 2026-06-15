@@ -1,0 +1,285 @@
+# Qianfan-OCR Routing Guide
+# Confidence: heuristic (routing recommendations)
+# Source: Capability analysis + benchmarks
+
+# When to route to Qianfan-OCR
+primary_use_cases:
+  
+  key_information_extraction:
+    priority: "critical"
+    conditions:
+      - "Need to extract specific fields from forms"
+      - "Invoices, receipts, certificates, ID cards, medical records"
+      - "Require semantic understanding of document context"
+    confidence: "high"
+    reasoning: "SOTA on KIE benchmarks (87.9% mean, #1 performance)"
+    example: "Automated claims processing, customer onboarding, invoice field extraction"
+  
+  complex_layout_reasoning:
+    priority: "critical"
+    conditions:
+      - "Document has cluttered elements"
+      - "Multi-column or non-standard reading order"
+      - "Heterogeneous pages (newspapers, exam papers)"
+      - "Ambiguous document structure"
+    confidence: "high"
+    reasoning: "Layout-as-Thought provides explicit layout reasoning"
+    example: "Complex newspapers, mixed-layout documents, academic papers with unusual layouts"
+  
+  document_qa_and_understanding:
+    priority: "critical"
+    conditions:
+      - "Need to ask questions about document content"
+      - "Require semantic understanding, not just extraction"
+      - "Document analysis and intelligence workflows"
+    confidence: "high"
+    reasoning: "Unique document Q&A capability"
+    example: "What's the total amount? Who signed this? What are key findings?"
+  
+  maximum_language_coverage:
+    priority: "high"
+    conditions:
+      - "Documents in rare or uncommon languages"
+      - "Multi-lingual global operations (>109 languages)"
+      - "Need guaranteed broad language support"
+    confidence: "high"
+    reasoning: "192 languages documented (most comprehensive)"
+    example: "Global enterprise operations, international archives"
+  
+  handwriting_primary_content:
+    priority: "high"
+    conditions:
+      - "Handwriting is primary content"
+      - "Mixed handwritten and printed"
+      - "Chinese handwriting"
+    confidence: "high"
+    reasoning: "Excellent handwriting recognition (Chinese and English)"
+    example: "Handwritten forms, notes, signatures with context"
+  
+  end_to_end_intelligence:
+    priority: "medium"
+    conditions:
+      - "Need full document understanding pipeline"
+      - "Prefer single model vs multi-stage"
+      - "Complex document intelligence workflows"
+    confidence: "high"
+    reasoning: "Unified architecture for parsing, layout, understanding"
+    example: "Document management systems, intelligent archival"
+  
+  maximum_context_length:
+    priority: "medium"
+    conditions:
+      - "Very long documents (books, contracts)"
+      - "Need to maintain context across many pages"
+    confidence: "medium"
+    reasoning: "32K context (extendable to 131K)"
+    example: "Long legal contracts, books, extensive reports"
+
+# When NOT to route to Qianfan-OCR
+avoid_for:
+  
+  simple_text_only:
+    reason: "Overkill (4B model) for straightforward text extraction"
+    alternative: "Route to TrOCR-Base or PaddleOCR-VL"
+    confidence: "high"
+  
+  speed_critical_high_volume:
+    reason: "Largest model (4B) = slower than 580M GOT or 0.9B PaddleOCR"
+    alternative: "Route to GOT-OCR 2.0 or PaddleOCR-VL for speed"
+    confidence: "medium"
+    note: "W8A8 quantization helps, but still slowest of the three"
+  
+  sota_table_extraction_only:
+    reason: "PaddleOCR-VL has slight edge on pure table benchmarks"
+    alternative: "Route to PaddleOCR-VL if ONLY tables matter"
+    confidence: "medium"
+    note: "Qianfan is still excellent at tables, just not #1"
+  
+  formatted_output_primary:
+    reason: "GOT-OCR 2.0 specializes in Markdown/LaTeX formatted output"
+    alternative: "Route to GOT-OCR 2.0 for formatted output focus"
+    confidence: "medium"
+    note: "Qianfan can do this, but GOT is more specialized"
+  
+  cost_constrained:
+    reason: "Largest model = highest compute cost"
+    alternative: "Use smaller models if budget is tight"
+    confidence: "medium"
+
+# Routing decision tree
+decision_tree:
+  
+  step_1_check_kie:
+    question: "Need to extract specific fields (KIE)?"
+    if_yes: "ROUTE TO QIANFAN-OCR (SOTA)"
+    if_no: "Continue to step 2"
+  
+  step_2_check_qa:
+    question: "Need to ask questions about document content?"
+    if_yes: "ROUTE TO QIANFAN-OCR (unique capability)"
+    if_no: "Continue to step 3"
+  
+  step_3_check_handwriting:
+    question: "Is handwriting the primary content?"
+    if_yes: "ROUTE TO QIANFAN-OCR (excellent performance)"
+    if_no: "Continue to step 4"
+  
+  step_4_check_layout_complexity:
+    question: "Complex, cluttered, or ambiguous layout?"
+    if_yes: "STRONG PREFERENCE for Qianfan-OCR (Layout-as-Thought)"
+    if_no: "Continue to step 5"
+  
+  step_5_check_language:
+    question: "Is document in rare language or many languages?"
+    if_yes: "Qianfan-OCR (192 languages)"
+    if_common_language: "Continue to step 6"
+  
+  step_6_check_understanding_vs_extraction:
+    question: "Need understanding or just extraction?"
+    if_understanding: "Qianfan-OCR"
+    if_extraction_only: "Consider alternatives based on content type"
+  
+  step_7_general:
+    conclusion: "For simple extraction, consider GOT or PaddleOCR (more efficient)"
+
+# Confidence scoring
+confidence_scores:
+  
+  high_confidence_routing:
+    scenarios:
+      - kie_tasks: 0.95
+      - document_qa: 0.95
+      - complex_layout_reasoning: 0.90
+      - handwriting_primary: 0.90
+      - maximum_language_coverage: 0.95
+      - semantic_understanding: 0.90
+  
+  medium_confidence_routing:
+    scenarios:
+      - general_document_intelligence: 0.80
+      - mixed_content: 0.75
+      - long_documents: 0.75
+  
+  low_confidence_routing:
+    scenarios:
+      - simple_text_only: 0.30
+      - sota_tables_only: 0.70
+      - formatted_output: 0.65
+      - speed_critical: 0.50
+
+# Layout-as-Thought usage guide
+layout_as_thought_routing:
+  
+  enable_thinking_if:
+    - "Multi-column complex layouts"
+    - "Cluttered elements"
+    - "Non-standard reading order"
+    - "Heterogeneous pages"
+    - "Ambiguous structure"
+  
+  skip_thinking_if:
+    - "Simple single-column documents"
+    - "Clear, straightforward layouts"
+    - "Standard business documents with known structure"
+  
+  api_usage:
+    parameter: "enable_thinking=True in apply_chat_template"
+    note: "Adds reasoning overhead but improves accuracy on complex docs"
+
+# Tier alignment
+tier_recommendations:
+  
+  enterprise:
+    primary: true
+    reasoning: "Most comprehensive capabilities; highest quota needs"
+    use_cases:
+      - "Large-scale KIE workflows"
+      - "Document intelligence platforms"
+      - "Complex multi-lingual operations"
+  
+  pro:
+    primary: true
+    reasoning: "Advanced capabilities for mid-volume"
+    use_cases:
+      - "Handwriting processing"
+      - "Multi-lingual documents"
+      - "Document understanding workflows"
+  
+  basic:
+    not_recommended: true
+    reasoning: "Overkill for basic use cases"
+
+# Comparison decision points
+qianfan_vs_got:
+  choose_qianfan_if:
+    - "Need KIE (field extraction)"
+    - "Document Q&A required"
+    - "Handwriting is primary"
+    - "Complex layout needs reasoning"
+    - "192 language coverage needed"
+    - "Semantic understanding required"
+  
+  choose_got_if:
+    - "Need formatted output (Markdown, LaTeX)"
+    - "Interactive region extraction"
+    - "Speed is critical"
+    - "Straightforward extraction"
+
+qianfan_vs_paddle:
+  choose_qianfan_if:
+    - "KIE workflows"
+    - "Document Q&A"
+    - "Handwriting content"
+    - "Complex layout reasoning"
+    - "Need >109 languages"
+    - "Semantic understanding"
+  
+  choose_paddle_if:
+    - "Pure table extraction (SOTA)"
+    - "Business forms (invoices, receipts) without KIE"
+    - "Need explicit layout from two-stage"
+    - "Efficiency is priority (0.9B vs 4B)"
+    - "Seals/stamps present"
+
+# Prompt engineering guidance
+prompt_strategies:
+  
+  for_kie:
+    prompt: "Extract the following fields: [field1], [field2], [field3]"
+    note: "Qianfan understands semantic field descriptions"
+  
+  for_qa:
+    prompt: "What is [question about document]?"
+    examples:
+      - "What is the total amount on this invoice?"
+      - "Who are the parties to this contract?"
+      - "What is the expiration date?"
+  
+  for_layout_reasoning:
+    prompt: "Parse this document with layout analysis"
+    enable: "enable_thinking=True"
+  
+  for_markdown_conversion:
+    prompt: "Convert this document to Markdown format"
+
+# Fallback logic
+fallback_scenarios:
+  
+  if_qianfan_fails:
+    common_causes:
+      - "Model overload or timeout"
+      - "Unsupported edge case"
+      - "Language truly unsupported"
+    fallback_order:
+      1: "Retry with enable_thinking=True (if not already enabled)"
+      2: "Try PaddleOCR-VL (different architecture)"
+      3: "Try GOT-OCR 2.0 (different approach)"
+      4: "Manual review"
+  
+  if_kie_accuracy_low:
+    diagnosis: "Check field names, prompt clarity"
+    solutions:
+      - "Refine prompt with clearer field descriptions"
+      - "Enable Layout-as-Thought for complex forms"
+      - "Add examples to prompt (few-shot)"
+      - "Verify field actually exists in document"

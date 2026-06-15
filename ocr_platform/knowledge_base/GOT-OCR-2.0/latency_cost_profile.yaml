@@ -1,0 +1,197 @@
+# GOT-OCR 2.0 Latency and Cost Profile
+# Confidence: placeholder (requires benchmarking on your infrastructure)
+# Source: Model specifications + general inference patterns
+
+model_specifications:
+  parameters: "580M (smallest among the three engines)"
+  architecture: "Encoder-decoder"
+  encoder_size: "~80M parameters"
+  decoder_size: "~500M parameters"
+
+theoretical_performance:
+  
+  relative_to_alternatives:
+    vs_paddleocr_vl:
+      comparison: "GOT (580M) vs PaddleOCR-VL (0.9B)"
+      expectation: "GOT should be ~35% faster due to smaller size"
+      confidence: "medium (theoretical)"
+    
+    vs_qianfan:
+      comparison: "GOT (580M) vs Qianfan (4B)"
+      expectation: "GOT should be ~85% faster due to much smaller size"
+      confidence: "high (theoretical)"
+  
+  inference_characteristics:
+    encoding_phase: "Fast (80M encoder)"
+    decoding_phase: "Moderate (500M decoder, 8K context)"
+    note: "Decoding time grows with output length"
+
+# PLACEHOLDER: Actual latency depends on deployment
+latency_estimates:
+  
+  simple_text_page:
+    description: "Single A4 page, plain text, ~500 words"
+    estimated_latency: "TBD - benchmark needed"
+    factors:
+      - "GPU type (T4, V100, A100)"
+      - "Batch size"
+      - "Cold start vs warm"
+    platform_setting:
+      gpu: "cuda"
+      dpi: 144
+      eager_load: false
+  
+  table_heavy_page:
+    description: "Single page with 2-3 complex tables"
+    estimated_latency: "TBD - benchmark needed"
+    note: "Table recognition adds decoding time"
+  
+  formula_heavy_page:
+    description: "Single page with 10+ mathematical formulas"
+    estimated_latency: "TBD - benchmark needed"
+    note: "LaTeX generation may increase decoding time"
+  
+  multi_page_document:
+    description: "10-page document, mixed content"
+    estimated_latency: "TBD - benchmark needed"
+    note: "Multi-page mode processes together; not 10x single-page"
+  
+  high_resolution_image:
+    description: ">2K resolution with dynamic cropping"
+    estimated_latency: "TBD - benchmark needed"
+    note: "Dynamic resolution adds cropping + merging overhead"
+
+cold_start_considerations:
+  
+  model_loading:
+    description: "First inference loads model into GPU memory"
+    estimated_time: "TBD - 10-30 seconds typical for 580M model"
+    mitigation: "Set GOT_OCR_EAGER_LOAD=true in production"
+    platform_default: false
+  
+  subsequent_inferences:
+    description: "Model already in memory"
+    performance: "Full speed, no loading overhead"
+
+cost_profile:
+  
+  compute_cost:
+    type: "GPU inference cost"
+    factors:
+      - "GPU instance type (e.g., g4dn.xlarge on AWS)"
+      - "Inference time per document"
+      - "Utilization rate"
+    note: "Smaller model = lower cost per inference"
+  
+  relative_cost:
+    vs_paddleocr: "~35% cheaper (smaller model)"
+    vs_qianfan: "~85% cheaper (much smaller model)"
+    confidence: "medium (theoretical)"
+  
+  storage_cost:
+    model_size: "~2.3 GB (580M parameters in FP16/BF16)"
+    note: "One-time storage cost, negligible compared to inference"
+
+scaling_characteristics:
+  
+  batch_processing:
+    single_inference: "Optimized for single documents"
+    batch_support: "Multi-page mode acts as batching for related pages"
+    throughput: "Higher throughput due to smaller model size"
+  
+  concurrent_requests:
+    gpu_memory: "~4-6 GB VRAM for 580M model"
+    parallelization: "Can run multiple instances on larger GPUs"
+    note: "Smaller model allows more concurrent instances"
+
+cost_optimization_strategies:
+  
+  eager_loading:
+    benefit: "Eliminates cold start latency"
+    trade_off: "GPU memory always occupied"
+    recommendation: "Enable for production with consistent traffic"
+  
+  batch_similar_documents:
+    benefit: "Amortize encoding overhead"
+    implementation: "Use multi-page mode for related documents"
+  
+  right_size_gpu:
+    recommendation: "GOT-OCR 2.0 doesn't need A100; T4 or V100 sufficient"
+    savings: "Significant cost reduction vs large GPU"
+  
+  dynamic_scaling:
+    approach: "Scale up instances during peak, down during idle"
+    works_well: "Fast cold start makes this viable"
+
+performance_tuning:
+  
+  platform_settings:
+    GOT_OCR_ENABLED: true
+    GOT_OCR_MODEL_ID: "ucaslcl/GOT-OCR2_0"
+    GOT_OCR_DEVICE: "cuda"  # or "cpu" for non-GPU (slow)
+    GOT_OCR_PDF_DPI: 144  # Higher = better quality, slower
+    GOT_OCR_MAX_PDF_PAGES: 50
+    GOT_OCR_EAGER_LOAD: false  # Set true for production
+  
+  trade_offs:
+    higher_dpi:
+      benefit: "Better OCR accuracy"
+      cost: "Larger images = slower processing"
+    
+    eager_load:
+      benefit: "No cold start latency"
+      cost: "GPU memory always occupied"
+    
+    multi_page_mode:
+      benefit: "Maintains context across pages"
+      cost: "Slightly longer processing for batch"
+
+benchmarking_recommendations:
+  
+  priority_high:
+    - "Measure latency on representative documents from your use cases"
+    - "Test cold start vs warm inference times"
+    - "Profile GPU memory usage"
+  
+  priority_medium:
+    - "Compare throughput vs PaddleOCR-VL and Qianfan-OCR"
+    - "Measure scaling characteristics (concurrent requests)"
+    - "Test different DPI settings for quality/speed trade-off"
+  
+  priority_low:
+    - "Profile different output formats (plain vs formatted)"
+    - "Test dynamic resolution overhead"
+    - "Measure interactive OCR latency"
+
+cost_vs_quality_matrix:
+  
+  lowest_cost:
+    engine: "TrOCR-Base"
+    use_when: "Simple text only"
+  
+  balanced:
+    engine: "GOT-OCR 2.0"
+    use_when: "Mixed content, formatted output, good speed needed"
+  
+  highest_quality:
+    engine: "Qianfan-OCR"
+    use_when: "Accuracy critical, cost secondary"
+  
+  table_specialist:
+    engine: "PaddleOCR-VL"
+    use_when: "Table-heavy, SOTA accuracy needed"
+
+monitoring_recommendations:
+  
+  key_metrics:
+    - "p50, p95, p99 latency by document type"
+    - "Cold start frequency and duration"
+    - "GPU utilization rate"
+    - "Throughput (documents per hour)"
+    - "Error rate by document complexity"
+  
+  alerting:
+    - "Latency >10s for simple pages"
+    - "GPU memory >90%"
+    - "Error rate >5%"
+    - "Cold starts >10% of requests (if eager_load off)"

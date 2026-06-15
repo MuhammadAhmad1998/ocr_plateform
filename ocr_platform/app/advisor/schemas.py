@@ -85,4 +85,5 @@ class RecommendationPayload(BaseModel):
     primary_reasons: list[str]
     alternative_reasons: list[str]
     selected_engine: str
+    selected_engine_name: str | None = None
     demo_tier: str

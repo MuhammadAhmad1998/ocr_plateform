@@ -1,0 +1,275 @@
+# PaddleOCR-VL Routing Guide
+# Confidence: heuristic (routing recommendations)
+# Source: Capability analysis + benchmarks
+
+# When to route to PaddleOCR-VL
+primary_use_cases:
+  
+  sota_table_extraction:
+    priority: "critical"
+    conditions:
+      - "Document is table-heavy"
+      - "Need highest accuracy for table structure"
+      - "Complex tables with merged cells"
+    confidence: "high"
+    reasoning: "SOTA on table benchmarks (94.76% TEDS, 97.11% TEDS-Structure)"
+    example: "Financial reports, invoice processing, structured data mining"
+  
+  business_documents:
+    priority: "critical"
+    conditions:
+      - "Invoices, receipts, forms"
+      - "Need structured data extraction"
+      - "Tables + text combination"
+    confidence: "high"
+    reasoning: "Optimized for business document workflows"
+    example: "Accounts payable automation, expense processing"
+  
+  multilingual_documents:
+    priority: "high"
+    conditions:
+      - "Documents in multiple languages"
+      - "Need documented language coverage"
+      - "Global operations"
+    confidence: "high"
+    reasoning: "109 languages documented (vs GOT unknown, Qianfan 192)"
+    example: "International business documents, multi-lingual archives"
+  
+  real_world_robustness:
+    priority: "high"
+    conditions:
+      - "Scanned documents with distortions"
+      - "Photos of documents (perspective, curved)"
+      - "Varying quality inputs"
+    confidence: "high"
+    reasoning: "SOTA on Real5-OmniDocBench (real-world robustness)"
+    example: "Mobile document capture, legacy archive digitization"
+  
+  chinese_documents_with_seals:
+    priority: "high"
+    conditions:
+      - "Chinese legal or business documents"
+      - "Contains company seals or stamps"
+      - "Official documents"
+    confidence: "high"
+    reasoning: "Unique seal recognition capability"
+    example: "Chinese contracts, certificates, official documents"
+  
+  formula_heavy_documents:
+    priority: "high"
+    conditions:
+      - "Mathematical formulas present"
+      - "Need LaTeX output"
+      - "SOTA formula accuracy required"
+    confidence: "high"
+    reasoning: "SOTA formula recognition (97.49% CDM)"
+    example: "Scientific papers, textbooks, technical manuals"
+  
+  explicit_layout_needed:
+    priority: "medium"
+    conditions:
+      - "Need bounding boxes for elements"
+      - "Require reading order information"
+      - "Downstream processing needs layout structure"
+    confidence: "high"
+    reasoning: "Two-stage architecture provides explicit layout analysis"
+    example: "Document structure analysis, custom post-processing"
+  
+  efficiency_with_quality:
+    priority: "medium"
+    conditions:
+      - "Need balance of accuracy and speed"
+      - "0.9B model sweet spot"
+    confidence: "medium"
+    reasoning: "Compact yet SOTA performance"
+    example: "High-volume processing with quality requirements"
+
+# When NOT to route to PaddleOCR-VL
+avoid_for:
+  
+  formatted_output_primary:
+    reason: "Good but not specialized for Markdown/LaTeX formatted output"
+    alternative: "Route to GOT-OCR 2.0 for formatted output needs"
+    confidence: "medium"
+    note: "PaddleOCR outputs structured data, but GOT has better format preservation"
+  
+  interactive_region_extraction:
+    reason: "No coordinate-based OCR like GOT"
+    alternative: "Route to GOT-OCR 2.0 for interactive workflows"
+    confidence: "high"
+  
+  document_qa_and_understanding:
+    reason: "Focused on extraction, not understanding"
+    alternative: "Route to Qianfan-OCR for document Q&A, KIE"
+    confidence: "high"
+  
+  maximum_language_coverage:
+    reason: "109 languages vs Qianfan's 192"
+    alternative: "Route to Qianfan-OCR if language is rare or unsupported"
+    confidence: "medium"
+    note: "109 is still comprehensive; check language list"
+  
+  simple_text_only:
+    reason: "Two-stage overhead for simple cases"
+    alternative: "Route to TrOCR-Base for plain text"
+    confidence: "medium"
+
+# Routing decision tree
+decision_tree:
+  
+  step_1_check_table_heavy:
+    question: "Is document primarily tables or table-heavy?"
+    if_yes: "ROUTE TO PADDLEOCR-VL (SOTA tables)"
+    if_no: "Continue to step 2"
+  
+  step_2_check_business_doc:
+    question: "Is this a business document (invoice, receipt, form)?"
+    if_yes: "STRONG PREFERENCE for PaddleOCR-VL"
+    if_no: "Continue to step 3"
+  
+  step_3_check_formulas:
+    question: "Document contains mathematical formulas?"
+    if_yes: "PaddleOCR-VL is excellent (97.49% CDM)"
+    if_also_needs_formatted_output: "Consider GOT-OCR 2.0 instead"
+    if_no: "Continue to step 4"
+  
+  step_4_check_seals:
+    question: "Document has seals or stamps?"
+    if_yes: "ROUTE TO PADDLEOCR-VL (unique capability)"
+    if_no: "Continue to step 5"
+  
+  step_5_check_layout_needs:
+    question: "Need explicit layout analysis?"
+    if_yes: "PaddleOCR-VL or Qianfan-OCR"
+    note: "PaddleOCR two-stage, Qianfan Layout-as-Thought"
+    if_no: "Continue to step 6"
+  
+  step_6_check_language:
+    question: "What languages?"
+    if_supported_by_109: "PaddleOCR-VL is good"
+    if_rare_language: "Check Qianfan-OCR (192 languages)"
+  
+  step_7_general:
+    conclusion: "PaddleOCR-VL is excellent general choice for structured documents"
+
+# Confidence scoring
+confidence_scores:
+  
+  high_confidence_routing:
+    scenarios:
+      - sota_table_extraction: 0.95
+      - business_forms_invoices: 0.95
+      - formula_recognition: 0.90
+      - seal_recognition: 0.95
+      - multilingual_109: 0.90
+      - real_world_robustness: 0.90
+  
+  medium_confidence_routing:
+    scenarios:
+      - chart_extraction: 0.80
+      - explicit_layout: 0.75
+      - mixed_content: 0.75
+  
+  low_confidence_routing:
+    scenarios:
+      - formatted_output: 0.60
+      - interactive_ocr: 0.20
+      - document_qa: 0.30
+
+# Task mode selection
+task_mode_routing:
+  
+  if_table_primary:
+    mode: "table"
+    confidence: "high"
+  
+  if_formula_primary:
+    mode: "formula"
+    confidence: "high"
+  
+  if_chart_primary:
+    mode: "chart"
+    confidence: "high"
+  
+  if_plain_text:
+    mode: "ocr"
+    confidence: "high"
+  
+  if_mixed_content:
+    strategy: "Run layout analysis first, then appropriate mode per element"
+    confidence: "medium"
+
+# Tier alignment
+tier_recommendations:
+  
+  basic:
+    primary: true
+    reasoning: "Excellent for business documents; 500 pages/month"
+    use_cases:
+      - "Invoice processing"
+      - "Form automation"
+      - "Business workflows"
+  
+  pro:
+    primary: true
+    reasoning: "Formula recognition + higher volume"
+    use_cases:
+      - "Scientific papers"
+      - "Technical documentation"
+      - "High-volume business processing"
+  
+  enterprise:
+    secondary: true
+    reasoning: "For very high volume or complex workflows"
+    use_cases:
+      - "Large-scale document processing"
+      - "Complex multi-element documents"
+
+# Comparison decision points
+paddle_vs_got:
+  choose_paddle_if:
+    - "Tables are primary focus (SOTA accuracy)"
+    - "Business documents (invoices, forms)"
+    - "Need explicit layout analysis"
+    - "Documents have seals/stamps"
+    - "Real-world quality variations"
+  
+  choose_got_if:
+    - "Need formatted output (Markdown, LaTeX structure)"
+    - "Interactive region extraction required"
+    - "Multi-page with cross-page formatting"
+    - "Speed is critical (smaller model)"
+
+paddle_vs_qianfan:
+  choose_paddle_if:
+    - "SOTA table accuracy required"
+    - "Efficiency matters (0.9B vs 4B)"
+    - "Straightforward extraction (not understanding)"
+    - "109 languages sufficient"
+  
+  choose_qianfan_if:
+    - "Need document Q&A or understanding"
+    - "Key information extraction (KIE)"
+    - "Complex layout reasoning needed"
+    - "192 language coverage required"
+    - "Document intelligence vs extraction"
+
+# Fallback logic
+fallback_scenarios:
+  
+  if_paddle_fails:
+    common_causes:
+      - "Highly irregular layout"
+      - "Handwriting misdetected"
+      - "Unsupported language"
+    fallback_order:
+      1: "Try Qianfan-OCR (broader capabilities)"
+      2: "Try GOT-OCR 2.0 (different architecture)"
+      3: "Manual review"
+  
+  if_table_extraction_poor:
+    diagnosis: "Check table complexity, borders"
+    solutions:
+      - "Ensure PP-DocLayoutV3 correctly detected table region"
+      - "Try adjusting input quality (DPI, contrast)"
+      - "For extremely complex tables, consider manual verification"

@@ -1,0 +1,128 @@
+# Platform Tier Capabilities
+# Confidence: verified
+# Source: ocr_platform/app/seed.py, ocr_platform/app/registry/models.py
+# Updated: Removed TrOCR engines, now using PaddleOCR, GOT-OCR 2.0, and Qianfan OCR only
+
+tiers:
+  free:
+    slug: "free"
+    public_name: "Starter"
+    description: "PDF text extraction; 50 pages/month; no API"
+    quota_limit: 50
+    api_access: false
+    engine: "PaddleOCR Lite"
+    features:
+      - "Basic PDF text extraction"
+      - "Simple document OCR"
+      - "Printed text recognition"
+      - "Web interface only"
+    use_cases:
+      - "Evaluation and testing"
+      - "Personal documents"
+      - "Low-volume needs"
+    limitations:
+      - "No API keys"
+      - "Limited to 50 pages/month"
+      - "No advanced features (tables, formulas, handwriting)"
+    
+  basic:
+    slug: "basic"
+    public_name: "Essential"
+    description: "Printed text + tables; 500 pages/month; API included"
+    quota_limit: 500
+    api_access: true
+    engine: "PaddleOCR Vision-Language"
+    features:
+      - "Printed text recognition"
+      - "Table extraction"
+      - "Invoice and form processing"
+      - "API access with rate limiting"
+      - "Webhook support"
+    use_cases:
+      - "Business documents"
+      - "Invoices and receipts"
+      - "Forms processing"
+      - "Integration with business workflows"
+    limitations:
+      - "Limited to printed text and tables"
+      - "No equation or handwriting support"
+      - "500 pages/month quota"
+    
+  pro:
+    slug: "pro"
+    public_name: "Professional"
+    description: "Equations, multi-language, handwriting; 5,000 pages/month"
+    quota_limit: 5000
+    api_access: true
+    engines:
+      - "GOT-OCR 2.0 (handwriting, equations, advanced features)"
+      - "Qianfan OCR (KIE, structured extraction)"
+    features:
+      - "All Basic features"
+      - "Mathematical equations (LaTeX)"
+      - "Handwriting recognition (89%+ accuracy)"
+      - "Multi-language support (100+ languages)"
+      - "Chart and diagram understanding"
+      - "Key Information Extraction (KIE)"
+      - "Medical and financial document processing"
+      - "Format preservation"
+      - "Priority processing"
+      - "Higher API rate limits"
+    use_cases:
+      - "Scientific papers and research documents"
+      - "Technical documentation with formulas"
+      - "Mixed handwritten/printed content"
+      - "Multi-lingual document processing"
+      - "Educational materials"
+      - "Medical claims and records"
+      - "Financial documents"
+    limitations:
+      - "5,000 pages/month quota"
+      - "May require preprocessing for very complex layouts"
+    
+  enterprise:
+    slug: "enterprise"
+    public_name: "Enterprise"
+    description: "All capabilities + custom fine-tuning; unlimited"
+    quota_limit: 999999
+    api_access: true
+    engines:
+      - "GOT-OCR 2.0 Enterprise (91%+ handwriting, 94%+ equations)"
+      - "Qianfan OCR Enterprise (95%+ invoice accuracy)"
+    features:
+      - "All Professional features"
+      - "Unlimited page processing"
+      - "Custom model fine-tuning"
+      - "Multi-column complex layouts"
+      - "Geometric shapes and diagrams"
+      - "Musical notation"
+      - "Molecular formulas"
+      - "Custom template extraction"
+      - "Advanced KIE with custom fields"
+      - "Highest accuracy benchmarks"
+      - "Dedicated support"
+      - "Custom SLA"
+      - "On-premise deployment option"
+    use_cases:
+      - "Large-scale document processing"
+      - "Complex academic papers"
+      - "Scientific and medical documents"
+      - "Specialized domain-specific documents"
+      - "Enterprise integration"
+      - "High-volume invoice processing"
+      - "Complex contract analysis"
+    limitations:
+      - "Higher cost"
+      - "May require custom integration work"
+
+# Platform constraints
+platform_constraints:
+  max_upload_size_mb: 10
+  max_pdf_pages_per_upload: 50
+  supported_formats:
+    - "application/pdf"
+    - "image/png"
+    - "image/jpeg"
+    - "image/jpg"
+  pdf_processing_dpi: 144
+  demo_runs_per_session: 1

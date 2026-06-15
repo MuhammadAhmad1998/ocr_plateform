@@ -1,0 +1,58 @@
+# Platform Technical Constraints
+# Confidence: verified
+# Source: ocr_platform/app/core/config.py, .env.example
+
+upload_constraints:
+  max_upload_size_mb: 10
+  max_pdf_pages: 50
+  supported_formats:
+    pdf: "application/pdf"
+    png: "image/png"
+    jpeg: "image/jpeg"
+    jpg: "image/jpg"
+
+processing_constraints:
+  pdf_dpi: 144
+  demo_runs_per_session: 1
+  max_file_retention_days: 90  # heuristic
+
+rate_limits:
+  free_tier:
+    requests_per_window: 30
+    window_seconds: 60
+  basic_tier:
+    requests_per_window: 60
+    window_seconds: 60
+  pro_tier:
+    requests_per_window: 120
+    window_seconds: 60
+  enterprise_tier:
+    requests_per_window: 300
+    window_seconds: 60
+
+authentication:
+  jwt_required: true
+  api_key_scopes:
+    - "ocr:read"
+    - "ocr:write"
+    - "demo:run"
+  session_management: true
+
+storage:
+  local_mode_available: true
+  s3_mode_available: true
+  document_retention: "auto-cleanup after processing"
+
+integration:
+  webhook_support: true
+  idempotency_support: true
+  stripe_checkout: true
+  sse_streaming: true
+
+# Confidence: heuristic - based on typical deployment needs
+latency_expectations:
+  simple_text_ocr: "2-5 seconds per page"
+  table_extraction: "3-8 seconds per page"
+  formula_recognition: "4-10 seconds per page"
+  complex_multi_element: "10-20 seconds per page"
+  note: "Actual latency depends on GPU availability, model loading, and document complexity"

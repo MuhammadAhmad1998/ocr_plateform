@@ -64,8 +64,16 @@ OPENAPI_TAGS = [
 async def lifespan(app: FastAPI):
     validate_production_settings(settings)
     wait_for_database(engine)
+    from app.rag.store import ensure_pgvector_extension
+
+    ensure_pgvector_extension()
     Base.metadata.create_all(bind=engine)
     seed_database()
+
+    if not settings.USE_MOCK_RAG:
+        from app.rag.indexer import ensure_kb_indexed
+
+        ensure_kb_indexed()
 
     if settings.VLM_ENABLED and settings.VLM_EAGER_LOAD:
         from app.vlm.service import vlm_service

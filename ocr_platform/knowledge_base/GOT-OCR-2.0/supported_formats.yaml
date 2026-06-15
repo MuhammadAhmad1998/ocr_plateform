@@ -1,0 +1,193 @@
+# GOT-OCR 2.0 Supported Formats
+# Confidence: documented
+# Source: https://huggingface.co/ucaslcl/GOT-OCR2_0, arxiv paper
+
+input_formats:
+  
+  images:
+    supported:
+      - format: "PNG"
+        notes: "Preferred for lossless quality"
+      - format: "JPEG / JPG"
+        notes: "Widely supported"
+      - format: "WebP"
+        notes: "Modern format support"
+    
+    specifications:
+      resolution:
+        standard: "1024×1024"
+        max: "2K+ with dynamic resolution mode"
+      color_modes:
+        - "RGB"
+        - "Grayscale"
+        - "RGBA (alpha ignored)"
+  
+  documents:
+    supported:
+      - format: "PDF"
+        modes:
+          - "Single page extraction"
+          - "Multi-page processing"
+        max_pages: 50  # Platform constraint
+        dpi: 144  # Platform setting
+        notes: "Converts PDF pages to images for processing"
+    
+    not_directly_supported:
+      - format: "DOCX / DOC"
+        workaround: "Convert to PDF first"
+      - format: "XLSX / XLS"
+        workaround: "Export as PDF or images"
+
+output_formats:
+  
+  plain_text:
+    description: "Raw text extraction"
+    encoding: "UTF-8"
+    use_cases:
+      - "Simple text extraction"
+      - "Full document transcription"
+  
+  markdown:
+    description: "Structured Markdown output"
+    features:
+      - "Preserves headings"
+      - "Lists and formatting"
+      - "Basic table structure"
+      - "Inline code blocks"
+    use_cases:
+      - "Documentation conversion"
+      - "Web content preparation"
+      - "Structured note-taking"
+  
+  mathpix_markdown:
+    description: "Enhanced Markdown with LaTeX formulas"
+    features:
+      - "Standard Markdown"
+      - "Inline formulas with $...$"
+      - "Display formulas with $$...$$"
+    use_cases:
+      - "Scientific document conversion"
+      - "Technical documentation"
+  
+  latex:
+    description: "Pure LaTeX output for formulas"
+    use_cases:
+      - "Mathematical equations"
+      - "Academic paper formatting"
+      - "Formula databases"
+  
+  tikz:
+    description: "TikZ format for geometric shapes and diagrams"
+    use_cases:
+      - "Diagram extraction"
+      - "Geometric shape representation"
+      - "LaTeX figure generation"
+  
+  smiles:
+    description: "SMILES notation for molecular formulas"
+    use_cases:
+      - "Chemistry documents"
+      - "Molecular structure databases"
+      - "Chemical notation extraction"
+  
+  kern:
+    description: "Kern format for sheet music"
+    use_cases:
+      - "Musical score digitization"
+      - "Music notation extraction"
+
+ocr_type_options:
+  
+  ocr:
+    mode: "Plain OCR"
+    output: "Plain text"
+    use_when: "Simple text extraction needed"
+  
+  format:
+    mode: "Formatted OCR"
+    output: "Markdown with structure"
+    use_when: "Need to preserve document structure"
+  
+  ocr_box:
+    mode: "Interactive OCR with coordinates"
+    input: "Bounding box coordinates [x1,y1,x2,y2]"
+    output: "Text within specified region"
+    use_when: "Extracting specific regions"
+  
+  ocr_color:
+    mode: "Interactive OCR with color"
+    input: "Color value for region marking"
+    output: "Text within colored region"
+    use_when: "Visual region specification"
+
+processing_modes:
+  
+  slice_style:
+    description: "Single region or small section"
+    input: "Cropped image or region"
+    use_cases:
+      - "Specific field extraction"
+      - "Focused OCR tasks"
+  
+  whole_page:
+    description: "Full page processing"
+    input: "Complete document page"
+    use_cases:
+      - "Full document transcription"
+      - "Page-level OCR"
+  
+  multi_page:
+    description: "Multiple pages processed together"
+    input: "Array of page images"
+    output: "Continuous text across pages"
+    use_cases:
+      - "Book digitization"
+      - "Long document processing"
+      - "Maintaining cross-page formatting"
+  
+  dynamic_resolution:
+    description: "Automatic cropping for high-res images"
+    input: "Images >2K resolution or unusual aspect ratios"
+    processing: "Crops into patches, processes, then merges"
+    use_cases:
+      - "Two-page spreads"
+      - "Ultra-high-resolution scans"
+      - "Wide panoramic documents"
+
+format_conversion_requirements:
+  
+  latex_rendering:
+    requires: "pdftex or similar LaTeX processor"
+    platform_support: "Post-processing needed"
+  
+  tikz_rendering:
+    requires: "TikZ LaTeX package"
+    platform_support: "Post-processing needed"
+  
+  smiles_visualization:
+    requires: "Chemistry visualization library (RDKit, etc.)"
+    platform_support: "Post-processing needed"
+  
+  kern_rendering:
+    requires: "verovio or music notation renderer"
+    platform_support: "Post-processing needed"
+
+platform_integration:
+  
+  api_format:
+    input: "Multipart form data with image/PDF file"
+    parameters:
+      - "ocr_type: ocr | format | ocr_box | ocr_color"
+      - "filename: optional, used for type detection"
+      - "options: JSON with model-specific options"
+    output: "JSON with text, layout, confidence, timing_ms"
+  
+  supported_by_platform:
+    - "Plain text (ocr mode)"
+    - "Formatted output (format mode)"
+    - "Interactive OCR (ocr_box, ocr_color modes)"
+  
+  platform_constraints:
+    max_file_size: "10 MB"
+    max_pdf_pages: 50
+    timeout: "Varies by complexity"

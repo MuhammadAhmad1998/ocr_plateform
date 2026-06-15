@@ -9,6 +9,8 @@ from app.advisor.fingerprint import fingerprint_document
 from app.advisor.models import ChatMessage, ChatSession, Document
 from app.advisor.schemas import DocumentResponse, MessageRequest, SessionCreate, SessionResponse
 from app.advisor.service import advisor_service
+from app.rag.retriever import rag_retriever
+from app.core.config import get_settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.exceptions import ConflictError, NotFoundError
@@ -16,6 +18,20 @@ from app.core.storage import storage
 from app.core.uploads import check_payload_size, validate_advisor_upload
 
 router = APIRouter(prefix="/advisor", tags=["advisor"])
+
+
+@router.get("/capabilities/")
+def get_advisor_capabilities():
+    """Expose RAG/LLM mode for UI indicators."""
+    settings = get_settings()
+    rag_info = rag_retriever.describe_mode()
+    return {
+        "rag_mode": rag_info["rag_mode"],
+        "llm_mode": advisor_service.describe_llm_mode(),
+        "indexed_chunks": rag_info["indexed_chunks"],
+        "use_mock_rag": rag_info["use_mock_rag_setting"],
+        "llm_provider": settings.LLM_PROVIDER,
+    }
 
 
 @router.post("/session/", response_model=SessionResponse, status_code=status.HTTP_201_CREATED)
@@ -39,9 +55,7 @@ def create_session(
     db.refresh(session)
 
     greeting = (
-        "Hello! I'm your OCR advisor. Upload a sample document and I'll help you find the perfect tier."
-        if not session.document_id
-        else "I see your document is ready. Let's discuss your OCR needs."
+        "Hello! I'm your OCR advisor. Tell me about your document processing needs—what types of documents will you be working with, and what's your use case?"
     )
     db.add(ChatMessage(session_id=session.id, role="assistant", content=greeting))
     db.commit()
@@ -121,18 +135,15 @@ async def send_message(
     db.commit()
 
     async def event_generator():
-        async for chunk in advisor_service.stream_response(db, session, data.content):
-            yield {"event": "message", "data": chunk}
+        import json
 
-        last_msg = (
-            db.query(ChatMessage)
-            .filter(ChatMessage.session_id == session.id, ChatMessage.role == "assistant")
-            .order_by(ChatMessage.created_at.desc())
-            .first()
-        )
-        if last_msg and last_msg.metadata_json:
-            import json
-            yield {"event": "recommendation", "data": json.dumps(last_msg.metadata_json)}
+        async for chunk in advisor_service.stream_response(db, session, data.content):
+            if isinstance(chunk, dict):
+                event = chunk.get("event")
+                if event in {"meta", "recommendation"}:
+                    yield {"event": event, "data": json.dumps(chunk["data"])}
+                continue
+            yield {"event": "message", "data": chunk}
 
         yield {"event": "done", "data": ""}
 

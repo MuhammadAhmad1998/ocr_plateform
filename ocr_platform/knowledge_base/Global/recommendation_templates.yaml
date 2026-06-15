@@ -1,0 +1,236 @@
+# Recommendation Response Templates
+# Confidence: heuristic (UX best practices)
+# Source: Platform advisor best practices
+
+# Template structure for tier + engine recommendations
+recommendation_format:
+  structure:
+    - "Clear tier recommendation with public name"
+    - "Specific engine selection with reasoning"
+    - "3-5 bullet points explaining 'why'"
+    - "Alternative option for flexibility"
+    - "Call to action (demo run offer)"
+  
+  tone:
+    - "Confident but not pushy"
+    - "Technical but accessible"
+    - "Focus on user benefits, not model specs"
+
+# Templates by use case
+templates:
+  
+  scientific_paper_high_accuracy:
+    primary_tier: "pro"
+    primary_engine: "qianfan-ocr"
+    message: |
+      Based on your scientific document with equations and complex layout, I recommend the **Professional tier** using **Qianfan-OCR**.
+      
+      **Why Qianfan-OCR?**
+      - Handles mathematical formulas with LaTeX output
+      - Layout-as-Thought reasoning for complex multi-column papers
+      - 192 language support for international research
+      - Excellent performance on academic documents (93.12% on OmniDocBench)
+      
+      **Alternative:** GOT-OCR 2.0 if you need interactive region-level extraction or prefer Markdown formatting.
+    alternative_tier: "pro"
+    alternative_engine: "got-ocr2"
+  
+  business_forms_tables:
+    primary_tier: "basic"
+    primary_engine: "paddle-ocr-vl"
+    message: |
+      For business documents with tables, I recommend the **Essential tier** using **PaddleOCR-VL**.
+      
+      **Why PaddleOCR-VL?**
+      - State-of-the-art table extraction (96.33% accuracy on OmniDocBench)
+      - First-class 'table' task mode for structured data
+      - Compact and efficient (0.9B parameters)
+      - Excellent for invoices, receipts, and forms
+      - 500 pages/month quota with API access
+      
+      **Alternative:** Essential tier with Donut-Base for simpler forms at lower compute cost.
+    alternative_tier: "basic"
+    alternative_engine: "donut-base"
+  
+  high_volume_mixed_content:
+    primary_tier: "pro"
+    primary_engine: "paddle-ocr-vl"
+    message: |
+      Given your high volume ({volume} pages/month) and mixed content, I recommend the **Professional tier** using **PaddleOCR-VL**.
+      
+      **Why PaddleOCR-VL?**
+      - Handles tables, formulas, and charts in one model
+      - Ultra-efficient 0.9B architecture for fast throughput
+      - 5,000 pages/month quota
+      - Multi-task capability (ocr, table, chart, formula modes)
+      - Strong real-world robustness
+      
+      **Alternative:** Enterprise tier with Qianfan-OCR if you need advanced document understanding or key information extraction.
+    alternative_tier: "enterprise"
+    alternative_engine: "qianfan-ocr"
+  
+  handwriting_primary:
+    primary_tier: "pro"
+    primary_engine: "qianfan-ocr"
+    message: |
+      For documents with significant handwriting, I recommend the **Professional tier** using **Qianfan-OCR**.
+      
+      **Why Qianfan-OCR?**
+      - Excellent handwriting recognition (Chinese and English)
+      - Handles mixed printed and handwritten content
+      - 192 languages for diverse handwritten scripts
+      - Can extract key information from handwritten forms
+      
+      **Alternative:** TrOCR-handwritten for English handwriting at lower cost.
+    alternative_tier: "pro"
+    alternative_engine: "trocr-handwritten"
+  
+  formatted_output_required:
+    primary_tier: "pro"
+    primary_engine: "got-ocr2"
+    message: |
+      Since you need formatted output (Markdown/LaTeX), I recommend the **Professional tier** using **GOT-OCR 2.0**.
+      
+      **Why GOT-OCR 2.0?**
+      - Excellent formatted output (Markdown, LaTeX, TikZ)
+      - Preserves document structure and formatting
+      - Interactive region-level OCR for precise extraction
+      - Handles formulas, tables, charts, and diagrams
+      - Fast inference with 580M parameter model
+      
+      **Alternative:** Qianfan-OCR for more comprehensive document intelligence features.
+    alternative_tier: "pro"
+    alternative_engine: "qianfan-ocr"
+  
+  simple_text_low_volume:
+    primary_tier: "basic"
+    primary_engine: "trocr-base"
+    message: |
+      For straightforward text documents at moderate volume, I recommend the **Essential tier** using **TrOCR-Base**.
+      
+      **Why TrOCR-Base?**
+      - Excellent printed text recognition
+      - Fast and efficient processing
+      - 500 pages/month with API access
+      - Cost-effective for simple documents
+      - Reliable for clean scans and forms
+      
+      **Alternative:** Starter tier (50 pages/month) if you're just evaluating.
+    alternative_tier: "free"
+    alternative_engine: "trocr-base"
+  
+  enterprise_custom_needs:
+    primary_tier: "enterprise"
+    primary_engine: "qianfan-ocr"
+    message: |
+      Given your high volume, complex requirements, and need for customization, I recommend the **Enterprise tier** using **Qianfan-OCR**.
+      
+      **Why Enterprise + Qianfan-OCR?**
+      - Unlimited page processing
+      - Most comprehensive capabilities (4B parameter model)
+      - Custom fine-tuning available
+      - Advanced layout analysis with Layout-as-Thought
+      - Key information extraction for business workflows
+      - 192 language support for global operations
+      - Dedicated support and SLA
+      
+      **Alternative:** Professional tier with PaddleOCR-VL if budget is a constraint.
+    alternative_tier: "pro"
+    alternative_engine: "paddle-ocr-vl"
+  
+  key_information_extraction:
+    primary_tier: "pro"
+    primary_engine: "qianfan-ocr"
+    message: |
+      For extracting specific fields from {doc_type}, I recommend the **Professional tier** using **Qianfan-OCR**.
+      
+      **Why Qianfan-OCR?**
+      - #1 performance on Key Information Extraction benchmarks (87.9% mean score)
+      - Specialized for invoices, receipts, certificates, ID cards
+      - Understands document context and semantics
+      - Can answer questions about document content
+      - Structured JSON output for easy integration
+      
+      **Alternative:** PaddleOCR-VL for table-heavy documents with structured layouts.
+    alternative_tier: "pro"
+    alternative_engine: "paddle-ocr-vl"
+
+  multilingual_global:
+    primary_tier: "pro"
+    primary_engine: "qianfan-ocr"
+    message: |
+      For documents in multiple languages ({languages}), I recommend the **Professional tier** using **Qianfan-OCR**.
+      
+      **Why Qianfan-OCR?**
+      - Most comprehensive language support (192 languages)
+      - Handles Latin, Cyrillic, Arabic, CJK, and South/Southeast Asian scripts
+      - Maintains accuracy across language switches
+      - Global deployment ready
+      
+      **Alternative:** PaddleOCR-VL supports 109 languages at a lower compute cost.
+    alternative_tier: "pro"
+    alternative_engine: "paddle-ocr-vl"
+
+# Reasoning explanation patterns
+reasoning_patterns:
+  
+  accuracy_focused:
+    keywords: ["state-of-the-art", "benchmark leader", "highest accuracy"]
+    use_when: "User prioritizes quality over speed or cost"
+  
+  efficiency_focused:
+    keywords: ["compact", "fast throughput", "efficient", "cost-effective"]
+    use_when: "User has high volume or speed requirements"
+  
+  capability_match:
+    keywords: ["specialized for", "designed for", "optimized for"]
+    use_when: "Document has specific requirements (tables, formulas, handwriting)"
+  
+  proven_track_record:
+    keywords: ["benchmark results", "tested on", "excellent performance on"]
+    use_when: "User needs confidence in recommendation"
+  
+  flexibility:
+    keywords: ["handles diverse", "multi-task", "versatile"]
+    use_when: "User has varied document types"
+
+# JSON output format for recommendations
+json_format:
+  structure:
+    recommendation:
+      primary_tier: "tier_slug"
+      primary_engine: "engine_slug"
+      primary_reasons:
+        - "Reason 1"
+        - "Reason 2"
+        - "Reason 3"
+      alternative_tier: "tier_slug"
+      alternative_engine: "engine_slug"
+      alternative_reasons:
+        - "Reason 1"
+        - "Reason 2"
+      demo_tier: "tier_slug"
+      selected_engine: "engine_slug"
+  
+  example: |
+    ```json
+    {
+      "recommendation": {
+        "primary_tier": "pro",
+        "primary_engine": "paddle-ocr-vl",
+        "primary_reasons": [
+          "State-of-the-art table extraction (96.33% accuracy)",
+          "Efficient 0.9B model for fast processing",
+          "Multi-task capability for varied document types"
+        ],
+        "alternative_tier": "basic",
+        "alternative_engine": "donut-base",
+        "alternative_reasons": [
+          "Lower cost option for simpler documents",
+          "Still capable of table extraction"
+        ],
+        "demo_tier": "pro",
+        "selected_engine": "paddle-ocr-vl"
+      }
+    }
+    ```

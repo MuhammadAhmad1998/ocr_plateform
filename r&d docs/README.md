@@ -47,11 +47,17 @@ docker compose up -d postgres redis
 cd ocr_platform
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
+# Local postgres (setup_postgres.sh):
 export DATABASE_URL=postgresql://ocr:ocr@localhost:5432/ocr_platform
+# Or Docker postgres (mapped to host port 5433):
+# export DATABASE_URL=postgresql://postgres:root@localhost:5433/ocr_platform
 export REDIS_URL=redis://localhost:6379/0
 export USE_LOCAL_STORAGE=true
+export USE_MOCK_RAG=false  # Auto-indexes knowledge_base/ on first start
 uvicorn app.main:app --reload --port 8000
 ```
+
+**Note:** First startup with `USE_MOCK_RAG=false` auto-indexes the knowledge base (15-60s). Subsequent restarts skip this. After editing KB files, run `python scripts/index_kb.py` to rebuild.
 
 Or with Docker:
 
@@ -99,21 +105,24 @@ Frontend: http://localhost:3000
 
 Copy `.env.example` to `.env`. Key settings:
 
-- `OPENAI_API_KEY` — Enables real LLM advisor (mock without it)
+- `OPENAI_API_KEY` / `GROQ_API_KEY` — Enables real LLM advisor (mock without it)
 - `STRIPE_SECRET_KEY` — Enables real checkout (mock without it)
-- `PINECONE_API_KEY` — Enables real RAG (mock by default)
+- `USE_MOCK_RAG=false` — Enables pgvector RAG with auto-indexing (mock by default)
 - `USE_LOCAL_STORAGE=true` — Local file storage instead of S3
 
 ## Tech Stack
 
-**Backend:** FastAPI, SQLAlchemy, Celery, Redis, PostgreSQL, JWT auth
+**Backend:** FastAPI, SQLAlchemy, Celery, Redis, PostgreSQL (pgvector), JWT auth
 
 **Frontend:** Next.js 14, TypeScript, Tailwind CSS, TanStack Query, Zustand
+
+**RAG:** LangChain, FastEmbed, pgvector for knowledge base retrieval
 
 **OCR:** Tesseract adapter (local), mock neural adapters for demo tiers
 
 ## Development Notes
 
 - Database auto-creates tables and seeds tiers/engines on startup
+- Knowledge base auto-indexes on first startup when `USE_MOCK_RAG=false`
 - Celery worker falls back to synchronous processing if Redis unavailable
 - Demo limited to 1 upload + 1 OCR run per advisor session

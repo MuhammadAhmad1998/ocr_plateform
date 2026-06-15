@@ -11,7 +11,7 @@ const nav = [
   { href: "/advisor", label: "Advisor" },
   { href: "/testing", label: "Testing" },
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/checkout", label: "Pricing" },
+  { href: "/pricing", label: "Pricing" },
 ];
 
 export function Navbar({ variant = "app" }: { variant?: "marketing" | "app" }) {

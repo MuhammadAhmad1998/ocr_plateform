@@ -1,0 +1,107 @@
+# Document Fingerprint Signal Interpretation Guide
+# Confidence: verified
+# Source: ocr_platform/app/advisor/fingerprint.py
+
+fingerprint_extraction:
+  doc_type:
+    possible_values: ["pdf", "image", "form", "scientific", "unknown"]
+    interpretation:
+      pdf: "Multi-page document, likely needs layout analysis"
+      image: "Single image, may be scanned document or photo"
+      form: "Structured document with fields and tables"
+      scientific: "Academic paper with equations, complex layouts"
+      unknown: "Unclassified, use general-purpose OCR"
+    
+  has_tables:
+    type: boolean
+    detection_method: "Presence of | or \\t characters in extracted text"
+    routing_impact: "High - suggests need for table-specialized engines"
+    
+  has_equations:
+    type: boolean
+    detection_method: "Presence of =, ∑, ∫, \\frac in text"
+    routing_impact: "High - requires formula recognition capability"
+    
+  has_handwriting:
+    type: boolean
+    detection_method: "Heuristic from filename or visual analysis"
+    routing_impact: "Critical - requires handwriting-capable models"
+    
+  layout_complexity:
+    possible_values: ["simple", "scanned", "complex"]
+    interpretation:
+      simple: "Single column, straightforward reading order"
+      scanned: "Image-based, may need OCR rather than text extraction"
+      complex: "Multi-column, mixed elements, non-linear reading order"
+    
+  page_count:
+    type: integer
+    routing_impact: "Affects batch processing and quota consumption"
+    
+  languages:
+    type: array
+    default: ["en"]
+    note: "Multi-language detection not fully implemented; assumes English"
+
+# Routing decision matrix based on fingerprint signals
+routing_logic:
+  handwriting_detected:
+    priority: "critical"
+    required_capability: "handwriting"
+    recommended_tier: "pro"
+    recommended_engines: ["trocr-handwritten", "qianfan-ocr"]
+    
+  equations_detected:
+    priority: "high"
+    required_capability: "equations"
+    recommended_tier: "pro"
+    recommended_engines: ["nougat-base", "paddle-ocr-vl", "got-ocr2", "qianfan-ocr"]
+    
+  tables_detected:
+    priority: "high"
+    required_capability: "tables"
+    recommended_tier: "basic"
+    recommended_engines: ["donut-base", "paddle-ocr-vl", "got-ocr2", "qianfan-ocr"]
+    
+  complex_layout:
+    priority: "medium"
+    required_capability: "multi_column"
+    recommended_tier: "enterprise"
+    recommended_engines: ["pix2struct", "doctr", "paddle-ocr-vl", "qianfan-ocr"]
+    
+  scientific_document:
+    priority: "high"
+    required_capability: "scientific_pdf"
+    recommended_tier: "pro"
+    recommended_engines: ["nougat-base", "got-ocr2", "qianfan-ocr"]
+    
+  simple_form:
+    priority: "low"
+    required_capability: "printed_text"
+    recommended_tier: "basic"
+    recommended_engines: ["trocr-base", "donut-base", "paddle-ocr-vl"]
+
+# Question generation based on missing signals
+question_generation_rules:
+  - condition: "doc_type == 'unknown'"
+    ask: "What type of documents will you primarily process? (invoices, scientific papers, forms, handwritten notes)"
+    priority: "high"
+    
+  - condition: "volume not specified"
+    ask: "What's your expected monthly document volume?"
+    priority: "high"
+    
+  - condition: "has_tables == false AND doc_type == 'form'"
+    ask: "Do you need to extract table structure or just the text content?"
+    priority: "medium"
+    
+  - condition: "has_equations == true"
+    ask: "Do you need LaTeX output for the mathematical formulas?"
+    priority: "medium"
+    
+  - condition: "has_handwriting == false AND simple layout"
+    skip_question: "Document appears to be printed text, no need to ask about handwriting"
+    
+  - condition: "fingerprint complete"
+    ask: "Do you have any specific accuracy or speed requirements?"
+    priority: "low"

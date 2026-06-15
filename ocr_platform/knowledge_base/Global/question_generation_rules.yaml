@@ -1,0 +1,206 @@
+# Question Generation Rules for Discovery Phase
+# Confidence: heuristic (conversational strategy)
+# Source: Platform UX best practices
+
+conversation_phases:
+  greeting:
+    order: 1
+    actions:
+      - "Welcome user"
+      - "Confirm document upload"
+      - "Set expectations for Q&A process"
+  
+  discovery:
+    order: 2
+    goal: "Understand document type, volume, and special requirements"
+    max_questions: 3
+  
+  clarification:
+    order: 3
+    goal: "Resolve ambiguities from discovery"
+    max_questions: 1
+  
+  recommendation:
+    order: 4
+    actions:
+      - "Provide tier + engine recommendation"
+      - "Explain reasoning"
+      - "Offer demo run"
+
+# Conditional question rules
+question_rules:
+  
+  # Always ask if not obvious from fingerprint
+  document_type:
+    priority: "critical"
+    condition: "doc_type == 'unknown' OR confidence < 0.7"
+    question: "What type of documents will you primarily process?"
+    options:
+      - "Invoices, receipts, or business forms"
+      - "Scientific papers or research documents"
+      - "Handwritten notes or mixed content"
+      - "Technical documentation with diagrams"
+      - "General text documents"
+    skip_if:
+      - "doc_type in ['form', 'scientific', 'invoice']"
+      - "filename clearly indicates type"
+  
+  volume_estimate:
+    priority: "high"
+    condition: "always ask unless explicitly stated"
+    question: "What's your expected monthly document volume?"
+    options:
+      - "Less than 50 pages (trying it out)"
+      - "50-500 pages (small business)"
+      - "500-5,000 pages (growing business)"
+      - "More than 5,000 pages (enterprise scale)"
+    reasoning: "Directly maps to tier quotas"
+  
+  table_complexity:
+    priority: "high"
+    condition: "has_tables == true OR doc_type == 'form'"
+    question: "How complex are your tables?"
+    options:
+      - "Simple tables with clear borders"
+      - "Complex tables with merged cells or nested structure"
+      - "Borderless tables or invoice line items"
+    skip_if:
+      - "has_tables == false"
+    follow_up:
+      if_complex: "Consider Professional tier with PaddleOCR-VL for SOTA table extraction"
+  
+  formula_requirements:
+    priority: "high"
+    condition: "has_equations == true OR doc_type == 'scientific'"
+    question: "Do you need to extract mathematical formulas?"
+    sub_question: "Should formulas be converted to LaTeX format?"
+    skip_if:
+      - "has_equations == false AND doc_type != 'scientific'"
+    follow_up:
+      if_yes: "Consider Professional tier with formula-capable engines"
+  
+  handwriting_details:
+    priority: "high"
+    condition: "has_handwriting == true"
+    question: "Is handwriting the primary content or mixed with printed text?"
+    options:
+      - "Primarily handwritten"
+      - "Mixed handwritten and printed"
+      - "Occasional signatures only"
+    skip_if:
+      - "has_handwriting == false"
+      - "doc_type clearly indicates printed only"
+    follow_up:
+      if_primary: "Recommend Professional tier with TrOCR-handwritten or Qianfan-OCR"
+  
+  language_requirements:
+    priority: "medium"
+    condition: "languages_detected > 1 OR user_region != 'en'"
+    question: "Which languages do your documents contain?"
+    options:
+      - "English only"
+      - "Multiple Latin-script languages"
+      - "Chinese, Japanese, or Korean"
+      - "Arabic or right-to-left scripts"
+      - "Mix of many languages (5+)"
+    skip_if:
+      - "languages == ['en'] with high confidence"
+  
+  layout_complexity:
+    priority: "medium"
+    condition: "page_count > 5 OR layout_complexity == 'complex'"
+    question: "How is your document content organized?"
+    options:
+      - "Single column, straightforward reading order"
+      - "Multi-column layout (like newspapers)"
+      - "Mixed layout with figures, tables, and text"
+      - "Complex academic paper layout"
+    skip_if:
+      - "layout_complexity == 'simple' AND page_count < 3"
+  
+  output_format:
+    priority: "low"
+    condition: "user hasn't specified"
+    question: "What output format do you need?"
+    options:
+      - "Plain text is fine"
+      - "Structured format (Markdown, JSON)"
+      - "Preserve formatting (LaTeX for formulas)"
+    reasoning: "Helps select between engines with different output capabilities"
+  
+  accuracy_vs_speed:
+    priority: "low"
+    condition: "multiple engines viable"
+    question: "What's more important for your use case?"
+    options:
+      - "Highest possible accuracy"
+      - "Fast processing speed"
+      - "Balanced accuracy and speed"
+    reasoning: "Helps choose between model sizes"
+  
+  integration_needs:
+    priority: "low"
+    condition: "volume > 100"
+    question: "How will you integrate OCR into your workflow?"
+    options:
+      - "Manual uploads via web interface"
+      - "API integration for automation"
+      - "Batch processing via scripts"
+      - "Real-time processing as documents arrive"
+    skip_if:
+      - "tier == 'free' (no API access)"
+
+# Question prioritization logic
+prioritization:
+  phase_1_critical:
+    questions: ["document_type", "volume_estimate"]
+    rationale: "These two questions determine tier selection"
+  
+  phase_2_capability:
+    questions: ["table_complexity", "formula_requirements", "handwriting_details"]
+    rationale: "These determine engine selection within tier"
+  
+  phase_3_refinement:
+    questions: ["language_requirements", "layout_complexity", "output_format"]
+    rationale: "These fine-tune the recommendation"
+  
+  phase_4_optional:
+    questions: ["accuracy_vs_speed", "integration_needs"]
+    rationale: "Only ask if still ambiguous after phase 3"
+
+# Smart question skipping
+skip_logic:
+  confident_fingerprint:
+    condition: "fingerprint signals are clear and unambiguous"
+    skip:
+      - "Don't ask what the document type is if it's obviously an invoice"
+      - "Don't ask about tables if has_tables == false"
+      - "Don't ask about handwriting if it's a PDF with embedded text"
+  
+  tier_already_determined:
+    condition: "fingerprint clearly maps to single tier"
+    skip:
+      - "Skip questions that don't affect tier selection"
+      - "Focus only on engine selection questions"
+  
+  user_expertise:
+    condition: "user demonstrates OCR knowledge in responses"
+    skip:
+      - "Skip basic explanation questions"
+      - "Get straight to technical recommendations"
+
+# Question templates
+templates:
+  greeting:
+    - "Welcome! I can see you've uploaded **{filename}**. I'll ask a few quick questions to recommend the best OCR solution for your needs."
+  
+  follow_up:
+    - "Got it. A couple more questions:"
+    - "Thanks! Just to clarify:"
+  
+  pre_recommendation:
+    - "Based on your document and requirements, I have a recommendation."
+    - "Perfect! I can now suggest the best OCR tier and engine for you."
+  
+  clarification:
+    - "Just to make sure I understand correctly: {clarification_question}"

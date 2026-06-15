@@ -49,12 +49,19 @@ class Settings(BaseSettings):
 
     OPENAI_API_KEY: str = ""
     ANTHROPIC_API_KEY: str = ""
-    LLM_PROVIDER: str = "openai"
+    GROQ_API_KEY: str = ""
+    LLM_PROVIDER: str = "openai"  # openai | groq
     LLM_MODEL: str = "gpt-4o-mini"
+    GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
 
     PINECONE_API_KEY: str = ""
     PINECONE_INDEX: str = "ocr-knowledge"
     USE_MOCK_RAG: bool = True
+    RAG_COLLECTION_NAME: str = "ocr_knowledge"
+    RAG_EMBEDDING_BACKEND: str = "fastembed"  # fastembed | huggingface
+    RAG_EMBEDDING_MODEL: str = "BAAI/bge-small-en-v1.5"
+    RAG_EMBEDDING_DEVICE: str = "cpu"
+    RAG_TOP_K: int = 5
 
     STRIPE_SECRET_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""

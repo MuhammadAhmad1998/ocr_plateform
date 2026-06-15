@@ -1,0 +1,144 @@
+# Case Study: Interactive Form Field Extraction
+# Confidence: heuristic (synthesized use case)
+
+case_id: "got_interactive_forms"
+title: "Targeted Extraction from Complex Application Forms"
+engine: "got-ocr2"
+tier: "enterprise"
+
+user_profile:
+  role: "RPA developer"
+  organization: "Insurance company"
+  goal: "Extract specific fields from diverse application forms without full OCR"
+
+document_characteristics:
+  doc_type: "form"
+  page_count: 1-3
+  content:
+    - "Multi-section application forms"
+    - "Pre-printed fields with handwritten/typed answers"
+    - "Logos, headers, boilerplate text"
+    - "Target fields: name, date, policy number, signature section"
+  layout_complexity: "complex"
+  variance: "High - forms from 20+ different partners"
+  file_format: "PDF or scanned images"
+
+user_requirements:
+  - "Extract only specific fields, not entire document"
+  - "Support different form layouts without retraining"
+  - "Fast extraction (processing 1000+ forms/day)"
+  - "Integrate with RPA workflow"
+  - "Minimize false positives from boilerplate text"
+
+why_got_ocr2:
+  primary_reasons:
+    - "Interactive OCR allows coordinate-based extraction"
+    - "No need to OCR entire document (faster, cleaner output)"
+    - "Flexible for varying form layouts"
+    - "Fast inference (580M model) supports high volume"
+  
+  specific_advantages:
+    interactive_capability: "Unique coordinate-based OCR (ocr_box mode)"
+    workflow_fit: "RPA script passes bounding box coordinates"
+    speed: "Only processes specified regions"
+    accuracy: "F1=0.970 on fine-grained OCR benchmark"
+
+alternative_considered:
+  engine: "paddle-ocr-vl"
+  reason_not_chosen: "Requires full document OCR first, then extract fields - slower and more complex"
+  note: "PaddleOCR-VL would need two-stage: layout analysis + recognition"
+
+workflow:
+  steps:
+    1:
+      action: "RPA bot identifies form type"
+      method: "Logo detection or form ID field"
+    2:
+      action: "Lookup field coordinates for this form type"
+      source: "Configuration database (x1,y1,x2,y2 per field)"
+    3:
+      action: "Call GOT-OCR 2.0 with ocr_box mode"
+      input: "Image + bounding box coordinates"
+      output: "Text from specified region only"
+    4:
+      action: "Parse extracted text"
+      example: "Name: John Doe → extract 'John Doe'"
+    5:
+      action: "Validate and store in system"
+      validation: "Format checks, required field validation"
+
+example:
+  form_type: "Partner ABC Application Form"
+  target_fields:
+    applicant_name:
+      coordinates: [120, 450, 420, 490]
+      extracted: "John Doe"
+    policy_number:
+      coordinates: [120, 520, 320, 560]
+      extracted: "POL-2024-00123"
+    signature_date:
+      coordinates: [520, 1200, 720, 1240]
+      extracted: "2024-06-15"
+  
+  processing_time: "< 1 second for 3 fields"
+  note: "Much faster than full page OCR"
+
+results:
+  accuracy:
+    field_extraction: "~97% (based on fine-grained OCR benchmark)"
+    false_positives: "Low (only processes specified regions)"
+    note: "Accuracy depends on coordinate precision"
+  
+  processing_speed:
+    per_form: "< 1 second for 5-10 fields"
+    daily_volume: "1,200 forms processed"
+    throughput: "Meets requirement (1000+ forms/day)"
+  
+  integration:
+    rpa_tool: "UiPath"
+    api_calls: "RESTful API with coordinates in request body"
+    error_handling: "Fallback to manual review if confidence < 0.8"
+
+cost_benefit:
+  monthly_volume: "~25,000 forms × 1-3 pages = ~50,000 pages"
+  tier: "Enterprise (unlimited quota)"
+  vs_manual: "90% time reduction vs manual data entry"
+  vs_full_ocr: "3x faster than full-page OCR + field extraction"
+  roi: "Positive within 1 month"
+
+lessons_learned:
+  - "Coordinate calibration is crucial - maintain config database"
+  - "Interactive OCR much faster than full-page for targeted extraction"
+  - "Works well with consistent form layouts"
+  - "For highly variable layouts, consider Qianfan's KIE capability instead"
+  - "Combine with visual form detection for automatic coordinate lookup"
+
+limitations:
+  - "Requires upfront work to map field coordinates per form type"
+  - "Not suitable if form layouts change frequently"
+  - "Handwriting in fields may need specialized model"
+  - "Coordinate precision critical - poor coordinates = poor results"
+
+when_to_replicate:
+  good_fit:
+    - "Processing standardized forms from known templates"
+    - "High volume requiring fast extraction"
+    - "Only specific fields needed (not full transcription)"
+    - "Forms from finite set of partners/sources"
+  
+  poor_fit:
+    - "Completely unstructured documents"
+    - "Forms with frequently changing layouts"
+    - "Need full document understanding, not just extraction"
+    - "Free-form handwritten content"
+
+tags:
+  - "interactive_ocr"
+  - "forms"
+  - "coordinate_based"
+  - "rpa_integration"
+  - "targeted_extraction"
+  - "high_volume"
+
+confidence: "high"
+applicability: "Similar use cases: standardized form processing, field-level extraction, RPA workflows"

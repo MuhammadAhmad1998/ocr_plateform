@@ -1,0 +1,202 @@
+# OCR Engine Selection Rules
+# Confidence: heuristic (routing logic for advisor)
+# Source: Platform best practices + ocr_platform/app/registry/service.py scoring logic
+
+# Deterministic routing rules based on document signals
+routing_rules:
+  
+  rule_handwriting_primary:
+    condition:
+      has_handwriting: true
+      is_primary_content: true
+    action:
+      tier: "pro"
+      engines: ["trocr-handwritten", "qianfan-ocr"]
+      reasoning: "Handwriting recognition requires specialized models"
+      confidence: "high"
+  
+  rule_scientific_paper:
+    condition:
+      doc_type: "scientific"
+      OR:
+        - has_equations: true
+        - has_tables: true
+        - layout_complexity: "complex"
+    action:
+      tier: "pro"
+      engines: ["got-ocr2", "qianfan-ocr", "nougat-base"]
+      reasoning: "Scientific papers need equation recognition and complex layout handling"
+      confidence: "high"
+  
+  rule_business_forms:
+    condition:
+      doc_type: "form"
+      has_tables: true
+      has_equations: false
+      has_handwriting: false
+    action:
+      tier: "basic"
+      engines: ["paddle-ocr-vl", "donut-base"]
+      reasoning: "Business forms primarily need table extraction"
+      confidence: "high"
+  
+  rule_complex_tables:
+    condition:
+      has_tables: true
+      layout_complexity: "complex"
+    action:
+      tier: "pro"
+      engines: ["paddle-ocr-vl", "qianfan-ocr"]
+      reasoning: "PaddleOCR-VL has SOTA table recognition; Qianfan handles complex layouts"
+      confidence: "high"
+  
+  rule_multi_column_layout:
+    condition:
+      layout_complexity: "complex"
+      OR:
+        - multi_column_detected: true
+        - page_count: ">10"
+    action:
+      tier: "enterprise"
+      engines: ["qianfan-ocr", "pix2struct", "paddle-ocr-vl"]
+      reasoning: "Complex multi-column layouts need advanced layout analysis"
+      confidence: "medium"
+  
+  rule_chart_extraction:
+    condition:
+      has_charts: true
+      OR:
+        - doc_type: "report"
+        - doc_type: "presentation"
+    action:
+      tier: "pro"
+      engines: ["paddle-ocr-vl", "got-ocr2", "qianfan-ocr"]
+      reasoning: "All three engines have strong chart understanding capabilities"
+      confidence: "high"
+  
+  rule_key_information_extraction:
+    condition:
+      doc_type: ["invoice", "receipt", "id_card", "certificate"]
+      task: "key_information_extraction"
+    action:
+      tier: "pro"
+      engines: ["qianfan-ocr"]
+      reasoning: "Qianfan-OCR has SOTA performance on KIE tasks"
+      confidence: "high"
+  
+  rule_formatted_output_required:
+    condition:
+      output_format: ["markdown", "latex", "tikz"]
+    action:
+      tier: "pro"
+      engines: ["got-ocr2", "qianfan-ocr", "paddle-ocr-vl"]
+      reasoning: "These engines support structured formatted output"
+      confidence: "high"
+  
+  rule_multilingual_global:
+    condition:
+      languages: [">5"]
+      OR:
+        - languages_include: ["arabic", "cyrillic", "cjk"]
+    action:
+      tier: "pro"
+      engines: ["qianfan-ocr", "paddle-ocr-vl"]
+      reasoning: "Qianfan supports 192 languages, PaddleOCR supports 109"
+      confidence: "high"
+  
+  rule_simple_text_only:
+    condition:
+      has_tables: false
+      has_equations: false
+      has_handwriting: false
+      layout_complexity: "simple"
+    action:
+      tier: "basic"
+      engines: ["trocr-base", "paddle-ocr-vl"]
+      reasoning: "Simple printed text doesn't require advanced features"
+      confidence: "high"
+  
+  rule_high_volume_efficiency:
+    condition:
+      monthly_volume: ">1000"
+      speed_priority: "high"
+    action:
+      tier: "pro"
+      engines: ["got-ocr2", "paddle-ocr-vl"]
+      reasoning: "Smaller models (580M, 0.9B) provide better throughput"
+      confidence: "medium"
+  
+  rule_interactive_workflow:
+    condition:
+      workflow_type: "interactive"
+      region_based_ocr: true
+    action:
+      tier: "enterprise"
+      engines: ["got-ocr2"]
+      reasoning: "GOT-OCR 2.0 has unique interactive region-level OCR"
+      confidence: "high"
+
+# Engine scoring weights (used by registry_service._score_engine)
+scoring_weights:
+  has_handwriting:
+    weight: 30
+    required_tag: "handwriting"
+  
+  has_equations:
+    weight: 25
+    required_tag: "equations"
+  
+  has_tables:
+    weight: 20
+    required_tag: "tables"
+  
+  complex_layout:
+    weight: 20
+    required_tag: "multi_column"
+  
+  scientific_pdf:
+    weight: 25
+    required_tag: "scientific_pdf"
+  
+  benchmark_match:
+    weight: 10
+    multiplier: 10  # benchmark_score * 10
+  
+  cost_efficiency_simple:
+    weight: 10
+    condition: "layout_complexity == 'simple' AND cost_profile == 'low'"
+
+# Fallback logic
+fallback:
+  no_match_found:
+    tier: "basic"
+    engine: "trocr-base"
+    reasoning: "General-purpose engine as safe fallback"
+  
+  ambiguous_signals:
+    action: "ask_clarifying_questions"
+    questions:
+      - "What's the primary content type? (text, tables, formulas, mixed)"
+      - "Do you need structured output or plain text?"
+      - "What's your accuracy vs speed priority?"
+
+# Tier upgrade recommendations
+upgrade_paths:
+  free_to_basic:
+    triggers:
+      - "volume > 50"
+      - "api_access_needed"
+    
+  basic_to_pro:
+    triggers:
+      - "has_equations"
+      - "has_handwriting"
+      - "multi_language"
+      - "volume > 500"
+    
+  pro_to_enterprise:
+    triggers:
+      - "volume > 5000"
+      - "complex_multi_column_layouts"
+      - "custom_fine_tuning_needed"
+      - "on_premise_required"

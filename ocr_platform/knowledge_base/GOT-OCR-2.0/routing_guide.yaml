@@ -1,0 +1,231 @@
+# GOT-OCR 2.0 Routing Guide
+# Confidence: heuristic (routing recommendations)
+# Source: Capability analysis + platform routing logic
+
+# When to route to GOT-OCR 2.0
+primary_use_cases:
+  
+  formatted_output_required:
+    priority: "critical"
+    conditions:
+      - "User needs Markdown output"
+      - "User needs LaTeX formulas"
+      - "User wants structured formatting preserved"
+    confidence: "high"
+    reasoning: "GOT-OCR 2.0 excels at formatted output; this is a unique strength"
+    example: "Academic paper conversion to Markdown with LaTeX formulas"
+  
+  interactive_ocr_workflow:
+    priority: "critical"
+    conditions:
+      - "User needs region-level extraction"
+      - "User wants coordinate-based OCR"
+      - "User has visual region specification workflow"
+    confidence: "high"
+    reasoning: "GOT-OCR 2.0 has unique interactive OCR capability"
+    example: "Extracting specific tables or sections from complex documents"
+  
+  multi_page_complex_documents:
+    priority: "high"
+    conditions:
+      - "Document has 10+ pages"
+      - "Content spans across pages"
+      - "Formatting needs to be preserved across page breaks"
+    confidence: "high"
+    reasoning: "Multi-page OCR without pagination loops maintains context"
+    example: "Academic textbooks, research papers, long-form documents"
+  
+  chart_and_diagram_extraction:
+    priority: "high"
+    conditions:
+      - "Document contains charts, plots, or diagrams"
+      - "Need structured extraction from visual data"
+    confidence: "high"
+    reasoning: "Strong benchmark performance on ChartQA (AP@strict=0.747)"
+    example: "Scientific papers with data visualizations"
+  
+  high_resolution_scans:
+    priority: "medium"
+    conditions:
+      - "Images are >2K resolution"
+      - "Unusual aspect ratios (two-page spreads)"
+      - "Need dynamic cropping for accuracy"
+    confidence: "high"
+    reasoning: "Dynamic resolution feature handles ultra-high-res intelligently"
+    example: "Scanned book spreads, high-DPI professional scans"
+  
+  speed_and_efficiency_priority:
+    priority: "medium"
+    conditions:
+      - "High-volume processing (>1000 pages/month)"
+      - "Speed is prioritized over absolute max accuracy"
+      - "Compute budget is constrained"
+    confidence: "medium"
+    reasoning: "Smallest model (580M) = fastest inference among the three"
+    example: "Bulk document processing where fast turnaround matters"
+  
+  mixed_content_documents:
+    priority: "medium"
+    conditions:
+      - "Document has text + tables + formulas + charts"
+      - "Unified end-to-end processing preferred"
+    confidence: "high"
+    reasoning: "Unified architecture handles all content types"
+    example: "Technical reports, scientific papers with mixed elements"
+
+# When NOT to route to GOT-OCR 2.0
+avoid_for:
+  
+  handwriting_primary_content:
+    reason: "GOT-OCR 2.0 has moderate handwriting performance"
+    alternative: "Route to Qianfan-OCR or TrOCR-handwritten"
+    confidence: "high"
+  
+  sota_table_extraction:
+    reason: "PaddleOCR-VL has better table-specific performance (96.33% on OmniDocBench)"
+    alternative: "Route to PaddleOCR-VL for table-heavy documents"
+    confidence: "medium"
+    note: "GOT is still good at tables, just not SOTA"
+  
+  key_information_extraction:
+    reason: "Qianfan-OCR specialized for KIE (87.9% mean score)"
+    alternative: "Route to Qianfan-OCR for invoices, receipts, forms with KIE"
+    confidence: "high"
+  
+  explicit_layout_analysis_required:
+    reason: "End-to-end model doesn't provide bounding boxes by default"
+    alternative: "Route to PaddleOCR-VL (two-stage with layout) or Qianfan (Layout-as-Thought)"
+    confidence: "medium"
+    workaround: "Can use interactive OCR with coordinates if needed"
+  
+  maximum_language_coverage:
+    reason: "Language support not quantified; Qianfan has 192 documented"
+    alternative: "Route to Qianfan-OCR for global multilingual needs"
+    confidence: "medium"
+  
+  simple_text_only:
+    reason: "Overkill for plain text; TrOCR-Base is more efficient"
+    alternative: "Route to TrOCR-Base for simple printed text"
+    confidence: "medium"
+
+# Routing decision tree
+decision_tree:
+  
+  step_1_check_output_format:
+    question: "Does user need formatted output (Markdown, LaTeX)?"
+    if_yes: "ROUTE TO GOT-OCR 2.0 (primary strength)"
+    if_no: "Continue to step 2"
+  
+  step_2_check_interactive:
+    question: "Does workflow require interactive region extraction?"
+    if_yes: "ROUTE TO GOT-OCR 2.0 (unique capability)"
+    if_no: "Continue to step 3"
+  
+  step_3_check_content_type:
+    question: "What's the primary content?"
+    options:
+      handwriting: "AVOID GOT-OCR 2.0 → Use Qianfan or TrOCR-handwritten"
+      tables: "Consider PaddleOCR-VL (SOTA) but GOT is also good"
+      charts: "GOT-OCR 2.0 is strong (AP@strict=0.747)"
+      formulas: "GOT-OCR 2.0 is excellent (LaTeX output)"
+      mixed: "Continue to step 4"
+  
+  step_4_check_volume_and_speed:
+    question: "Is speed/efficiency critical?"
+    if_yes: "GOT-OCR 2.0 favored (smallest model)"
+    if_no: "Continue to step 5"
+  
+  step_5_check_special_requirements:
+    question: "Any special requirements?"
+    options:
+      kie: "AVOID GOT-OCR 2.0 → Use Qianfan-OCR"
+      layout_analysis: "Consider PaddleOCR-VL or Qianfan"
+      multi_page: "GOT-OCR 2.0 is strong"
+      high_res: "GOT-OCR 2.0 (dynamic resolution)"
+      default: "GOT-OCR 2.0 is a good general choice"
+
+# Confidence scoring
+confidence_scores:
+  
+  high_confidence_routing:
+    scenarios:
+      - formatted_output: 0.95
+      - interactive_ocr: 0.95
+      - charts_and_plots: 0.90
+      - multi_page_documents: 0.90
+      - formulas_with_latex: 0.90
+  
+  medium_confidence_routing:
+    scenarios:
+      - mixed_content: 0.75
+      - high_volume_speed: 0.75
+      - high_resolution: 0.80
+      - simple_tables: 0.70
+  
+  low_confidence_routing:
+    scenarios:
+      - handwriting: 0.30
+      - kie_tasks: 0.40
+      - sota_tables: 0.60
+      - rare_languages: 0.50
+
+# Tier alignment
+tier_recommendations:
+  
+  enterprise:
+    primary: true
+    reasoning: "GOT-OCR 2.0 is positioned as an enterprise-grade solution"
+    use_cases:
+      - "High-volume formatted output"
+      - "Complex multi-page documents"
+      - "Interactive workflows"
+  
+  pro:
+    secondary: true
+    reasoning: "Can be used in Pro tier for specialized tasks"
+    use_cases:
+      - "Scientific papers with formulas"
+      - "Chart extraction"
+      - "Formatted output needs"
+  
+  basic:
+    not_recommended: true
+    reasoning: "Overkill for basic use cases"
+
+# A/B testing recommendations
+when_to_compare:
+  
+  got_vs_paddle:
+    test_if: "Document is table-heavy"
+    compare: "Table extraction accuracy and structure"
+    expected: "PaddleOCR-VL may have slight edge; GOT is competitive"
+  
+  got_vs_qianfan:
+    test_if: "Complex layout or KIE needs"
+    compare: "Layout understanding and field extraction"
+    expected: "Qianfan may have edge on KIE; GOT has edge on formatted output"
+  
+  got_vs_trocr:
+    test_if: "Simple printed text"
+    compare: "Speed and accuracy"
+    expected: "Similar accuracy; TrOCR-Base may be faster for simple tasks"
+
+# Fallback logic
+fallback_scenarios:
+  
+  if_got_fails:
+    common_causes:
+      - "Document too complex"
+      - "Language not well-supported"
+      - "Handwriting misdetected as printed"
+    fallback_order:
+      1: "Try Qianfan-OCR (larger model, broader capabilities)"
+      2: "Try PaddleOCR-VL (different architecture)"
+      3: "Manual review required"
+  
+  if_output_format_wrong:
+    issue: "Formatted output not as expected"
+    solutions:
+      - "Try different ocr_type (ocr vs format)"
+      - "Post-process output with custom parser"
+      - "Use interactive OCR for specific regions"
