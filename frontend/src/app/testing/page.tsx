@@ -44,8 +44,9 @@ export default function TestingPage() {
     api
       .getTestingModels()
       .then((data) => {
-        // Filter to only show got_ocr, qianfan, and vlm (minicpm) models
+        // Filter to only show paddle_ocr, got_ocr, qianfan, and vlm models
         const filteredModels = data.models.filter((model) => 
+          model.type === "paddle_ocr" ||
           model.type === "got_ocr" || 
           model.type === "qianfan_ocr" || 
           model.type === "vlm"
@@ -257,6 +258,8 @@ export default function TestingPage() {
                       <option value="table">Table recognition</option>
                       <option value="chart">Chart recognition</option>
                       <option value="formula">Formula recognition</option>
+                      <option value="spotting">Text spotting</option>
+                      <option value="seal">Seal recognition</option>
                     </select>
                   </div>
                 )}
