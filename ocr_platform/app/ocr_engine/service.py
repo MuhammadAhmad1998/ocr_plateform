@@ -1,16 +1,19 @@
 import json
+import threading
 import uuid
 from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
+from app.advisor.demo_document import ensure_demo_document, engine_slug_for_session
 from app.advisor.models import ChatSession, Document
 from app.core.config import get_settings
 from app.core.exceptions import BadRequestError
 from app.core.storage import storage
 from app.ocr_engine.adapters.base import result_to_json, run_ocr
+from app.ocr_engine.demo_resolution import resolve_demo_engine
 from app.ocr_engine.models import OcrJob, UsageEvent
-from app.registry.models import Engine, Tier
+from app.registry.models import Engine
 
 settings = get_settings()
 
@@ -77,6 +80,21 @@ def _notify_job_webhook(db: Session, job: OcrJob) -> None:
     enqueue_job_webhook(db, job)
 
 
+def dispatch_demo_job(job_id: str) -> None:
+    """Process a demo OCR job in-process (no Celery worker required)."""
+
+    def _run() -> None:
+        from app.core.database import SessionLocal
+
+        db = SessionLocal()
+        try:
+            process_ocr_job(db, job_id)
+        finally:
+            db.close()
+
+    threading.Thread(target=_run, daemon=True, name=f"demo-ocr-{job_id}").start()
+
+
 def create_demo_job(
     db: Session,
     user_id: uuid.UUID,
@@ -87,24 +105,16 @@ def create_demo_job(
     if session.demo_run_count >= settings.DEMO_RUNS_PER_SESSION:
         raise BadRequestError("Demo run limit reached for this session")
 
-    if not session.document_id:
-        raise BadRequestError("No document uploaded for session")
-
-    tier = None
-    engine = None
-    if session.selected_engine_id:
-        engine = db.query(Engine).filter(Engine.id == session.selected_engine_id).first()
-    if session.recommendation_tier_id:
-        tier = db.query(Tier).filter(Tier.id == session.recommendation_tier_id).first()
-    if not engine and tier:
-        from app.registry.service import registry_service
-        doc = db.query(Document).filter(Document.id == session.document_id).first()
-        match = registry_service.select_engine_for_document(db, tier.slug, doc.fingerprint_json if doc else {})
-        if match:
-            engine = match.engine
-
+    tier, engine = resolve_demo_engine(db, session)
     if not engine:
-        engine = db.query(Engine).filter(Engine.slug == "trocr-base").first()
+        raise BadRequestError("No OCR engine selected for this session")
+
+    ensure_demo_document(
+        db,
+        session,
+        user_id,
+        engine_slug=engine_slug_for_session(db, session, engine),
+    )
 
     job = OcrJob(
         user_id=user_id,

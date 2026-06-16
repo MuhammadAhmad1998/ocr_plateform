@@ -74,3 +74,34 @@ def wait_for_database(engine, retries: int = 15, delay_seconds: float = 2.0) -> 
         f"Expected DATABASE_URL: {settings.DATABASE_URL}\n"
     )
     raise RuntimeError(message) from last_error
+
+
+# Columns added after initial deploy — create_all does not alter existing tables.
+_SCHEMA_PATCHES: tuple[tuple[str, str, str], ...] = (
+    ("ocr_jobs", "webhook_url", "VARCHAR(2048)"),
+)
+
+
+def sync_database_schema(engine) -> None:
+    """Apply additive schema patches for databases created before new columns were added."""
+    if not get_settings().DATABASE_URL.startswith("postgresql"):
+        return
+
+    with engine.begin() as conn:
+        for table, column, column_type in _SCHEMA_PATCHES:
+            exists = conn.execute(
+                text(
+                    """
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_schema = 'public'
+                      AND table_name = :table
+                      AND column_name = :column
+                    """
+                ),
+                {"table": table, "column": column},
+            ).fetchone()
+            if exists:
+                continue
+            conn.execute(text(f'ALTER TABLE "{table}" ADD COLUMN "{column}" {column_type}'))
+            logger.info("Added missing column %s.%s", table, column)

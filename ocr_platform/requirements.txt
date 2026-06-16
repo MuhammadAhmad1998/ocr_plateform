@@ -31,9 +31,11 @@ sse-starlette>=1.8.0
 pytest>=8.0.0
 pytest-asyncio>=0.23.0
 
-# VLM (MiniCPM-V) — on Linux + CUDA, install newer torch from https://pytorch.org if needed
-torch>=2.2.0,<2.3.0
-torchvision>=0.17.0,<0.18.0
-transformers>=5.8.0
+# VLM / OCR models — transformers>=5.8 requires torch>=2.4; use cu121 wheel on Linux+CUDA:
+# pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+torch>=2.4.0
+torchvision>=0.19.0
+transformers>=5.8.0,<5.10.0
+numpy>=1.26.0,<3.0.0
 accelerate>=0.27.0
 pymupdf>=1.24.0

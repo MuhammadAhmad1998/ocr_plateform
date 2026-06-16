@@ -140,7 +140,8 @@ export default function AdvisorPage() {
         }, 2000);
       } catch (err) {
         console.error("Demo failed:", err);
-        toast.error("Could not start live demo");
+        const message = err instanceof Error ? err.message : "Could not start live demo";
+        toast.error(message);
       }
     },
     [setDemoJob, setDemoResult]
@@ -318,6 +319,7 @@ export default function AdvisorPage() {
                         status={demoStatus}
                         result={demoResult}
                         tierName={recommendation ? TIER_NAMES[recommendation.demo_tier] : undefined}
+                        engineName={recommendation ? formatEngineName(recommendation) : undefined}
                       />
                       {recommendation && demoStatus === "failed" && (
                         <Button onClick={handleStartDemo} variant="outline" className="w-full">
