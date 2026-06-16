@@ -1,0 +1,203 @@
+# OCR Engine Comparison Matrix
+# Confidence: documented (from official sources) + verified (from codebase)
+# Sources: Model papers, HuggingFace model cards, ocr_platform/app/seed.py
+
+engines:
+  got-ocr2:
+    model_id: "ucaslcl/GOT-OCR2_0"
+    display_name: "GOT-OCR 2.0"
+    tier: "enterprise"
+    parameters: "580M"
+    source: "https://arxiv.org/abs/2409.01704"
+    
+    strengths:
+      - "Unified end-to-end architecture for all OCR tasks"
+      - "Excellent formatted output (Markdown, LaTeX, TikZ)"
+      - "Interactive region-level OCR via coordinates/colors"
+      - "Multi-page document processing"
+      - "Dynamic resolution for high-res images (>2K)"
+      - "Charts, tables, formulas, sheet music, geometric shapes"
+    
+    capabilities:
+      plain_text: "excellent"
+      tables: "excellent"
+      formulas: "excellent"
+      charts: "excellent"
+      handwriting: "moderate"
+      multi_column: "excellent"
+      formatted_output: "excellent"
+      interactive_ocr: "unique"
+    
+    benchmarks:
+      fox_pdf_f1: 0.972  # English PDF
+      fox_pdf_f1_zh: 0.980  # Chinese PDF
+      scene_ocr: "excellent"
+      fine_grained_ocr: "excellent"
+    
+    limitations:
+      - "Larger model size (580M params)"
+      - "Requires GPU for reasonable speed"
+      - "Primarily optimized for formatted output"
+    
+    best_for:
+      - "Academic papers and research documents"
+      - "Documents requiring formatted output"
+      - "Interactive OCR workflows"
+      - "Multi-page complex documents"
+      - "Chart and diagram extraction"
+
+  paddle-ocr-vl:
+    model_id: "PaddlePaddle/PaddleOCR-VL"
+    display_name: "PaddleOCR-VL 1.6"
+    tier: "basic / pro / enterprise"
+    parameters: "0.9B"
+    source: "https://arxiv.org/abs/2606.03264"
+    
+    strengths:
+      - "State-of-the-art on OmniDocBench (96.33% accuracy)"
+      - "Ultra-compact 0.9B parameter model"
+      - "First-class table, chart, formula tasks"
+      - "Two-stage: layout analysis + recognition"
+      - "109 languages supported"
+      - "Excellent real-world robustness"
+    
+    capabilities:
+      plain_text: "excellent"
+      tables: "state-of-the-art"
+      formulas: "excellent"
+      charts: "excellent"
+      handwriting: "good (ancient books, rare characters)"
+      seals: "excellent"
+      multi_column: "excellent"
+      structured_output: "excellent (Markdown, JSON)"
+    
+    benchmarks:
+      omnidocbench_v16: 96.33  # Overall accuracy
+      table_teds: 94.76
+      formula_cdm: 97.49
+      text_edit_distance: 0.033
+      real_world_robustness: "state-of-the-art"
+    
+    task_modes:
+      - "ocr"  # Plain text recognition
+      - "table"  # Table structure extraction
+      - "chart"  # Chart parsing
+      - "formula"  # Mathematical formula recognition
+    
+    limitations:
+      - "Two-stage process may be slower than end-to-end"
+      - "Requires layout analysis as first step"
+    
+    best_for:
+      - "Business documents (invoices, forms, receipts)"
+      - "Financial reports with complex tables"
+      - "Documents with seals and stamps"
+      - "Multi-lingual documents"
+      - "High-accuracy table extraction"
+      - "Ancient books and rare characters"
+
+  qianfan-ocr:
+    model_id: "baidu/Qianfan-OCR"
+    display_name: "Qianfan-OCR"
+    tier: "enterprise"
+    parameters: "4B"
+    source: "https://arxiv.org/abs/2603.13398"
+    
+    strengths:
+      - "Largest model (4B params) with strongest capabilities"
+      - "End-to-end document intelligence"
+      - "Layout-as-Thought reasoning mode"
+      - "192 languages supported (most comprehensive)"
+      - "Direct image-to-Markdown conversion"
+      - "Excellent document understanding and Q&A"
+    
+    capabilities:
+      plain_text: "excellent"
+      tables: "excellent"
+      formulas: "excellent"
+      charts: "excellent"
+      handwriting: "excellent"
+      multi_column: "excellent"
+      key_information_extraction: "state-of-the-art"
+      document_qa: "unique"
+      layout_analysis: "explicit (Layout-as-Thought)"
+    
+    benchmarks:
+      omnidocbench_v15: 93.12  # #1 end-to-end model
+      olmocr_bench: 79.8  # #1 end-to-end model
+      kie_mean: 87.9  # #1 on Key Information Extraction
+    
+    special_features:
+      layout_as_thought:
+        enabled_by: "<think> tokens"
+        provides: "Explicit bounding boxes, element types, reading order"
+        use_case: "Complex layouts, cluttered documents, non-standard reading order"
+      
+      prompt_driven:
+        - "Document parsing"
+        - "Table extraction"
+        - "Chart understanding"
+        - "Document Q&A"
+        - "Key information extraction"
+    
+    task_coverage:
+      - "Document parsing (image-to-Markdown)"
+      - "Multi-page parsing"
+      - "Layout analysis (25 element categories)"
+      - "Table recognition (complex, rotated, merged cells)"
+      - "Formula recognition (inline, display math)"
+      - "Chart understanding and Q&A"
+      - "Key information extraction"
+      - "Handwriting recognition"
+      - "Scene text recognition"
+      - "Multilingual OCR (192 languages)"
+    
+    limitations:
+      - "Largest model (4B params) - highest compute requirements"
+      - "Requires transformers>=5.8.0"
+      - "May be overkill for simple documents"
+    
+    best_for:
+      - "Complex document intelligence workflows"
+      - "Documents requiring layout reasoning"
+      - "Key information extraction (invoices, receipts, IDs)"
+      - "Multi-lingual global deployments"
+      - "Document Q&A and understanding"
+      - "Challenging layouts with cluttered elements"
+
+# Side-by-side comparison
+comparison_matrix:
+  model_size:
+    got-ocr2: "580M (smallest)"
+    paddle-ocr-vl: "0.9B (compact)"
+    qianfan-ocr: "4B (largest)"
+  
+  language_support:
+    got-ocr2: "Multi-lingual (not specified)"
+    paddle-ocr-vl: "109 languages"
+    qianfan-ocr: "192 languages (most comprehensive)"
+  
+  architecture:
+    got-ocr2: "End-to-end encoder-decoder"
+    paddle-ocr-vl: "Two-stage (layout + recognition)"
+    qianfan-ocr: "End-to-end with optional thinking phase"
+  
+  unique_features:
+    got-ocr2: "Interactive region OCR, dynamic resolution"
+    paddle-ocr-vl: "Task-specific modes, ultra-compact"
+    qianfan-ocr: "Layout-as-Thought, document Q&A"
+  
+  best_accuracy:
+    got-ocr2: "Formatted output, interactive OCR"
+    paddle-ocr-vl: "Tables (SOTA), real-world robustness"
+    qianfan-ocr: "Key information extraction, layout analysis"
+  
+  inference_speed:
+    got-ocr2: "Fast (smallest model)"
+    paddle-ocr-vl: "Fast (efficient architecture)"
+    qianfan-ocr: "Moderate (largest model, W8A8 quantization available)"
+  
+  deployment_complexity:
+    got-ocr2: "Low"
+    paddle-ocr-vl: "Low (compact)"
+    qianfan-ocr: "Moderate (requires transformers>=5.8.0)"

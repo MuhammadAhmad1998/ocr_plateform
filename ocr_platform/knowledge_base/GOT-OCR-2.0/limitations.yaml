@@ -1,0 +1,141 @@
+# GOT-OCR 2.0 Limitations
+# Confidence: documented + heuristic
+# Source: Paper analysis, model card, practical considerations
+
+known_limitations:
+  
+  handwriting_recognition:
+    severity: "moderate"
+    description: "Not specialized for handwriting; moderate performance"
+    alternative: "Use Qianfan-OCR or TrOCR-handwritten for handwriting-heavy documents"
+    confidence: "documented"
+  
+  explicit_layout_analysis:
+    severity: "low"
+    description: "End-to-end model doesn't provide explicit bounding boxes by default"
+    workaround: "Use interactive coordinate-based OCR for specific regions"
+    note: "Trade-off of end-to-end vs pipeline architecture"
+    confidence: "documented"
+  
+  model_size_vs_capability:
+    severity: "low"
+    description: "Smallest model (580M) means some capability trade-offs vs larger models"
+    context: "Optimized for efficiency; may have slightly lower accuracy than 4B Qianfan on complex tasks"
+    benefit: "Faster inference and lower compute requirements"
+    confidence: "heuristic"
+  
+  language_support_documentation:
+    severity: "low"
+    description: "Multi-lingual capability mentioned but not quantified in paper"
+    note: "192 language count not specified (unlike Qianfan)"
+    confidence: "documented"
+  
+  key_information_extraction:
+    severity: "moderate"
+    description: "Not specialized for KIE tasks (invoices, receipts, forms)"
+    alternative: "Use Qianfan-OCR for KIE workflows"
+    confidence: "heuristic"
+  
+  table_structure_specificity:
+    severity: "low"
+    description: "Good at tables but not SOTA like PaddleOCR-VL"
+    context: "PaddleOCR-VL has dedicated 'table' task mode"
+    confidence: "heuristic (benchmark comparison)"
+
+performance_constraints:
+  
+  gpu_requirements:
+    description: "Requires GPU for reasonable inference speed"
+    cpu_performance: "Possible but slow for production use"
+    recommended: "CUDA-capable GPU"
+    confidence: "verified (platform config)"
+  
+  batch_processing:
+    description: "Multi-page feature is good but single-image mode may be slower for large batches"
+    optimization: "Use multi-page mode when pages are related content"
+    confidence: "heuristic"
+  
+  cold_start:
+    description: "Model loading time on first inference"
+    mitigation: "Set EAGER_LOAD=true in production"
+    confidence: "verified (platform config)"
+
+format_limitations:
+  
+  output_format_processing:
+    description: "While model outputs plain text, formatted outputs need post-processing"
+    examples:
+      - "pdftex for LaTeX"
+      - "matplotlib for charts"
+      - "tikz for diagrams"
+      - "verovio for sheet music"
+    note: "Platform handles this but adds processing step"
+    confidence: "documented"
+  
+  iframe_content:
+    description: "Cannot process content inside iframes (if loaded in browser context)"
+    workaround: "Extract iframe content separately"
+    confidence: "verified (platform constraint)"
+
+deployment_considerations:
+  
+  transformers_version:
+    requirement: "Recent version of HuggingFace Transformers"
+    note: "Model relatively new (Sep 2024), ensure compatibility"
+    confidence: "documented"
+  
+  trust_remote_code:
+    requirement: "Must set trust_remote_code=True"
+    security_note: "Review model code if strict security requirements"
+    confidence: "documented"
+
+edge_cases:
+  
+  very_dense_text:
+    description: "8K token limit may be constraining for extremely long documents"
+    workaround: "Process in chunks or use page-by-page mode"
+    confidence: "heuristic"
+  
+  unusual_fonts_or_styles:
+    description: "Training data coverage determines performance on rare fonts"
+    note: "Generally robust but may struggle with highly stylized text"
+    confidence: "heuristic"
+  
+  low_quality_scans:
+    description: "Like all OCR, performance degrades with poor image quality"
+    recommendation: "Ensure minimum 300 DPI for scanned documents"
+    confidence: "general OCR principle"
+  
+  non_standard_reading_order:
+    description: "Complex layouts with non-linear reading order may be challenging"
+    alternative: "Qianfan's Layout-as-Thought better for this"
+    confidence: "heuristic"
+
+when_not_to_use:
+  scenarios:
+    - "Primary content is handwriting (use Qianfan or TrOCR-handwritten)"
+    - "Need explicit bounding boxes for layout analysis (use PaddleOCR-VL or Qianfan)"
+    - "Processing invoices/receipts for key info extraction (use Qianfan)"
+    - "Need SOTA table extraction accuracy (use PaddleOCR-VL)"
+    - "Documents in rare languages (use Qianfan with 192 language support)"
+    - "Very simple text-only documents (use TrOCR-Base for efficiency)"
+
+mitigation_strategies:
+  
+  combine_with_preprocessing:
+    - "Image enhancement for low-quality scans"
+    - "Deskewing for tilted documents"
+    - "Binarization for scanned documents"
+  
+  use_interactive_mode:
+    - "For complex layouts, extract regions separately"
+    - "Use coordinate-based OCR for precise control"
+  
+  leverage_formatted_output:
+    - "Use Markdown output for structure preservation"
+    - "LaTeX output for formulas provides machine-readable format"
+  
+  optimize_deployment:
+    - "Enable eager loading for production"
+    - "Use appropriate GPU for inference"
+    - "Consider batching strategy for high volume"

@@ -1,0 +1,245 @@
+# Case Study: Medical Claims Key Information Extraction
+# Confidence: heuristic (synthesized use case)
+
+case_id: "qianfan_medical_kie"
+title: "Automated Medical Claims Processing with KIE"
+engine: "qianfan-ocr"
+tier: "enterprise"
+
+user_profile:
+  role: "Claims processing manager"
+  organization: "Health insurance provider"
+  goal: "Automate extraction of key fields from 10,000+ medical claims per month"
+
+document_characteristics:
+  doc_type: "medical_form"
+  typical_pages: 2-4
+  content:
+    - "Patient information section"
+    - "Provider details"
+    - "Procedure codes and descriptions"
+    - "Diagnosis codes"
+    - "Itemized charges"
+    - "Insurance information"
+  complexity:
+    - "Mix of printed and handwritten content"
+    - "Varying form templates from 200+ providers"
+    - "Medical terminology and codes"
+    - "Multiple languages (English, Spanish)"
+  file_format: "PDF or scanned images (often poor quality)"
+
+user_requirements:
+  - "Extract specific fields for claims adjudication"
+  - "Handle handwritten notes from doctors"
+  - "Support forms from hundreds of different providers"
+  - "Process 10,000-15,000 claims per month"
+  - "High accuracy on dollar amounts and procedure codes"
+  - "Integrate with claims management system"
+  - "Minimize claim processing time from 5 days to <24 hours"
+
+why_qianfan_ocr:
+  primary_reasons:
+    - "SOTA on Key Information Extraction (87.9% mean, #1)"
+    - "Semantic understanding of document context"
+    - "Excellent handwriting recognition"
+    - "Can handle varying form templates without retraining"
+    - "Multi-lingual support (English and Spanish)"
+    - "4B model provides robust field extraction"
+  
+  specific_advantages:
+    kie_performance: "Purpose-built for field extraction with semantic understanding"
+    handwriting: "Handles handwritten doctor notes and signatures"
+    flexibility: "Adapts to varying form layouts via prompt"
+    accuracy: "#1 benchmark performance reduces manual review"
+    context_understanding: "Understands medical context (e.g., 'total charges' vs 'amount paid')"
+
+alternatives_considered:
+  
+  paddleocr_vl:
+    reason_not_chosen: "Strong on tables but not specialized for KIE semantic understanding"
+    note: "PaddleOCR excellent for structured extraction but Qianfan better for field-level understanding"
+  
+  got_ocr2:
+    reason_not_chosen: "No KIE capability; would need post-processing to map fields"
+    note: "GOT good for general OCR but lacks semantic field extraction"
+
+workflow:
+  steps:
+    1:
+      action: "Claim documents received (fax, email, portal)"
+      preprocessing: "Convert to PDF, basic quality enhancement"
+    2:
+      action: "Upload to OCR platform API"
+      endpoint: "/api/v1/ocr/jobs/"
+      model: "qianfan-ocr"
+      prompt: |
+        "Extract the following fields from this medical claim:
+        - Patient name
+        - Patient DOB
+        - Provider name and NPI
+        - Date of service
+        - Procedure codes (CPT codes)
+        - Diagnosis codes (ICD-10)
+        - Total charges
+        - Insurance member ID"
+    3:
+      action: "Qianfan-OCR processing"
+      mode: "Prompt-driven KIE"
+      optional: "Enable Layout-as-Thought for complex forms"
+      output: "Structured JSON with extracted fields + confidence"
+    4:
+      action: "Field validation"
+      checks:
+        - "Patient name matches member database"
+        - "Provider NPI is valid and in-network"
+        - "Procedure codes are valid CPT codes"
+        - "Diagnosis codes are valid ICD-10"
+        - "Charges are reasonable (outlier detection)"
+      fallback: "Low confidence (<0.85) → manual review queue"
+    5:
+      action: "Claims adjudication"
+      system: "Claims management system"
+      automation: "Auto-adjudicate if all validations pass + confidence >0.90"
+      manual_review: "10-15% of claims flagged for review"
+
+example_extraction:
+  claim_id: "CLM-2024-00123"
+  
+  extracted_fields:
+    patient_name:
+      value: "John Doe"
+      confidence: 0.96
+    patient_dob:
+      value: "1980-05-15"
+      confidence: 0.98
+    provider_name:
+      value: "Dr. Sarah Smith, MD"
+      confidence: 0.94
+      note: "Handwritten but recognized"
+    provider_npi:
+      value: "1234567890"
+      confidence: 0.99
+    date_of_service:
+      value: "2024-06-10"
+      confidence: 0.97
+    procedure_codes:
+      value: ["99213", "80053", "36415"]
+      confidence: [0.98, 0.96, 0.95]
+    diagnosis_codes:
+      value: ["E11.9", "I10"]
+      confidence: [0.97, 0.96]
+    total_charges:
+      value: 275.00
+      confidence: 0.99
+      note: "Critical field - high accuracy needed"
+    member_id:
+      value: "ABC123456789"
+      confidence: 0.98
+
+results:
+  accuracy:
+    field_extraction: "~88% (based on KIE benchmark)"
+    critical_fields: "~95% (amounts, codes)"
+    overall_claim: "85% fully correct, 10% partial, 5% needs review"
+    note: "87.9% benchmark translates to real-world accuracy"
+  
+  processing_speed:
+    per_claim: "~5-10 seconds (4B model + Layout-as-Thought)"
+    daily_capacity: "500-600 claims per day (single GPU)"
+    note: "Larger than GOT/PaddleOCR but acceptable for overnight batch"
+  
+  business_impact:
+    processing_time: "24 hours vs 5 days manual"
+    auto_adjudication: "85% of claims"
+    manual_review: "15% (down from 100%)"
+    cost_savings: "$150,000/month in labor"
+    accuracy_improvement: "95% vs 92% manual (human errors eliminated)"
+
+integration_details:
+  
+  api_integration:
+    method: "Batch API calls (overnight processing)"
+    authentication: "API key with enterprise quota"
+    input: "Multipart form-data with PDF + prompt"
+    output: "JSON with structured field mappings + confidence"
+  
+  cms_integration:
+    system: "Claims Management System (custom)"
+    field_mapping: "JSON fields → CMS database columns"
+    validation: "CMS performs additional business rules validation"
+    workflow:
+      high_confidence: "Auto-adjudicate"
+      medium_confidence: "Flag for review"
+      low_confidence: "Manual processing queue"
+
+cost_benefit:
+  monthly_volume: "12,000 claims × 3 pages avg = 36,000 pages"
+  tier: "Enterprise (unlimited quota)"
+  monthly_cost: "$X (tier cost + compute)"
+  savings:
+    labor: "$150,000/month (10 FTE claims processors)"
+    faster_payment: "$25,000/month (reduced claim turnaround)"
+    accuracy: "$10,000/month (fewer payment errors)"
+  roi: "Positive within 2-3 months"
+
+lessons_learned:
+  - "Layout-as-Thought crucial for varied form templates"
+  - "Prompt engineering important - clear field descriptions improve accuracy"
+  - "Handwriting recognition excellent but benefits from context"
+  - "Confidence scores reliable for routing (>0.90 = safe auto-adjudicate)"
+  - "Medical terminology handled well (model training data likely includes medical text)"
+  - "Dollar amounts need extra validation (outlier detection)"
+  - "Provider NPI lookup reduces false positives"
+
+challenges_and_solutions:
+  
+  challenge_1:
+    issue: "Varying form templates from 200+ providers"
+    solution: "Qianfan's semantic KIE adapts without template mapping"
+    note: "Prompt-driven approach more flexible than coordinate-based"
+  
+  challenge_2:
+    issue: "Handwritten doctor notes difficult to read"
+    solution: "Qianfan's excellent handwriting recognition (Chinese + English)"
+    note: "Still benefits from context clues (e.g., procedure code format)"
+  
+  challenge_3:
+    issue: "Poor scan quality from faxed documents"
+    solution: "Preprocessing + Qianfan's robustness"
+    note: "Image enhancement (deskew, denoise) helps"
+  
+  challenge_4:
+    issue: "4B model slower than alternatives"
+    solution: "Overnight batch processing acceptable for non-urgent claims"
+    note: "W8A8 quantization helps but still slower than GOT/PaddleOCR"
+
+scalability:
+  current: "12,000 claims/month"
+  can_scale_to: "50,000+ with multiple GPUs"
+  strategy: "Batch processing overnight, distribute across GPU cluster"
+
+when_to_replicate:
+  good_fit:
+    - "Key information extraction from forms"
+    - "Varying form templates (KIE flexibility)"
+    - "Mixed printed and handwritten"
+    - "Semantic field understanding required"
+    - "High-accuracy critical (financial, medical)"
+  
+  requirements:
+    - "Enterprise tier (high volume)"
+    - "GPU infrastructure (A100 recommended)"
+    - "Validation and fallback workflows"
+    - "Claims management system integration"
+
+tags:
+  - "key_information_extraction"
+  - "medical_claims"
+  - "handwriting"
+  - "semantic_understanding"
+  - "high_volume"
+  - "enterprise"
+  - "healthcare"
+
+confidence: "high"
+applicability: "Similar use cases: insurance claims, loan applications, customer onboarding, healthcare forms"

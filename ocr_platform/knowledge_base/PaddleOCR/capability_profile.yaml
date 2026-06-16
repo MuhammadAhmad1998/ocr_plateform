@@ -1,0 +1,249 @@
+# PaddleOCR-VL Capability Profile
+# Confidence: documented
+# Source: https://arxiv.org/abs/2606.03264, https://www.paddleocr.ai/
+
+model_info:
+  model_id: "PaddlePaddle/PaddleOCR-VL"
+  version: "1.6"
+  display_name: "PaddleOCR-VL 1.6"
+  full_name: "PaddleOCR Vision-Language Model"
+  developer: "PaddlePaddle (Baidu)"
+  parameters: "0.9B"
+  architecture: "Two-stage (layout analysis + recognition)"
+  paper: "https://arxiv.org/abs/2606.03264"
+  release_date: "June 2024 (v1.6)"
+
+core_concept:
+  approach: "Two-stage document parsing"
+  stage_1: "PP-DocLayoutV3 performs layout analysis and element localization"
+  stage_2: "PaddleOCR-VL-0.9B recognizes localized regions"
+  philosophy: "Ultra-compact, SOTA-performance VLM for practical deployment"
+
+strengths:
+  primary:
+    - "State-of-the-art on OmniDocBench v1.6 (96.33% overall accuracy)"
+    - "Ultra-compact 0.9B parameters (most efficient among compared engines)"
+    - "First-class task modes: ocr, table, chart, formula"
+    - "Excellent real-world robustness (Real5-OmniDocBench SOTA)"
+    - "109 languages supported (well-documented multilingual capability)"
+    - "Two-stage architecture provides explicit layout analysis"
+  
+  benchmarks:
+    omnidocbench_v16: "96.33% overall (SOTA)"
+    text_edit_distance: "0.033 (SOTA)"
+    formula_cdm: "97.49% (SOTA)"
+    table_teds: "94.76% (SOTA)"
+    table_teds_structure: "97.11% (SOTA)"
+    chart_recognition: "91.74 overall, 90.11 on charts, 93.37 on Chinese charts"
+    real_world_robustness: "SOTA on Real5-OmniDocBench"
+
+capabilities:
+  
+  text_recognition:
+    performance: "state-of-the-art"
+    benchmark:
+      text_edit_distance: 0.033
+      accuracy: "Excellent across 109 languages"
+    special_strengths:
+      - "Ancient books and rare Chinese characters"
+      - "Dense text recognition"
+      - "Multi-lingual documents"
+    use_cases:
+      - "Business documents"
+      - "Historical archives"
+      - "Multi-lingual content"
+  
+  table_recognition:
+    performance: "state-of-the-art"
+    benchmark:
+      table_teds: "94.76%"
+      table_teds_structure: "97.11%"
+    task_mode: "table"
+    types:
+      - "Simple bordered tables"
+      - "Complex tables with merged cells"
+      - "Borderless tables"
+      - "Invoice line items"
+      - "Financial reports"
+      - "Registration and catalog tables"
+      - "Cross-page tables"
+    output: "HTML, Markdown, JSON"
+    special_features:
+      - "Cell-level structure extraction"
+      - "Cross-page table merging"
+      - "Heading hierarchy refinement"
+    use_cases:
+      - "Financial document processing"
+      - "Invoice data extraction"
+      - "Structured data mining"
+  
+  formula_recognition:
+    performance: "state-of-the-art"
+    benchmark:
+      formula_cdm: "97.49%"
+    task_mode: "formula"
+    types:
+      - "Mathematical equations"
+      - "Inline formulas"
+      - "Display equations"
+    output: "LaTeX"
+    improvements: "Better with skewed formulas and varying illumination"
+    use_cases:
+      - "Scientific papers"
+      - "Textbooks"
+      - "Technical documentation"
+  
+  chart_recognition:
+    performance: "excellent"
+    benchmark:
+      overall: "91.74%"
+      general_charts: "90.11%"
+      chinese_charts: "93.37%"
+    task_mode: "chart"
+    types:
+      - "Bar charts"
+      - "Line plots"
+      - "Pie charts"
+      - "Complex scientific visualizations"
+    output: "Structured data extraction"
+    use_cases:
+      - "Business intelligence reports"
+      - "Scientific papers with plots"
+      - "Data visualization extraction"
+  
+  seal_recognition:
+    performance: "excellent"
+    special_feature: "Unique to PaddleOCR-VL"
+    types:
+      - "Company seals"
+      - "Official stamps"
+      - "Signature seals"
+    improvements_v16: "Enhanced compared to v1.5"
+    use_cases:
+      - "Legal documents"
+      - "Contracts"
+      - "Official certifications"
+      - "Chinese business documents"
+  
+  text_spotting:
+    performance: "excellent"
+    description: "Combined detection and recognition"
+    improvements_v16: "Enhanced compared to v1.5"
+    use_cases:
+      - "Scene text"
+      - "Natural images"
+      - "Signage"
+  
+  layout_analysis:
+    performance: "state-of-the-art"
+    component: "PP-DocLayoutV3"
+    features:
+      - "High-precision layout analysis"
+      - "Multi-point localization"
+      - "Handles perspective distortion"
+      - "Curved page support"
+      - "Irregular document layouts"
+    outputs:
+      - "Element bounding boxes"
+      - "Element types (text, table, formula, chart, seal)"
+      - "Reading order"
+    use_cases:
+      - "Complex document parsing"
+      - "Understanding document structure"
+      - "Downstream task preparation"
+
+task_modes:
+  
+  ocr:
+    description: "Plain text recognition"
+    input: "Image or document region"
+    output: "Plain text"
+    use_when: "Simple text extraction needed"
+  
+  table:
+    description: "Table structure extraction"
+    input: "Image containing table"
+    output: "HTML, Markdown, or JSON with cell-level structure"
+    use_when: "Need structured table data"
+    special: "First-class task mode (not just generic OCR)"
+  
+  chart:
+    description: "Chart parsing and data extraction"
+    input: "Image containing chart/plot"
+    output: "Structured data from visualization"
+    use_when: "Extract data from charts"
+  
+  formula:
+    description: "Mathematical formula recognition"
+    input: "Image containing formulas"
+    output: "LaTeX notation"
+    use_when: "Need machine-readable math"
+
+architecture_details:
+  
+  stage_1_layout_analysis:
+    component: "PP-DocLayoutV3"
+    purpose: "Identify and localize document elements"
+    outputs:
+      - "Bounding boxes"
+      - "Element types"
+      - "Reading order"
+    features:
+      - "Handles real-world distortions"
+      - "Multi-point localization"
+  
+  stage_2_recognition:
+    component: "PaddleOCR-VL-1.6-0.9B"
+    architecture: "NaViT-style dynamic resolution encoder + ERNIE-4.5-0.3B LM"
+    input: "Localized regions from stage 1"
+    output: "Recognized content per element type"
+    tasks: ["text", "table", "formula", "chart", "seal"]
+  
+  post_processing:
+    component: "Lightweight post-processing engine"
+    functions:
+      - "Organize outputs into Markdown or JSON"
+      - "Cross-page table merging"
+      - "Heading hierarchy refinement"
+
+language_support:
+  documented: "109 languages"
+  scripts:
+    - "Latin"
+    - "CJK (Chinese, Japanese, Korean)"
+    - "Cyrillic"
+    - "Arabic"
+    - "South Asian scripts"
+    - "Southeast Asian scripts"
+  special_capabilities:
+    - "Ancient books"
+    - "Rare Chinese characters"
+    - "Multi-lingual mixed documents"
+
+training_enhancements_v16:
+  approach: "Under-optimized region refinement + progressive post-training"
+  improvements:
+    - "Systematic analysis of under-optimized areas"
+    - "Targeted data optimization"
+    - "Refined post-training strategies"
+  results:
+    - "New SOTA on OmniDocBench v1.6 (96.33%)"
+    - "Improvements in text, formula, and table recognition"
+    - "Enhanced seal, chart, and text spotting"
+
+ideal_use_cases:
+  - "Business documents (invoices, receipts, forms)"
+  - "Financial reports with complex tables"
+  - "Documents requiring SOTA table extraction accuracy"
+  - "Multi-lingual document processing (109 languages)"
+  - "Real-world documents with physical distortions"
+  - "Documents with seals and stamps (legal, contracts)"
+  - "Ancient books and rare character recognition"
+  - "High-accuracy requirements with efficient inference"
+
+deployment_advantages:
+  - "Ultra-compact 0.9B model = efficient deployment"
+  - "Fast inference speeds"
+  - "Zero-cost adaptation (compatible architecture across versions)"
+  - "Drop-in replacement from v1.5 to v1.6"
+  - "Production-ready robustness (Real5-OmniDocBench SOTA)"

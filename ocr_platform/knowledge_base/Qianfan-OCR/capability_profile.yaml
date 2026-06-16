@@ -1,0 +1,265 @@
+# Qianfan-OCR Capability Profile
+# Confidence: documented
+# Source: https://arxiv.org/abs/2603.13398, https://huggingface.co/baidu/Qianfan-OCR
+
+model_info:
+  model_id: "baidu/Qianfan-OCR"
+  display_name: "Qianfan-OCR"
+  full_name: "Qianfan OCR - Unified Document Intelligence Model"
+  developer: "Baidu Qianfan Team"
+  parameters: "4B"
+  architecture: "End-to-end vision-language model with optional thinking phase"
+  paper: "https://arxiv.org/abs/2603.13398"
+  release_date: "June 2024"
+
+core_concept:
+  approach: "End-to-end document intelligence"
+  philosophy: "Unify layout analysis, text recognition, and semantic understanding in single model"
+  innovation: "Layout-as-Thought - optional reasoning phase for explicit layout analysis"
+  scope: "Beyond extraction to document understanding and Q&A"
+
+strengths:
+  primary:
+    - "Largest model (4B params) with most comprehensive capabilities"
+    - "End-to-end document intelligence (parsing + understanding)"
+    - "Layout-as-Thought reasoning mode for complex layouts"
+    - "192 languages supported (most comprehensive)"
+    - "#1 end-to-end model on multiple benchmarks"
+    - "SOTA on Key Information Extraction (87.9% mean)"
+    - "Document Q&A and semantic understanding"
+    - "Prompt-driven task execution"
+  
+  benchmarks:
+    omnidocbench_v15: "93.12% (#1 end-to-end model)"
+    olmocr_bench: "79.8% (#1 end-to-end model)"
+    kie_mean: "87.9% (#1 on Key Information Extraction)"
+    deployment_efficiency: ">1 page/sec on A100 with W8A8 quantization"
+
+capabilities:
+  
+  document_parsing:
+    performance: "state-of-the-art"
+    benchmark:
+      omnidocbench_v15: "93.12% (#1 end-to-end)"
+      olmocr_bench: "79.8% (#1 end-to-end)"
+    modes:
+      - "Image-to-Markdown conversion"
+      - "Multi-page parsing"
+      - "Structured output (JSON, HTML)"
+    use_cases:
+      - "Full document digitization"
+      - "Content management systems"
+      - "Knowledge base population"
+  
+  layout_analysis:
+    performance: "state-of-the-art"
+    feature: "Layout-as-Thought"
+    trigger: "<think> tokens in prompt"
+    outputs:
+      - "Bounding boxes (25 element categories)"
+      - "Element type classification"
+      - "Reading order"
+      - "Spatial grounding"
+    when_to_use:
+      - "Complex layouts with cluttered elements"
+      - "Multi-column or non-standard reading order"
+      - "Heterogeneous pages (exam papers, newspapers)"
+    benefit: "Explicit structural priors help resolve ambiguities"
+    note: "Optional - well-structured docs don't need it"
+  
+  table_recognition:
+    performance: "excellent"
+    types:
+      - "Complex tables with merged cells"
+      - "Rotated tables"
+      - "Borderless tables"
+    output: "HTML with full structure"
+    special_features:
+      - "Cross-page table handling"
+      - "Cell-level extraction"
+    use_cases:
+      - "Financial documents"
+      - "Scientific papers"
+      - "Data extraction"
+  
+  formula_recognition:
+    performance: "excellent"
+    types:
+      - "Inline math"
+      - "Display equations"
+    output: "LaTeX"
+    use_cases:
+      - "Academic papers"
+      - "Technical documentation"
+      - "Educational materials"
+  
+  chart_understanding:
+    performance: "excellent"
+    capabilities:
+      - "Chart Q&A"
+      - "Trend analysis"
+      - "Data extraction from various chart types"
+    unique: "Can answer questions about charts (not just extract)"
+    use_cases:
+      - "Business intelligence"
+      - "Report analysis"
+      - "Data visualization understanding"
+  
+  key_information_extraction:
+    performance: "state-of-the-art"
+    benchmark: "87.9% mean across 5 public KIE benchmarks (#1)"
+    document_types:
+      - "Receipts"
+      - "Invoices"
+      - "Certificates"
+      - "Medical records"
+      - "ID cards"
+    unique_strength: "Semantic understanding of document context"
+    output: "Structured JSON with field mappings"
+    use_cases:
+      - "Automated form processing"
+      - "Claims processing"
+      - "Customer onboarding"
+  
+  handwriting_recognition:
+    performance: "excellent"
+    languages:
+      - "Chinese handwriting"
+      - "English handwriting"
+    types:
+      - "Cursive"
+      - "Print handwriting"
+      - "Mixed handwritten and printed"
+    use_cases:
+      - "Handwritten forms"
+      - "Notes and annotations"
+      - "Signatures and handwritten fields"
+  
+  scene_text_recognition:
+    performance: "excellent"
+    types:
+      - "Street signs"
+      - "Product labels"
+      - "Natural scene text"
+      - "Photos of documents"
+    use_cases:
+      - "Mobile document capture"
+      - "Visual search"
+      - "Accessibility applications"
+  
+  multilingual_ocr:
+    performance: "comprehensive"
+    documented: "192 languages"
+    scripts:
+      - "Latin"
+      - "Cyrillic"
+      - "Arabic (right-to-left)"
+      - "CJK (Chinese, Japanese, Korean)"
+      - "South Asian scripts (Devanagari, Bengali, Tamil, etc.)"
+      - "Southeast Asian scripts (Thai, Myanmar, etc.)"
+    special: "Handles mixed-language documents"
+    use_cases:
+      - "Global operations"
+      - "Multi-lingual archives"
+      - "International documents"
+  
+  document_qa:
+    performance: "unique capability"
+    feature: "Ask questions about document content"
+    examples:
+      - "What is the total amount on this invoice?"
+      - "Who signed this contract?"
+      - "What are the key findings in this report?"
+    use_cases:
+      - "Document intelligence workflows"
+      - "Automated document review"
+      - "Information retrieval"
+
+special_features:
+  
+  layout_as_thought:
+    description: "Optional thinking phase triggered by <think> tokens"
+    process:
+      1: "Model generates structured layout representation"
+      2: "Outputs bounding boxes, element types, reading order"
+      3: "Uses structural priors to produce final output"
+    benefits:
+      functional: "Users get structured layout results from end-to-end model"
+      enhancement: "Helps resolve ambiguities in complex documents"
+    when_to_enable:
+      - "Complex multi-column layouts"
+      - "Cluttered elements"
+      - "Non-standard reading orders"
+      - "Heterogeneous pages"
+    when_to_skip:
+      - "Well-structured simple documents"
+      - "Single column, clear reading order"
+    api_parameter: "enable_thinking=True in apply_chat_template"
+  
+  prompt_driven_tasks:
+    description: "Flexible task execution via natural language prompts"
+    examples:
+      - "Convert this document to Markdown"
+      - "Extract the table from this image"
+      - "What is the invoice total?"
+      - "Find all dates in this document"
+    benefit: "Single model handles diverse tasks without task-specific modes"
+  
+  context_preservation:
+    max_context: "32K tokens (extendable to 131K)"
+    benefit: "Handles very long documents and maintains context"
+    use_cases:
+      - "Multi-page contracts"
+      - "Long-form reports"
+      - "Books and manuscripts"
+
+architecture_details:
+  
+  vision_encoder:
+    component: "Qianfan-ViT with AnyResolution design"
+    resolution: "Up to 4K"
+    output: "256 visual tokens per 448×448 tile"
+    max_tokens: "4,096 per image"
+  
+  language_model:
+    component: "Qwen3-4B"
+    parameters: "4B (3.6B active)"
+    layers: 36
+    hidden_dimensions: 2560
+    attention: "Grouped-Query Attention (GQA)"
+    context: "32K (extendable to 131K)"
+    normalization: "RMSNorm"
+  
+  cross_modal_adapter:
+    component: "2-layer MLP with GELU activation"
+    purpose: "Bridge vision and language representations"
+
+training_approach:
+  stages:
+    1: "Vision encoder pre-training"
+    2: "Vision-language joint training"
+    3: "Instruction fine-tuning for diverse tasks"
+    4: "Post-training for specialized capabilities"
+  
+  optimization:
+    - "W8A8 quantization available"
+    - "Achieves >1 page/sec on A100"
+    - "Production-ready efficiency"
+
+ideal_use_cases:
+  - "Key information extraction (SOTA performance)"
+  - "Complex layouts requiring reasoning (Layout-as-Thought)"
+  - "Multi-lingual global operations (192 languages)"
+  - "Document Q&A and understanding (unique capability)"
+  - "Handwriting-heavy documents"
+  - "Workflows requiring semantic understanding, not just extraction"
+  - "Legal, medical, financial document intelligence"
+  - "Heterogeneous documents with mixed content types"
+
+deployment_advantages:
+  - "Most comprehensive capabilities in single model"
+  - "Prompt-driven flexibility"
+  - "Efficient deployment with W8A8 quantization"
+  - "Production-grade inference (>1 page/sec on A100)"
+  - "Broadest language coverage (192)"
+  - "Handles edge cases via Layout-as-Thought reasoning"

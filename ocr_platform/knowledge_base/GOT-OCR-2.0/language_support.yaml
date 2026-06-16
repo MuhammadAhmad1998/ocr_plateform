@@ -1,0 +1,155 @@
+# GOT-OCR 2.0 Language Support
+# Confidence: partially documented
+# Source: Model paper mentions multi-lingual but doesn't quantify; benchmarks show EN/ZH
+
+documented_languages:
+  
+  english:
+    support_level: "excellent"
+    benchmark:
+      fox_pdf: "F1=0.972"
+      scene_text: "excellent"
+    evidence: "Extensive benchmarking in paper"
+    confidence: "documented"
+  
+  chinese:
+    support_level: "excellent"
+    benchmark:
+      fox_pdf_zh: "F1=0.980"
+    evidence: "Chinese PDF benchmark in paper"
+    confidence: "documented"
+  
+  multilingual:
+    support_level: "supported but not quantified"
+    evidence: "Paper mentions multi-lingual capability"
+    note: "Specific language list not provided in model card"
+    confidence: "documented (general claim)"
+
+inferred_capabilities:
+  
+  common_latin_scripts:
+    languages:
+      - "English"
+      - "Spanish"
+      - "French"
+      - "German"
+      - "Italian"
+      - "Portuguese"
+    confidence: "high inference"
+    reasoning: "Standard for modern vision-language models"
+  
+  cjk_languages:
+    languages:
+      - "Chinese (Simplified and Traditional)"
+      - "Japanese"
+      - "Korean"
+    confidence: "high inference"
+    reasoning: "Chinese explicitly benchmarked; CJK typically grouped"
+  
+  other_scripts:
+    uncertainty: "high"
+    note: "No specific evidence for Arabic, Cyrillic, Indic scripts"
+    recommendation: "Test with sample documents if needed, or use Qianfan (192 languages)"
+
+comparison_with_alternatives:
+  
+  vs_paddleocr_vl:
+    paddle_support: "109 languages (documented)"
+    got_support: "Multi-lingual (not quantified)"
+    recommendation: "Use PaddleOCR-VL if language coverage is critical"
+  
+  vs_qianfan:
+    qianfan_support: "192 languages (documented)"
+    got_support: "Multi-lingual (not quantified)"
+    recommendation: "Use Qianfan-OCR for maximum language coverage"
+
+text_direction_support:
+  
+  left_to_right:
+    support: "excellent"
+    languages: "English, Chinese, most Latin scripts"
+  
+  right_to_left:
+    support: "unknown"
+    languages: "Arabic, Hebrew"
+    note: "Not explicitly tested in paper"
+  
+  vertical_text:
+    support: "unknown"
+    languages: "Traditional Chinese, Japanese"
+    note: "Not explicitly mentioned"
+
+special_character_handling:
+  
+  mathematical_symbols:
+    support: "excellent"
+    evidence: "LaTeX formula output demonstrates symbol recognition"
+  
+  scientific_notation:
+    support: "excellent"
+    evidence: "Scientific PDF benchmarking"
+  
+  chemical_symbols:
+    support: "excellent"
+    evidence: "SMILES output for molecular formulas"
+  
+  musical_notation:
+    support: "supported"
+    evidence: "Kern format output for sheet music"
+  
+  geometric_shapes:
+    support: "supported"
+    evidence: "TikZ output capability"
+
+encoding_and_output:
+  
+  character_encoding:
+    output: "UTF-8"
+    support:
+      - "ASCII"
+      - "Extended Latin"
+      - "CJK characters"
+      - "Mathematical symbols"
+      - "Special Unicode characters"
+  
+  font_independence:
+    description: "Trained on diverse fonts"
+    performance: "Generally font-agnostic"
+    caveat: "Highly stylized fonts may degrade performance"
+
+recommendations_by_use_case:
+  
+  english_only:
+    recommendation: "Excellent choice"
+    confidence: "high"
+  
+  chinese_documents:
+    recommendation: "Excellent choice"
+    confidence: "high"
+  
+  western_european_languages:
+    recommendation: "Good choice (likely well-supported)"
+    confidence: "medium"
+  
+  global_multilingual:
+    recommendation: "Consider Qianfan-OCR (192 languages documented)"
+    confidence: "high"
+  
+  specialized_scripts:
+    recommendation: "Test with samples, or use Qianfan-OCR"
+    confidence: "low (insufficient data)"
+
+testing_recommendations:
+  
+  before_production:
+    - "Test with representative documents in your target languages"
+    - "Validate special character handling"
+    - "Verify output encoding compatibility"
+  
+  language_detection:
+    note: "Model doesn't explicitly detect language; processes all text uniformly"
+    workaround: "Use external language detection if needed"
+  
+  mixed_language_documents:
+    expectation: "Should handle mixed-language documents (common in modern VLMs)"
+    validation: "Test with your specific language combinations"

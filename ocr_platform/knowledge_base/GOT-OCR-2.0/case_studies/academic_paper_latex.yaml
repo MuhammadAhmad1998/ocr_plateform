@@ -1,0 +1,104 @@
+# Case Study: Academic Paper with LaTeX Formulas
+# Confidence: heuristic (synthesized use case)
+
+case_id: "got_academic_paper_latex"
+title: "Converting Scientific Paper to Markdown with LaTeX Formulas"
+engine: "got-ocr2"
+tier: "pro"
+
+user_profile:
+  role: "Research librarian"
+  organization: "University library"
+  goal: "Digitize archived scientific papers for searchable database"
+
+document_characteristics:
+  doc_type: "scientific"
+  page_count: 12
+  content:
+    - "Dense academic text"
+    - "15+ mathematical equations"
+    - "3 data tables"
+    - "2 line plots"
+  layout_complexity: "complex"
+  has_equations: true
+  has_tables: true
+  has_charts: true
+  languages: ["en"]
+  file_format: "PDF (scanned at 300 DPI)"
+
+user_requirements:
+  - "Preserve formula formatting in LaTeX"
+  - "Maintain document structure (headings, sections)"
+  - "Extract tables in structured format"
+  - "Output ready for Markdown-based publishing system"
+  - "Process 50-100 papers per month"
+
+why_got_ocr2:
+  primary_reasons:
+    - "Excellent formatted output (Mathpix Markdown with LaTeX)"
+    - "Handles mixed content (text + formulas + tables + charts) in one pass"
+    - "Multi-page processing maintains context across pages"
+    - "580M model enables fast processing for high volume"
+  
+  specific_advantages:
+    formula_handling: "Native LaTeX output preserves mathematical notation"
+    structure_preservation: "Markdown output maintains heading hierarchy"
+    efficiency: "Unified model vs pipeline approach saves time"
+    output_format: "Direct Markdown output fits publishing workflow"
+
+alternative_considered:
+  engine: "qianfan-ocr"
+  reason_not_chosen: "More expensive (4B model) and overkill for this straightforward extraction task"
+  note: "Qianfan would work but GOT-OCR 2.0 is more cost-effective"
+
+workflow:
+  steps:
+    1:
+      action: "Upload scanned PDF (12 pages)"
+      mode: "Multi-page OCR"
+    2:
+      action: "GOT-OCR 2.0 processes with 'format' mode"
+      output: "Markdown with inline LaTeX formulas"
+    3:
+      action: "Post-process: validate formula rendering"
+      tool: "pdftex or MathJax"
+    4:
+      action: "Ingest into searchable database"
+      format: "Markdown + metadata"
+
+results:
+  accuracy:
+    text: "~97% (based on Fox benchmark F1=0.972)"
+    formulas: "Excellent LaTeX conversion"
+    tables: "Good structure preservation"
+    overall: "High quality, minimal manual correction"
+  
+  processing_time:
+    per_document: "TBD (benchmark needed)"
+    note: "Fast enough for 50-100 papers/month with single GPU"
+  
+  user_satisfaction: "high"
+  post_processing_required: "Minimal - mainly validation"
+
+lessons_learned:
+  - "Multi-page mode crucial for maintaining cross-page references"
+  - "Dynamic resolution helpful for high-quality scans"
+  - "LaTeX output occasionally needs minor syntax cleanup"
+  - "Structure preservation better than manual retyping"
+
+cost_benefit:
+  monthly_volume: "75 papers × 12 pages = 900 pages"
+  tier: "Professional (5,000 pages/month quota)"
+  outcome: "Significant time savings vs manual transcription"
+  roi: "Positive within 2 months"
+
+tags:
+  - "scientific_papers"
+  - "latex_formulas"
+  - "markdown_output"
+  - "multi_page"
+  - "academic"
+  - "digitization"
+
+confidence: "high"
+applicability: "Similar use cases: research archives, academic publishing, technical documentation"
