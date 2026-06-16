@@ -1,6 +1,6 @@
 # Unified OCR Platform
 
-A full-stack OCR platform that combines multiple vision-language and document OCR engines with an AI-powered advisor. Upload a sample document, get a RAG-grounded tier and engine recommendation, run a live demo on your data, and integrate via REST API.
+A full-stack OCR platform that combines multiple vision-language and document OCR engines with an AI-powered advisor. Chat with the advisor about your needs, get a RAG-grounded tier and engine recommendation, optionally run a live demo on your sample document, and integrate via REST API.
 
 ## Features
 

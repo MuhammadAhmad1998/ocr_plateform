@@ -63,7 +63,7 @@ _DEFAULT_SAMPLE_TEXT = (
     "OCR Platform Demo Document\n"
     "This sample shows how your recommended engine extracts printed text.\n"
     "Line 3: Order reference KLX-2026-0616\n"
-    "Line 4: Thank you for evaluating Klarix OCR."
+    "Line 4: Thank you for evaluating Planet OCR."
 )
 
 _ENGINE_FINGERPRINTS: dict[str, dict] = {

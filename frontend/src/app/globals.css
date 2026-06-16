@@ -11,72 +11,72 @@
   }
 
   :root {
-    --background: #eef8ff;
-    --foreground: #1a1235;
-    --card: #ffffff;
-    --card-foreground: #1a1235;
-    --popover: #ffffff;
-    --popover-foreground: #1a1235;
-    --primary: #7d53de;
-    --primary-foreground: #ffffff;
-    --secondary: #d1f5ff;
-    --secondary-foreground: #1a1235;
-    --muted: #d1f5ff;
-    --muted-foreground: #5c4d8a;
-    --accent: #34f6f2;
-    --accent-foreground: #1a1235;
-    --destructive: #dc2626;
-    --border: #a8ddf5;
-    --input: #a8ddf5;
-    --ring: #7d53de;
+    --background: 255 255 255;
+    --foreground: 22 66 91;
+    --card: 255 255 255;
+    --card-foreground: 22 66 91;
+    --popover: 255 255 255;
+    --popover-foreground: 22 66 91;
+    --primary: 58 124 165;
+    --primary-foreground: 255 255 255;
+    --secondary: 217 220 214;
+    --secondary-foreground: 22 66 91;
+    --muted: 249 250 251;
+    --muted-foreground: 107 114 128;
+    --accent: 129 195 215;
+    --accent-foreground: 22 66 91;
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+    --success: 34 197 94;
+    --success-foreground: 255 255 255;
+    --warning: 251 146 60;
+    --warning-foreground: 255 255 255;
+    --border: 229 231 235;
+    --input: 229 231 235;
+    --ring: 58 124 165;
     --radius: 0.75rem;
-    --chart-1: #7d53de;
-    --chart-2: #78e3fd;
-    --chart-3: #34f6f2;
-    --chart-4: #1a1235;
-    --chart-5: #d1f5ff;
-    --sidebar: #ffffff;
-    --sidebar-foreground: #1a1235;
-    --sidebar-primary: #7d53de;
-    --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #d1f5ff;
-    --sidebar-accent-foreground: #1a1235;
-    --sidebar-border: #a8ddf5;
-    --sidebar-ring: #7d53de;
+    --sidebar: 249 250 251;
+    --sidebar-foreground: 22 66 91;
+    --sidebar-primary: 58 124 165;
+    --sidebar-primary-foreground: 255 255 255;
+    --sidebar-accent: 217 220 214;
+    --sidebar-accent-foreground: 22 66 91;
+    --sidebar-border: 229 231 235;
+    --sidebar-ring: 58 124 165;
   }
 
   .dark {
-    --background: #12102a;
-    --foreground: #eef8ff;
-    --card: #1a1838;
-    --card-foreground: #eef8ff;
-    --popover: #1a1838;
-    --popover-foreground: #eef8ff;
-    --primary: #78e3fd;
-    --primary-foreground: #12102a;
-    --secondary: #2d2360;
-    --secondary-foreground: #d1f5ff;
-    --muted: #1e1a42;
-    --muted-foreground: #78e3fd;
-    --accent: #34f6f2;
-    --accent-foreground: #12102a;
-    --destructive: #f87171;
-    --border: rgba(120, 227, 253, 0.18);
-    --input: rgba(120, 227, 253, 0.22);
-    --ring: #78e3fd;
-    --chart-1: #78e3fd;
-    --chart-2: #7d53de;
-    --chart-3: #34f6f2;
-    --chart-4: #d1f5ff;
-    --chart-5: #5c4d8a;
-    --sidebar: #1a1838;
-    --sidebar-foreground: #eef8ff;
-    --sidebar-primary: #78e3fd;
-    --sidebar-primary-foreground: #12102a;
-    --sidebar-accent: #2d2360;
-    --sidebar-accent-foreground: #d1f5ff;
-    --sidebar-border: rgba(120, 227, 253, 0.18);
-    --sidebar-ring: #78e3fd;
+    --background: 15 23 42;
+    --foreground: 248 250 252;
+    --card: 30 41 59;
+    --card-foreground: 248 250 252;
+    --popover: 30 41 59;
+    --popover-foreground: 248 250 252;
+    --primary: 129 195 215;
+    --primary-foreground: 15 23 42;
+    --secondary: 47 102 144;
+    --secondary-foreground: 248 250 252;
+    --muted: 51 65 85;
+    --muted-foreground: 148 163 184;
+    --accent: 58 124 165;
+    --accent-foreground: 255 255 255;
+    --destructive: 248 113 113;
+    --destructive-foreground: 15 23 42;
+    --success: 74 222 128;
+    --success-foreground: 15 23 42;
+    --warning: 253 186 116;
+    --warning-foreground: 15 23 42;
+    --border: 51 65 85;
+    --input: 51 65 85;
+    --ring: 129 195 215;
+    --sidebar: 30 41 59;
+    --sidebar-foreground: 248 250 252;
+    --sidebar-primary: 129 195 215;
+    --sidebar-primary-foreground: 15 23 42;
+    --sidebar-accent: 47 102 144;
+    --sidebar-accent-foreground: 248 250 252;
+    --sidebar-border: 51 65 85;
+    --sidebar-ring: 129 195 215;
   }
 
   * {
@@ -90,6 +90,22 @@
   html {
     @apply font-sans scroll-smooth;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl;
+  }
 }
 
 @layer utilities {
@@ -99,77 +115,31 @@
 
   .gradient-mesh {
     background-image:
-      radial-gradient(at 20% 20%, rgba(120, 227, 253, 0.3) 0, transparent 50%),
-      radial-gradient(at 80% 0%, rgba(125, 83, 222, 0.12) 0, transparent 45%),
-      radial-gradient(at 50% 100%, rgba(52, 246, 242, 0.1) 0, transparent 40%);
+      radial-gradient(at 20% 20%, rgb(129 195 215 / 0.15) 0, transparent 50%),
+      radial-gradient(at 80% 0%, rgb(58 124 165 / 0.1) 0, transparent 45%),
+      radial-gradient(at 50% 100%, rgb(217 220 214 / 0.12) 0, transparent 40%);
   }
 
   .dark .gradient-mesh {
     background-image:
-      radial-gradient(at 20% 20%, rgba(120, 227, 253, 0.08) 0, transparent 50%),
-      radial-gradient(at 80% 0%, rgba(125, 83, 222, 0.2) 0, transparent 45%),
-      radial-gradient(at 50% 100%, rgba(52, 246, 242, 0.06) 0, transparent 40%);
+      radial-gradient(at 20% 20%, rgb(129 195 215 / 0.08) 0, transparent 50%),
+      radial-gradient(at 80% 0%, rgb(58 124 165 / 0.15) 0, transparent 45%),
+      radial-gradient(at 50% 100%, rgb(47 102 144 / 0.1) 0, transparent 40%);
   }
-}
 
-/* Advisor onboarding tour (driver.js) */
-.advisor-tour-popover.driver-popover {
-  background: var(--card);
-  color: var(--card-foreground);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow:
-    0 20px 40px rgba(26, 18, 53, 0.12),
-    0 0 0 1px rgba(125, 83, 222, 0.08);
-  max-width: 360px;
-}
+  .glass-effect {
+    @apply bg-white/80 backdrop-blur-xl border border-white/20;
+  }
 
-.advisor-tour-popover .driver-popover-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: var(--foreground);
-}
+  .dark .glass-effect {
+    @apply bg-slate-900/80 backdrop-blur-xl border-slate-700/50;
+  }
 
-.advisor-tour-popover .advisor-tour-icon {
-  font-size: 1.15rem;
-  line-height: 1;
-}
+  .hover-lift {
+    @apply transition-transform duration-300 hover:-translate-y-1 hover:shadow-lg;
+  }
 
-.advisor-tour-popover .driver-popover-description {
-  color: var(--muted-foreground);
-  font-size: 0.9rem;
-  line-height: 1.55;
-}
-
-.advisor-tour-popover .driver-popover-progress-text {
-  color: var(--muted-foreground);
-  font-size: 0.75rem;
-}
-
-.advisor-tour-popover .driver-popover-footer button {
-  border-radius: calc(var(--radius) - 2px);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  padding: 0.4rem 0.85rem;
-  text-shadow: none;
-}
-
-.advisor-tour-popover .driver-popover-next-btn,
-.advisor-tour-popover .driver-popover-done-btn {
-  background: var(--primary) !important;
-  color: var(--primary-foreground) !important;
-  border: none !important;
-}
-
-.advisor-tour-popover .driver-popover-prev-btn {
-  background: transparent !important;
-  color: var(--foreground) !important;
-  border: 1px solid var(--border) !important;
-}
-
-.advisor-tour-popover .driver-popover-close-btn {
-  color: var(--muted-foreground) !important;
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-[1.02];
+  }
 }

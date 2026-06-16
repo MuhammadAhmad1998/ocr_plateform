@@ -5,12 +5,14 @@ import {
   ArrowRight,
   Loader2,
   Send,
+  Sparkles,
+  CheckCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { AdvisorOnboardingTour, hasCompletedAdvisorOnboarding } from "@/components/AdvisorOnboardingTour";
+import { AdvisorChatEmptyState } from "@/components/AdvisorChatEmptyState";
 import { ChatMessageContent } from "@/components/ChatMessageContent";
 import { AdvisorSystemStatus } from "@/components/AdvisorSystemStatus";
 import { DemoResults } from "@/components/DemoResults";
@@ -121,13 +123,20 @@ export default function AdvisorPage() {
     if (demoStatus !== "idle" && wizardStep < 2) setWizardStep(2);
   }, [demoStatus, wizardStep]);
 
-  // Keep chat input focused after replies finish and when in discuss step
   useEffect(() => {
-    if (!isStreaming && wizardStep === 0 && !recommendation && hasCompletedAdvisorOnboarding()) {
+    if (!isStreaming && wizardStep === 0 && !recommendation) {
       const timer = window.setTimeout(focusChatInput, 0);
       return () => window.clearTimeout(timer);
     }
   }, [isStreaming, wizardStep, recommendation, messages.length, focusChatInput]);
+
+  const handleSelectPrompt = useCallback(
+    (prompt: string) => {
+      setInput(prompt);
+      focusChatInput();
+    },
+    [focusChatInput]
+  );
 
   const startDemo = useCallback(
     async (sid: string) => {
@@ -211,12 +220,18 @@ export default function AdvisorPage() {
 
   if (initLoading) {
     return (
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-screen flex-col bg-background">
         <Navbar />
         <div className="flex flex-1 items-center justify-center">
-          <div className="space-y-4 text-center">
-            <Loader2 className="mx-auto size-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Starting your advisor session…</p>
+          <div className="space-y-6 text-center">
+            <div className="relative">
+              <div className="absolute inset-0 animate-pulse-slow rounded-full bg-primary/20 blur-xl"></div>
+              <Loader2 className="relative mx-auto size-12 animate-spin text-primary" />
+            </div>
+            <div className="space-y-2">
+              <p className="text-lg font-medium text-foreground">Starting Your Advisor Session</p>
+              <p className="text-sm text-muted-foreground">Preparing AI-powered recommendations...</p>
+            </div>
           </div>
         </div>
       </div>
@@ -224,133 +239,166 @@ export default function AdvisorPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-background to-muted/20">
       <Navbar />
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-6 py-8">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">OCR Advisor</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            A guided flow to match your documents with the right processing tier
-          </p>
+      <main className="flex w-full flex-1 flex-col gap-8 px-4 py-8 lg:px-8">
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-primary/10 p-2.5 ring-1 ring-primary/20">
+              <Sparkles className="size-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">OCR Advisor</h1>
+              <p className="text-muted-foreground">
+                AI-powered guidance to match your documents with the perfect tier
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div id="advisor-wizard-stepper">
+        <div id="advisor-wizard-stepper" className="rounded-2xl border border-border bg-card p-6 shadow-sm">
           <WizardStepper steps={WIZARD_STEPS} currentStep={wizardStep} />
         </div>
 
-        <AdvisorOnboardingTour
-          ready={!initLoading}
-          active={wizardStep === 0 && messages.length === 0 && !recommendation}
-        />
-
-        <div className="grid flex-1 gap-6 lg:grid-cols-[1fr_320px]">
-          <Card id="advisor-chat-card" className="flex min-h-[520px] flex-col">
-            <CardHeader className="border-b border-border pb-4">
-              <CardTitle className="text-lg">{WIZARD_STEPS[wizardStep].label}</CardTitle>
-              <CardDescription>{WIZARD_STEPS[wizardStep].description}</CardDescription>
+        <div className="grid flex-1 gap-8 lg:grid-cols-[1fr_380px]">
+          <Card id="advisor-chat-card" className="flex min-h-[600px] flex-col overflow-hidden border-border shadow-lg">
+            <CardHeader className="space-y-1 border-b border-border bg-muted/30 backdrop-blur-sm">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-primary/10 p-2">
+                  {wizardStep === 0 && <Sparkles className="size-5 text-primary" />}
+                  {wizardStep === 1 && <CheckCircle className="size-5 text-primary" />}
+                  {wizardStep === 2 && <ArrowRight className="size-5 text-primary" />}
+                </div>
+                <div>
+                  <CardTitle className="text-xl">{WIZARD_STEPS[wizardStep].label}</CardTitle>
+                  <CardDescription className="text-sm">{WIZARD_STEPS[wizardStep].description}</CardDescription>
+                </div>
+              </div>
             </CardHeader>
 
             <CardContent className="flex flex-1 flex-col p-0">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={wizardStep}
-                  initial={{ opacity: 0, x: 12 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -12 }}
-                  transition={{ duration: 0.25 }}
-                  className="flex min-h-0 flex-1 flex-col p-6"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="flex min-h-0 flex-1 flex-col"
                 >
                   {wizardStep === 0 && (
                     <>
-                      <ScrollArea className="min-h-0 flex-1 pr-4">
-                        <div className="space-y-4">
-                          {messages.map((msg, i) => (
-                            <div
-                              key={i}
-                              className={cn("flex min-w-0", msg.role === "user" ? "justify-end" : "justify-start")}
-                            >
-                              <div
-                                className={cn(
-                                  "min-w-0 max-w-[85%] overflow-hidden break-words rounded-2xl px-4 py-2.5 text-sm",
-                                  msg.role === "user"
-                                    ? "bg-primary text-primary-foreground"
-                                    : "bg-muted text-foreground"
-                                )}
+                      <ScrollArea className="flex-1 px-6 py-6">
+                        {messages.length === 0 && !isStreaming ? (
+                          <AdvisorChatEmptyState
+                            onSelectPrompt={handleSelectPrompt}
+                            onFocusInput={focusChatInput}
+                          />
+                        ) : (
+                          <div className="space-y-4">
+                            {messages.map((msg, i) => (
+                              <motion.div
+                                key={i}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: i * 0.05 }}
+                                className={cn("flex min-w-0", msg.role === "user" ? "justify-end" : "justify-start")}
                               >
-                                {msg.role === "assistant" && msg.responseMeta && (
-                                  <ResponseModeBadge meta={msg.responseMeta} className="mb-2" />
-                                )}
-                                <ChatMessageContent content={msg.content} />
-                              </div>
-                            </div>
-                          ))}
-                          {isStreaming && (
-                            <div className="flex min-w-0 justify-start">
-                              <div className="min-w-0 max-w-[85%] overflow-hidden break-words rounded-2xl bg-muted px-4 py-2.5 text-sm">
-                                {pendingResponseMeta && (
-                                  <ResponseModeBadge meta={pendingResponseMeta} className="mb-2" />
-                                )}
-                                {streamingContent ? (
-                                  <ChatMessageContent content={streamingContent} />
-                                ) : (
-                                  <Loader2 className="size-4 animate-spin text-muted-foreground" />
-                                )}
-                                <span className="cursor-blink ml-0.5 inline-block h-4 w-0.5 align-middle bg-accent" />
-                              </div>
-                            </div>
-                          )}
-                          <div ref={chatEndRef} />
-                        </div>
+                                <div
+                                  className={cn(
+                                    "group relative min-w-0 max-w-[85%] overflow-hidden rounded-2xl px-5 py-3.5 text-sm shadow-sm",
+                                    msg.role === "user"
+                                      ? "bg-primary text-primary-foreground"
+                                      : "border border-border bg-muted/50 text-foreground backdrop-blur-sm"
+                                  )}
+                                >
+                                  {msg.role === "assistant" && msg.responseMeta && (
+                                    <ResponseModeBadge meta={msg.responseMeta} className="mb-2.5" />
+                                  )}
+                                  <ChatMessageContent content={msg.content} />
+                                </div>
+                              </motion.div>
+                            ))}
+                            {isStreaming && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="flex min-w-0 justify-start"
+                              >
+                                <div className="min-w-0 max-w-[85%] overflow-hidden rounded-2xl border border-border bg-muted/50 px-5 py-3.5 text-sm shadow-sm backdrop-blur-sm">
+                                  {pendingResponseMeta && (
+                                    <ResponseModeBadge meta={pendingResponseMeta} className="mb-2.5" />
+                                  )}
+                                  {streamingContent ? (
+                                    <ChatMessageContent content={streamingContent} />
+                                  ) : (
+                                    <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                                  )}
+                                  <span className="ml-1 inline-block h-4 w-0.5 animate-pulse bg-primary align-middle" />
+                                </div>
+                              </motion.div>
+                            )}
+                            <div ref={chatEndRef} />
+                          </div>
+                        )}
                       </ScrollArea>
                       {recommendation && !isStreaming && (
-                        <div className="mt-4 flex justify-center border-t border-border pt-4">
-                          <Button onClick={() => setWizardStep(1)} className="gap-2">
-                            View recommendation <ArrowRight className="size-4" />
+                        <div className="border-t border-border bg-muted/30 px-6 py-4">
+                          <Button onClick={() => setWizardStep(1)} className="w-full gap-2 shadow-sm hover:shadow-md transition-shadow" size="lg">
+                            View Recommendation <ArrowRight className="size-5" />
                           </Button>
                         </div>
                       )}
                       <form
                         id="advisor-chat-form"
                         onSubmit={handleSend}
-                        className="mt-4 flex gap-2 border-t border-border pt-4"
+                        className="border-t border-border bg-background/50 p-4 backdrop-blur-sm"
                       >
-                        <Input
-                          id="advisor-chat-input"
-                          ref={inputRef}
-                          placeholder="Describe your documents, volume, and accuracy needs…"
-                          value={input}
-                          onChange={(e) => setInput(e.target.value)}
-                          disabled={isStreaming || !!recommendation}
-                          className="flex-1"
-                        />
-                        <Button type="submit" disabled={isStreaming || !!recommendation || !input.trim()} size="icon">
-                          <Send className="size-4" />
-                        </Button>
+                        <div className="flex gap-3">
+                          <Input
+                            id="advisor-chat-input"
+                            ref={inputRef}
+                            placeholder="Describe your documents, volume, and accuracy needs…"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            disabled={isStreaming || !!recommendation}
+                            className="flex-1 border-border bg-background shadow-sm focus-visible:ring-2 focus-visible:ring-primary"
+                          />
+                          <Button 
+                            type="submit" 
+                            disabled={isStreaming || !!recommendation || !input.trim()} 
+                            size="icon" 
+                            className="size-10 shrink-0 shadow-sm hover:shadow-md transition-all hover:scale-105"
+                          >
+                            <Send className="size-4" />
+                          </Button>
+                        </div>
                       </form>
                     </>
                   )}
 
                   {wizardStep === 1 && recommendation && (
-                    <div className="flex flex-1 flex-col gap-6">
+                    <div className="flex flex-1 flex-col gap-6 p-6">
                       <RecommendationCard recommendation={recommendation} />
                       <div className="mt-auto flex flex-wrap gap-3">
-                        <Button onClick={handleGoToDemo} className="gap-2">
-                          Run live demo <ArrowRight className="size-4" />
+                        <Button onClick={handleGoToDemo} className="flex-1 gap-2 shadow-sm hover:shadow-md transition-all" size="lg">
+                          Run Live Demo <ArrowRight className="size-5" />
                         </Button>
                         <Link
                           href={`/checkout?tier=${recommendation.primary_tier}`}
                           className={cn(
-                            buttonVariants({ variant: "outline" }),
+                            buttonVariants({ variant: "outline", size: "lg" }),
+                            "flex-1 hover-scale"
                           )}
                         >
-                          Skip demo — subscribe to {TIER_NAMES[recommendation.primary_tier]}
+                          Skip Demo — Subscribe to {TIER_NAMES[recommendation.primary_tier]}
                         </Link>
                       </div>
                     </div>
                   )}
 
                   {wizardStep === 2 && (
-                    <div className="flex flex-1 flex-col gap-6">
+                    <div className="flex flex-1 flex-col gap-6 p-6">
                       {demoStatus === "idle" ? (
                         <DemoUpload
                           documentName={documentName}
@@ -367,8 +415,8 @@ export default function AdvisorPage() {
                         />
                       )}
                       {recommendation && demoStatus === "failed" && (
-                        <Button onClick={handleProcessDocument} variant="outline" className="w-full">
-                          Retry live demo
+                        <Button onClick={handleProcessDocument} variant="outline" className="w-full" size="lg">
+                          Retry Live Demo
                         </Button>
                       )}
                       {recommendation && demoStatus === "completed" && (
@@ -376,7 +424,7 @@ export default function AdvisorPage() {
                           href={`/checkout?tier=${recommendation.primary_tier}`}
                           className={cn(
                             buttonVariants({ size: "lg" }),
-                            "w-full bg-accent text-accent-foreground hover:bg-accent/90"
+                            "w-full bg-primary shadow-lg hover:shadow-xl hover:scale-105 transition-all"
                           )}
                         >
                           Continue with {TIER_NAMES[recommendation.primary_tier]}
@@ -389,38 +437,36 @@ export default function AdvisorPage() {
             </CardContent>
           </Card>
 
-          {/* Sidebar */}
-          <div className="space-y-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Advisor mode</CardTitle>
-                <CardDescription>How replies are generated</CardDescription>
+          <div className="space-y-6">
+            <Card className="overflow-hidden border-border shadow-sm">
+              <CardHeader className="space-y-1 bg-muted/30 pb-4">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Sparkles className="size-4 text-primary" />
+                  Advisor Mode
+                </CardTitle>
+                <CardDescription className="text-sm">How replies are generated</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-6">
                 <AdvisorSystemStatus capabilities={systemCapabilities} />
               </CardContent>
             </Card>
 
-            {wizardStep === 0 && (
-              <Card className="bg-muted/30">
-                <CardContent className="pt-6">
-                  <p className="text-sm text-muted-foreground">
-                    <span className="font-medium text-foreground">Tip:</span> Be specific about document types, 
-                    monthly volume, and special features like tables, handwriting, or equations.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-
             {wizardStep >= 1 && recommendation && (
-              <Card>
-                <CardContent className="space-y-2 pt-6">
-                  <p className="text-sm font-medium">Quick summary</p>
-                  <p className="text-2xl font-semibold text-primary">
-                    {TIER_NAMES[recommendation.primary_tier]}
-                  </p>
-                  <p className="text-sm font-medium">{formatEngineName(recommendation)}</p>
-                  <p className="text-xs text-muted-foreground">Recommended based on your document profile</p>
+              <Card className="overflow-hidden border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 shadow-lg">
+                <CardContent className="space-y-4 p-6">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="size-5 text-primary" />
+                    <p className="text-sm font-semibold text-muted-foreground">Your Recommendation</p>
+                  </div>
+                  <div>
+                    <p className="text-3xl font-bold text-primary">
+                      {TIER_NAMES[recommendation.primary_tier]}
+                    </p>
+                    <p className="mt-2 text-sm font-medium text-foreground">{formatEngineName(recommendation)}</p>
+                    <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                      Recommended based on your document profile and requirements
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             )}

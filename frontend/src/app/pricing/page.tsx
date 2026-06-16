@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, ArrowRight, Sparkles } from "lucide-react";
+import { CheckCircle2, ArrowRight, Zap } from "lucide-react";
 import Link from "next/link";
 import { FadeIn } from "@/components/fade-in";
 import { Navbar } from "@/components/Navbar";
@@ -77,56 +77,63 @@ const tiers = [
 
 export default function PricingPage() {
   return (
-    <div className="min-h-screen bg-background gradient-mesh">
+    <div className="min-h-screen bg-background">
       <Navbar />
       
-      <main className="px-6 py-12">
-        <div className="mx-auto max-w-7xl">
-          <FadeIn className="text-center">
-            <Badge variant="secondary" className="mb-6 gap-1.5 px-3 py-1">
-              <Sparkles className="size-3.5 text-accent" />
-              Powered by PaddleOCR, GOT-OCR 2.0, and Qianfan OCR
-            </Badge>
-            <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
-              Choose the right tier for your needs
-            </h1>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Transparent pricing based on capabilities. Start free, upgrade anytime.
-            </p>
-          </FadeIn>
+      <main className="px-4 py-16 lg:px-8">
+        <FadeIn className="mb-16 text-center">
+          <h1 className="mb-4 text-5xl font-bold tracking-tight text-foreground sm:text-6xl">
+            Choose the Right Tier for Your Needs
+          </h1>
+          <p className="mx-auto max-w-2xl text-lg leading-relaxed text-muted-foreground">
+            Transparent pricing based on capabilities. Start free, scale as you grow, upgrade anytime.
+          </p>
+        </FadeIn>
 
-          <div className="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
             {tiers.map((tier, i) => (
-              <FadeIn key={tier.slug} delay={0.1 + i * 0.05}>
+              <FadeIn key={tier.slug} delay={0.1 + i * 0.08}>
                 <Card
                   className={cn(
-                    "relative flex h-full flex-col transition-all hover:-translate-y-1 hover:shadow-lg",
-                    tier.highlight && "border-primary shadow-lg ring-2 ring-primary/20"
+                    "group relative flex h-full flex-col overflow-hidden transition-all",
+                    tier.highlight
+                      ? "border-2 border-primary shadow-2xl ring-4 ring-primary/10 hover:-translate-y-2"
+                      : "border-border shadow-sm hover-lift"
                   )}
                 >
                   {tier.highlight && (
-                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-accent-foreground">
-                      Most popular
-                    </Badge>
+                    <>
+                      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-primary via-accent to-primary" />
+                      <div className="absolute right-6 top-6 z-10">
+                        <Badge className="gap-1.5 bg-accent px-3 py-1 text-xs font-bold text-accent-foreground shadow-md">
+                          <Zap className="size-3.5" />
+                          Most Popular
+                        </Badge>
+                      </div>
+                    </>
                   )}
                   
-                  <CardHeader>
+                  <CardHeader className={cn("pb-8", tier.highlight && "pt-8")}>
                     <CardTitle className="text-2xl">{tier.name}</CardTitle>
-                    <CardDescription className="min-h-[40px]">{tier.description}</CardDescription>
-                    <div className="mt-4">
-                      <span className="text-4xl font-bold text-primary">{tier.price}</span>
+                    <CardDescription className="min-h-[48px] text-sm leading-relaxed">
+                      {tier.description}
+                    </CardDescription>
+                    <div className="mt-6 flex items-baseline gap-1.5">
+                      <span className="text-5xl font-bold text-primary">{tier.price}</span>
                       {tier.period && (
-                        <span className="ml-1 text-base text-muted-foreground">{tier.period}</span>
+                        <span className="text-base text-muted-foreground">{tier.period}</span>
                       )}
                     </div>
                   </CardHeader>
                   
-                  <CardContent className="flex flex-1 flex-col">
-                    <ul className="mb-6 flex-1 space-y-3">
+                  <CardContent className="flex flex-1 flex-col pb-8">
+                    <ul className="mb-8 flex-1 space-y-3.5">
                       {tier.features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-2.5 text-sm">
-                          <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
-                          <span className="text-foreground">{feature}</span>
+                        <li key={feature} className="flex items-start gap-3 text-sm">
+                          <div className="rounded-full bg-primary/10 p-1 mt-0.5">
+                            <CheckCircle2 className="size-4 shrink-0 text-primary" />
+                          </div>
+                          <span className="leading-relaxed text-foreground">{feature}</span>
                         </li>
                       ))}
                     </ul>
@@ -135,44 +142,60 @@ export default function PricingPage() {
                       <Link
                         href="/register"
                         className={cn(
-                          buttonVariants({ variant: "outline" }),
-                          "w-full"
+                          buttonVariants({ variant: tier.highlight ? "default" : "outline", size: "lg" }),
+                          "w-full gap-2 shadow-sm hover:shadow-md transition-all",
+                          tier.highlight && "bg-primary hover:scale-105"
                         )}
                       >
-                        Get started free
+                        Get Started Free
+                        <ArrowRight className="size-4" />
                       </Link>
                     ) : tier.slug === "enterprise" ? (
-                      <Button variant="outline" className="w-full" asChild>
-                        <a href="mailto:sales@klarix.com">Contact sales</a>
-                      </Button>
+                      <a
+                        href="mailto:sales@planetocr.com"
+                        className={cn(
+                          buttonVariants({ variant: "outline", size: "lg" }),
+                          "w-full hover-scale"
+                        )}
+                      >
+                        Contact Sales
+                      </a>
                     ) : (
                       <Link
                         href={`/checkout?tier=${tier.slug}`}
                         className={cn(
                           buttonVariants({
                             variant: tier.highlight ? "default" : "outline",
+                            size: "lg",
                           }),
-                          tier.highlight && "bg-accent text-accent-foreground hover:bg-accent/90",
-                          "w-full gap-2"
+                          "w-full gap-2 shadow-sm hover:shadow-md transition-all",
+                          tier.highlight && "bg-primary hover:scale-105"
                         )}
                       >
-                        Subscribe <ArrowRight className="size-4" />
+                        Subscribe Now
+                        <ArrowRight className="size-4" />
                       </Link>
                     )}
                   </CardContent>
                 </Card>
               </FadeIn>
             ))}
-          </div>
-
-          <FadeIn delay={0.3} className="mt-16 text-center">
-            <p className="text-sm text-muted-foreground">
-              All plans include AI-powered tier recommendations and live demos.
-              <br />
-              Need help choosing? <Link href="/advisor" className="text-primary hover:underline">Try our OCR advisor</Link>
-            </p>
-          </FadeIn>
         </div>
+
+        <FadeIn delay={0.4} className="mt-16 text-center">
+          <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-gradient-to-br from-muted/50 to-background p-8 shadow-sm">
+            <p className="text-base leading-relaxed text-muted-foreground">
+              All plans include AI-powered tier recommendations and live demos.
+            </p>
+            <p className="mt-4 text-base font-medium text-foreground">
+              Need help choosing?{" "}
+              <Link href="/advisor" className="inline-flex items-center gap-1.5 text-primary transition-colors hover:text-primary/80">
+                Try our OCR Advisor
+                <ArrowRight className="size-4" />
+              </Link>
+            </p>
+          </div>
+        </FadeIn>
       </main>
     </div>
   );

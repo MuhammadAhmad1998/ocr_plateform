@@ -7,9 +7,16 @@ import { cn } from "@/lib/utils";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "Klarix — Intelligent OCR, matched to your documents",
+  title: "Planet OCR — Intelligent OCR, matched to your documents",
   description:
-    "Upload a sample document, get an AI-powered tier recommendation, and see live OCR results before you commit.",
+    "Chat with our AI advisor, get a personalized tier recommendation, and optionally test with live OCR results before you commit.",
+  icons: {
+    icon: [
+      { url: "/planet-ocr-logo.png", type: "image/png" },
+    ],
+    apple: "/planet-ocr-logo.png",
+    shortcut: "/planet-ocr-logo.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

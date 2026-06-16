@@ -6,8 +6,10 @@ import {
   Lock,
   MessageSquare,
   Shield,
-  Sparkles,
   Zap,
+  TrendingUp,
+  Award,
+  Globe,
 } from "lucide-react";
 import { AdvisorDemoWidget } from "@/components/AdvisorDemoWidget";
 import { FadeIn } from "@/components/fade-in";
@@ -28,13 +30,15 @@ const tiers = [
   {
     slug: "basic",
     name: "Essential",
-    price: "$29 / mo",
+    price: "$29",
+    period: "/mo",
     features: ["500 pages / month", "Tables & forms", "REST API access"],
   },
   {
     slug: "pro",
     name: "Professional",
-    price: "$99 / mo",
+    price: "$99",
+    period: "/mo",
     features: ["5,000 pages / month", "Equations & handwriting", "Priority processing"],
     highlight: true,
   },
@@ -48,19 +52,19 @@ const tiers = [
 
 const steps = [
   {
-    icon: FileSearch,
-    title: "Upload a sample",
-    description: "We fingerprint document type, layout complexity, and content signals in seconds.",
-  },
-  {
     icon: MessageSquare,
-    title: "Talk to the advisor",
-    description: "A RAG-grounded agent asks the right questions — no generic tier guesswork.",
+    title: "Chat with the advisor",
+    description: "Tell us about your document types, volume, and accuracy needs — our AI agent guides the conversation.",
   },
   {
     icon: Zap,
-    title: "See it on your data",
-    description: "Run a live OCR demo on your actual document before you choose a plan.",
+    title: "Get your recommendation",
+    description: "Receive a personalized tier match based on your requirements — no guesswork, just smart suggestions.",
+  },
+  {
+    icon: FileSearch,
+    title: "See it in action",
+    description: "Upload a sample document and run a live OCR demo to validate your recommendation before subscribing.",
   },
 ];
 
@@ -70,78 +74,202 @@ const trust = [
   { icon: CheckCircle2, label: "Stripe-secured billing" },
 ];
 
+const stats = [
+  { icon: TrendingUp, value: "99.8%", label: "Accuracy rate" },
+  { icon: Zap, value: "<2s", label: "Average processing" },
+  { icon: Globe, value: "50+", label: "Languages supported" },
+  { icon: Award, value: "SOC 2", label: "Certified platform" },
+];
+
 export default function HomePage() {
   return (
-    <div className="min-h-screen gradient-mesh">
+    <div className="min-h-screen bg-background">
       <Navbar variant="marketing" />
 
       <main>
-        {/* Hero — signup first */}
-        <section className="mx-auto max-w-6xl px-6 pb-20 pt-20 lg:pt-28">
-          <FadeIn className="mx-auto max-w-3xl text-center">
-            <Badge variant="secondary" className="mb-6 gap-1.5 px-3 py-1">
-              <Sparkles className="size-3.5 text-accent" />
-              AI-powered OCR matching
-            </Badge>
-            <h1 className="text-balance text-4xl font-semibold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-              The right OCR tier for every document —{" "}
-              <span className="text-primary">proven on yours</span>
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              Klarix analyzes your sample file, recommends the ideal processing tier, and runs a live
-              demo so you buy with confidence — not guesswork.
-            </p>
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-              <Link
-                href="/register"
-                className={cn(buttonVariants({ size: "lg" }), "bg-accent text-accent-foreground hover:bg-accent/90 gap-2")}
+        <section className="relative overflow-hidden gradient-mesh">
+          {/* Animated Background Logo */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+            <div className="animate-spin-slow opacity-[0.12]">
+              <svg
+                width="900"
+                height="900"
+                viewBox="0 0 480 480"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="text-primary"
               >
-                Start free <ArrowRight className="size-4" />
-              </Link>
-              <Link href="/login" className={buttonVariants({ variant: "outline", size: "lg" })}>
-                Sign in
-              </Link>
+                {/* Planet circle */}
+                <circle cx="240" cy="240" r="120" fill="currentColor" opacity="0.7" />
+                
+                {/* Orbital rings */}
+                <ellipse
+                  cx="240"
+                  cy="240"
+                  rx="180"
+                  ry="60"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  fill="none"
+                  opacity="0.5"
+                />
+                <ellipse
+                  cx="240"
+                  cy="240"
+                  rx="180"
+                  ry="60"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  fill="none"
+                  opacity="0.4"
+                  transform="rotate(120 240 240)"
+                />
+                
+                {/* Orbital dots */}
+                <circle cx="420" cy="240" r="10" fill="currentColor" opacity="0.6">
+                  <animateTransform
+                    attributeName="transform"
+                    type="rotate"
+                    from="0 240 240"
+                    to="360 240 240"
+                    dur="20s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
+                <circle cx="60" cy="240" r="8" fill="currentColor" opacity="0.5">
+                  <animateTransform
+                    attributeName="transform"
+                    type="rotate"
+                    from="180 240 240"
+                    to="540 240 240"
+                    dur="20s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
+                <circle cx="240" cy="180" r="9" fill="currentColor" opacity="0.55">
+                  <animateTransform
+                    attributeName="transform"
+                    type="rotate"
+                    from="90 240 240"
+                    to="450 240 240"
+                    dur="20s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
+              </svg>
             </div>
-            <p className="mt-4 text-sm text-muted-foreground">No credit card · 50 pages included</p>
-          </FadeIn>
+          </div>
+
+          <div className="relative z-10 px-4 py-24 sm:py-32 lg:px-8">
+            <FadeIn className="mx-auto max-w-3xl text-center">
+              <p className="mb-6 text-sm font-semibold uppercase tracking-[0.2em] text-primary">
+                Document intelligence
+              </p>
+              <h1 className="mb-6 text-balance text-5xl font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl">
+                The right OCR tier for{" "}
+                <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                  every document
+                </span>
+              </h1>
+              <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
+                Planet OCR's AI advisor understands your needs, recommends the ideal processing tier, and lets you
+                validate with a live demo — buy with confidence, not guesswork.
+              </p>
+              <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+                <Link
+                  href="/register"
+                  className={cn(
+                    buttonVariants({ size: "lg" }),
+                    "group gap-2 bg-primary px-8 py-6 text-base font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+                  )}
+                >
+                  Get Started Free
+                  <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
+                </Link>
+                <Link
+                  href="/login"
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "lg" }),
+                    "px-8 py-6 text-base font-semibold hover-scale"
+                  )}
+                >
+                  Sign In
+                </Link>
+              </div>
+              <p className="mt-6 text-sm text-muted-foreground">
+                No credit card required • 50 pages included free
+              </p>
+            </FadeIn>
+
+            <FadeIn delay={0.2} className="mx-auto mt-16 max-w-5xl">
+              <div className="grid grid-cols-2 gap-6 sm:gap-8 lg:grid-cols-4">
+                {stats.map((stat, i) => (
+                  <div
+                    key={stat.label}
+                    className="group rounded-2xl border border-border bg-card/50 p-6 text-center backdrop-blur-sm transition-all hover:shadow-lg hover:-translate-y-1"
+                    style={{ animationDelay: `${i * 0.1}s` }}
+                  >
+                    <div className="mb-3 inline-flex rounded-full bg-primary/10 p-3">
+                      <stat.icon className="size-6 text-primary" />
+                    </div>
+                    <div className="text-2xl font-bold text-foreground sm:text-3xl">{stat.value}</div>
+                    <div className="mt-1 text-sm text-muted-foreground">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+            </FadeIn>
+          </div>
+
+          <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
+            <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-primary to-accent opacity-20 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]" />
+          </div>
         </section>
 
-        {/* Product demo preview */}
-        <section className="border-y border-border bg-card/40 py-20">
-          <div className="mx-auto max-w-6xl px-6">
-            <FadeIn delay={0.1} className="mb-12 text-center">
-              <h2 className="text-3xl font-semibold tracking-tight">How Klarix works</h2>
-              <p className="mt-3 text-muted-foreground">Three steps from upload to validated recommendation</p>
+        <section className="border-y border-border bg-muted/30 py-24">
+          <div className="px-4 lg:px-8">
+            <FadeIn className="mb-16 text-center">
+              <h2 className="text-4xl font-bold tracking-tight text-foreground">How Planet OCR Works</h2>
+              <p className="mt-4 text-lg text-muted-foreground">
+                Three simple steps to your perfect OCR tier
+              </p>
             </FadeIn>
-            <div className="grid gap-6 lg:grid-cols-3">
+            <div className="grid gap-8 lg:grid-cols-3">
               {steps.map((step, i) => (
-                <FadeIn key={step.title} delay={0.15 + i * 0.08}>
-                  <Card className="h-full border-border/80 bg-card/80 shadow-sm transition-shadow hover:shadow-md">
-                    <CardHeader>
-                      <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-secondary text-primary">
-                        <step.icon className="size-5" />
+                <FadeIn key={step.title} delay={0.1 + i * 0.1}>
+                  <Card className="group relative h-full overflow-hidden border-border bg-card hover-lift">
+                    <div className="absolute right-0 top-0 h-full w-1 bg-gradient-to-b from-primary to-accent opacity-0 transition-opacity group-hover:opacity-100" />
+                    <CardHeader className="pb-4">
+                      <div className="mb-4 inline-flex rounded-xl bg-primary/10 p-3 ring-1 ring-primary/20">
+                        <step.icon className="size-7 text-primary" />
                       </div>
-                      <CardTitle className="text-lg">{step.title}</CardTitle>
-                      <CardDescription>{step.description}</CardDescription>
+                      <div className="mb-2 text-sm font-semibold text-primary">Step {i + 1}</div>
+                      <CardTitle className="text-xl">{step.title}</CardTitle>
+                      <CardDescription className="text-base leading-relaxed">
+                        {step.description}
+                      </CardDescription>
                     </CardHeader>
                   </Card>
                 </FadeIn>
               ))}
             </div>
 
-            <FadeIn delay={0.4} className="mt-10 flex justify-center">
+            <FadeIn delay={0.4} className="mt-16 flex justify-center">
               <AdvisorDemoWidget />
             </FadeIn>
           </div>
         </section>
 
-        {/* Enterprise trust */}
-        <section className="py-16">
-          <div className="mx-auto max-w-6xl px-6">
-            <FadeIn className="flex flex-wrap items-center justify-center gap-8">
+        <section className="bg-background py-16">
+          <div className="px-4 lg:px-8">
+            <FadeIn className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
               {trust.map((item) => (
-                <div key={item.label} className="flex items-center gap-2.5 text-sm text-muted-foreground">
-                  <item.icon className="size-4 text-primary" />
+                <div
+                  key={item.label}
+                  className="flex items-center gap-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <div className="rounded-lg bg-primary/10 p-2">
+                    <item.icon className="size-5 text-primary" />
+                  </div>
                   {item.label}
                 </div>
               ))}
@@ -149,39 +277,48 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Pricing */}
-        <section className="border-t border-border bg-card/30 py-20">
-          <div className="mx-auto max-w-6xl px-6">
-            <FadeIn className="text-center">
-              <h2 className="text-3xl font-semibold tracking-tight">Transparent pricing</h2>
-              <p className="mt-3 text-muted-foreground">
+        <section className="border-t border-border bg-gradient-to-b from-muted/50 to-background py-24">
+          <div className="px-4 lg:px-8">
+            <FadeIn className="mb-16 text-center">
+              <h2 className="text-4xl font-bold tracking-tight text-foreground">Transparent Pricing</h2>
+              <p className="mt-4 text-lg text-muted-foreground">
                 Capability-based tiers — no opaque model names, just what you need.
               </p>
             </FadeIn>
-            <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {tiers.map((tier, i) => (
-                <FadeIn key={tier.slug} delay={0.1 + i * 0.06}>
+                <FadeIn key={tier.slug} delay={0.1 + i * 0.08}>
                   <Card
                     className={cn(
-                      "relative h-full transition-all hover:-translate-y-0.5 hover:shadow-md",
-                      tier.highlight && "border-primary shadow-md ring-1 ring-primary/20"
+                      "group relative flex h-full flex-col overflow-hidden transition-all hover-lift",
+                      tier.highlight
+                        ? "border-2 border-primary shadow-xl ring-4 ring-primary/10"
+                        : "border-border shadow-sm"
                     )}
                   >
                     {tier.highlight && (
-                      <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-accent text-accent-foreground">
-                        Most popular
+                      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-accent to-primary" />
+                    )}
+                    {tier.highlight && (
+                      <Badge className="absolute -right-12 top-6 rotate-45 bg-accent px-12 py-1 text-xs font-bold text-accent-foreground shadow-sm">
+                        Popular
                       </Badge>
                     )}
-                    <CardHeader>
-                      <CardTitle>{tier.name}</CardTitle>
-                      <p className="text-2xl font-semibold text-primary">{tier.price}</p>
+                    <CardHeader className="pb-8">
+                      <CardTitle className="text-xl">{tier.name}</CardTitle>
+                      <div className="mt-4 flex items-baseline gap-1">
+                        <span className="text-4xl font-bold text-primary">{tier.price}</span>
+                        {tier.period && (
+                          <span className="text-base text-muted-foreground">{tier.period}</span>
+                        )}
+                      </div>
                     </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-2.5">
+                    <CardContent className="flex-1">
+                      <ul className="space-y-3">
                         {tier.features.map((f) => (
-                          <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
-                            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
-                            {f}
+                          <li key={f} className="flex items-start gap-3 text-sm">
+                            <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-primary" />
+                            <span className="text-muted-foreground">{f}</span>
                           </li>
                         ))}
                       </ul>
@@ -193,21 +330,24 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Final CTA */}
-        <section className="py-20">
-          <FadeIn className="mx-auto max-w-2xl px-6 text-center">
-            <h2 className="text-3xl font-semibold tracking-tight">Ready to find your tier?</h2>
-            <p className="mt-3 text-muted-foreground">
-              Upload one document and let Klarix do the rest — recommendation and live proof included.
+        <section className="bg-gradient-to-br from-primary/5 via-accent/5 to-background py-24">
+          <FadeIn className="mx-auto max-w-4xl px-4 text-center lg:px-8">
+            <h2 className="text-4xl font-bold tracking-tight text-foreground">
+              Ready to Find Your Perfect Tier?
+            </h2>
+            <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
+              Start a conversation with our AI advisor to get your personalized tier recommendation,
+              then optionally test with a live demo before you commit.
             </p>
             <Link
               href="/register"
               className={cn(
                 buttonVariants({ size: "lg" }),
-                "mt-8 bg-accent text-accent-foreground hover:bg-accent/90 gap-2"
+                "group mt-10 gap-2 bg-primary px-8 py-6 text-base font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
               )}
             >
-              Create free account <ArrowRight className="size-4" />
+              Create Free Account
+              <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
             </Link>
           </FadeIn>
         </section>

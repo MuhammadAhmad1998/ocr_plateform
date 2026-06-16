@@ -53,8 +53,8 @@ export function DemoResults({ status, result, tierName, engineName }: DemoResult
                 <Badge variant="outline">{result.timing_ms}ms</Badge>
               )}
             </div>
-            <ScrollArea className="h-64 rounded-lg border border-border bg-klarix-jet p-4">
-              <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-klarix-cyan">
+            <ScrollArea className="h-64 rounded-lg border border-border bg-slate-950 p-4">
+              <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-cyan-400">
                 {result.text}
               </pre>
             </ScrollArea>
