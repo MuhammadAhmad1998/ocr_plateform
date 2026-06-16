@@ -229,7 +229,7 @@ Before going live, review [ocr_platform/docs/PRODUCTION_CHECKLIST.md](ocr_platfo
 - Deploy Celery workers separately from the API process
 
 Health endpoints: `GET /health` (liveness), `GET /api/v1/status/` (service status and model availability).
-ß
+
 ## License
 
 Proprietary — all rights reserved unless otherwise noted.
