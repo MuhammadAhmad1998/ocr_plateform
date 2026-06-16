@@ -10,9 +10,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { AdvisorOnboardingTour, hasCompletedAdvisorOnboarding } from "@/components/AdvisorOnboardingTour";
 import { ChatMessageContent } from "@/components/ChatMessageContent";
 import { AdvisorSystemStatus } from "@/components/AdvisorSystemStatus";
 import { DemoResults } from "@/components/DemoResults";
+import { DemoUpload } from "@/components/DemoUpload";
 import { Navbar } from "@/components/Navbar";
 import { RecommendationCard } from "@/components/RecommendationCard";
 import { ResponseModeBadge } from "@/components/ResponseModeBadge";
@@ -30,7 +32,7 @@ import { TIER_NAMES, cn } from "@/lib/utils";
 const WIZARD_STEPS = [
   { id: "discuss", label: "Discuss", description: "Tell us about your needs" },
   { id: "recommend", label: "Recommend", description: "Review your tier match" },
-  { id: "demo", label: "Demo", description: "See live OCR output" },
+  { id: "demo", label: "Demo", description: "Upload a document and see live OCR output" },
 ];
 
 export default function AdvisorPage() {
@@ -40,6 +42,7 @@ export default function AdvisorPage() {
   const [input, setInput] = useState("");
   const [initLoading, setInitLoading] = useState(true);
   const [wizardStep, setWizardStep] = useState(0);
+  const [uploading, setUploading] = useState(false);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
 
   const {
@@ -51,7 +54,10 @@ export default function AdvisorPage() {
     demoJobId,
     demoResult,
     demoStatus,
+    documentId,
+    documentName,
     setSession,
+    setDocument,
     addMessage,
     setStreaming,
     appendStream,
@@ -79,6 +85,9 @@ export default function AdvisorPage() {
         setSession(session.id);
         setSystemCapabilities(capabilities);
         if (session.recommendation) setRecommendation(session.recommendation);
+        if (session.document_id) {
+          setDocument(session.document_id, "Uploaded document");
+        }
       } catch {
         router.push("/login");
       } finally {
@@ -86,7 +95,7 @@ export default function AdvisorPage() {
       }
     }
     init();
-  }, [router, setSession, setRecommendation, setSystemCapabilities]);
+  }, [router, setSession, setRecommendation, setSystemCapabilities, setDocument]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -114,7 +123,7 @@ export default function AdvisorPage() {
 
   // Keep chat input focused after replies finish and when in discuss step
   useEffect(() => {
-    if (!isStreaming && wizardStep === 0 && !recommendation) {
+    if (!isStreaming && wizardStep === 0 && !recommendation && hasCompletedAdvisorOnboarding()) {
       const timer = window.setTimeout(focusChatInput, 0);
       return () => window.clearTimeout(timer);
     }
@@ -140,19 +149,35 @@ export default function AdvisorPage() {
         }, 2000);
       } catch (err) {
         console.error("Demo failed:", err);
-        toast.error("Could not start live demo");
+        const message = err instanceof Error ? err.message : "Could not start live demo";
+        toast.error(message);
       }
     },
     [setDemoJob, setDemoResult]
   );
 
-  const handleStartDemo = useCallback(() => {
-    if (!sessionId) return;
+  const handleGoToDemo = useCallback(() => {
     setWizardStep(2);
-    if (demoStatus === "idle" || demoStatus === "failed") {
-      startDemo(sessionId);
-    }
-  }, [sessionId, demoStatus, startDemo]);
+  }, []);
+
+  const handleUploadDocument = useCallback(
+    async (file: File) => {
+      if (!sessionId) return;
+      setUploading(true);
+      try {
+        const doc = await api.uploadDocument(file, sessionId);
+        setDocument(doc.id, doc.filename);
+      } finally {
+        setUploading(false);
+      }
+    },
+    [sessionId, setDocument]
+  );
+
+  const handleProcessDocument = useCallback(() => {
+    if (!sessionId || !documentId) return;
+    startDemo(sessionId);
+  }, [sessionId, documentId, startDemo]);
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
@@ -209,10 +234,17 @@ export default function AdvisorPage() {
           </p>
         </div>
 
-        <WizardStepper steps={WIZARD_STEPS} currentStep={wizardStep} />
+        <div id="advisor-wizard-stepper">
+          <WizardStepper steps={WIZARD_STEPS} currentStep={wizardStep} />
+        </div>
+
+        <AdvisorOnboardingTour
+          ready={!initLoading}
+          active={wizardStep === 0 && messages.length === 0 && !recommendation}
+        />
 
         <div className="grid flex-1 gap-6 lg:grid-cols-[1fr_320px]">
-          <Card className="flex min-h-[520px] flex-col">
+          <Card id="advisor-chat-card" className="flex min-h-[520px] flex-col">
             <CardHeader className="border-b border-border pb-4">
               <CardTitle className="text-lg">{WIZARD_STEPS[wizardStep].label}</CardTitle>
               <CardDescription>{WIZARD_STEPS[wizardStep].description}</CardDescription>
@@ -277,8 +309,13 @@ export default function AdvisorPage() {
                           </Button>
                         </div>
                       )}
-                      <form onSubmit={handleSend} className="mt-4 flex gap-2 border-t border-border pt-4">
+                      <form
+                        id="advisor-chat-form"
+                        onSubmit={handleSend}
+                        className="mt-4 flex gap-2 border-t border-border pt-4"
+                      >
                         <Input
+                          id="advisor-chat-input"
                           ref={inputRef}
                           placeholder="Describe your documents, volume, and accuracy needs…"
                           value={input}
@@ -297,7 +334,7 @@ export default function AdvisorPage() {
                     <div className="flex flex-1 flex-col gap-6">
                       <RecommendationCard recommendation={recommendation} />
                       <div className="mt-auto flex flex-wrap gap-3">
-                        <Button onClick={handleStartDemo} className="gap-2">
+                        <Button onClick={handleGoToDemo} className="gap-2">
                           Run live demo <ArrowRight className="size-4" />
                         </Button>
                         <Link
@@ -314,13 +351,23 @@ export default function AdvisorPage() {
 
                   {wizardStep === 2 && (
                     <div className="flex flex-1 flex-col gap-6">
-                      <DemoResults
-                        status={demoStatus}
-                        result={demoResult}
-                        tierName={recommendation ? TIER_NAMES[recommendation.demo_tier] : undefined}
-                      />
+                      {demoStatus === "idle" ? (
+                        <DemoUpload
+                          documentName={documentName}
+                          onUpload={handleUploadDocument}
+                          onProcess={handleProcessDocument}
+                          uploading={uploading}
+                        />
+                      ) : (
+                        <DemoResults
+                          status={demoStatus}
+                          result={demoResult}
+                          tierName={recommendation ? TIER_NAMES[recommendation.demo_tier] : undefined}
+                          engineName={recommendation ? formatEngineName(recommendation) : undefined}
+                        />
+                      )}
                       {recommendation && demoStatus === "failed" && (
-                        <Button onClick={handleStartDemo} variant="outline" className="w-full">
+                        <Button onClick={handleProcessDocument} variant="outline" className="w-full">
                           Retry live demo
                         </Button>
                       )}

@@ -275,6 +275,8 @@ class GotOCRService:
 
             with self._inference_lock:
                 import torch
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
                 with torch.inference_mode():
                     result = self._model.chat(
                         self._tokenizer,

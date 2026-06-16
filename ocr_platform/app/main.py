@@ -26,7 +26,7 @@ from app.core.middleware import (
 )
 from app.core.security_checks import validate_production_settings
 from app.core.rate_limit import RateLimitMiddleware
-from app.core.db_bootstrap import wait_for_database
+from app.core.db_bootstrap import sync_database_schema, wait_for_database
 from app.core.database import Base, engine
 import app.models  # noqa: F401 — register all models
 from app.seed import seed_database
@@ -68,6 +68,7 @@ async def lifespan(app: FastAPI):
 
     ensure_pgvector_extension()
     Base.metadata.create_all(bind=engine)
+    sync_database_schema(engine)
     seed_database()
 
     if not settings.USE_MOCK_RAG:

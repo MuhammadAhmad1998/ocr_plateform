@@ -17,12 +17,7 @@ from app.core.idempotency import (
 )
 from app.ocr_engine.models import OcrJob
 from app.ocr_engine.schemas import DemoRunRequest, DemoRunResponse, OcrResultResponse
-from app.ocr_engine.service import create_demo_job, get_job_result
-
-try:
-    from workers.celery_app import process_ocr_job_task
-except ImportError:
-    process_ocr_job_task = None
+from app.ocr_engine.service import create_demo_job, dispatch_demo_job, get_job_result
 
 router = APIRouter(prefix="/demo", tags=["demo"])
 
@@ -62,16 +57,7 @@ def run_demo(
         raise NotFoundError("Session not found")
 
     job = create_demo_job(db, user.id, session, webhook_url=data.webhook_url)
-
-    if process_ocr_job_task:
-        try:
-            process_ocr_job_task.delay(str(job.id))
-        except Exception:
-            from app.ocr_engine.service import process_ocr_job
-            process_ocr_job(db, str(job.id))
-    else:
-        from app.ocr_engine.service import process_ocr_job
-        process_ocr_job(db, str(job.id))
+    dispatch_demo_job(str(job.id))
 
     response = DemoRunResponse(
         job_id=str(job.id),

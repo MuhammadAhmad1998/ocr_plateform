@@ -8,6 +8,7 @@ from app.advisor.fingerprint import format_fingerprint_for_prompt
 from app.advisor.models import ChatMessage, ChatSession
 from app.core.config import get_settings
 from app.rag.retriever import rag_retriever
+from app.ocr_engine.demo_resolution import normalize_engine_slug
 from app.registry.service import registry_service
 
 settings = get_settings()
@@ -187,14 +188,18 @@ class AdvisorService:
                 tier = registry_service.get_tier_by_slug(db, primary)
                 if tier:
                     session.recommendation_tier_id = tier.id
-                engine_slug = recommendation.get("selected_engine")
+                engine_slug = normalize_engine_slug(recommendation.get("selected_engine"))
                 if engine_slug:
+                    recommendation["selected_engine"] = engine_slug
                     engine = registry_service.get_engine_by_slug(db, engine_slug)
                     if engine:
                         session.selected_engine_id = engine.id
-                    elif session.document:
+                    else:
+                        fingerprint = (
+                            session.document.fingerprint_json if session.document else {}
+                        )
                         match = registry_service.select_engine_for_document(
-                            db, primary, session.document.fingerprint_json
+                            db, primary, fingerprint
                         )
                         if match:
                             session.selected_engine_id = match.engine.id

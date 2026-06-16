@@ -8,15 +8,23 @@ interface DemoResultsProps {
   status: "idle" | "running" | "completed" | "failed";
   result: { text?: string; confidence?: number; timing_ms?: number } | null;
   tierName?: string;
+  engineName?: string;
 }
 
-export function DemoResults({ status, result, tierName }: DemoResultsProps) {
+export function DemoResults({ status, result, tierName, engineName }: DemoResultsProps) {
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0 pb-3">
         <div>
           <CardTitle className="text-base">Live OCR demo</CardTitle>
-          {tierName && <CardDescription>Running on {tierName} engine</CardDescription>}
+          {engineName ? (
+            <CardDescription>
+              Running on {tierName ? `${tierName} — ` : ""}
+              {engineName}
+            </CardDescription>
+          ) : (
+            tierName && <CardDescription>Running on {tierName} engine</CardDescription>
+          )}
         </div>
         {status === "running" && <Loader2 className="size-4 animate-spin text-primary" />}
         {status === "completed" && <CheckCircle2 className="size-4 text-primary" />}

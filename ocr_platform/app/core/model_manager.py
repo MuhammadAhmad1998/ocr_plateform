@@ -8,11 +8,14 @@ to prevent CUDA out of memory errors.
 
 import gc
 import logging
+from threading import Lock
 from typing import Literal
 
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
+
+_load_lock = Lock()
 
 ModelType = Literal["vlm", "paddle_ocr", "qianfan_ocr", "got_ocr"]
 
@@ -71,45 +74,58 @@ class ModelManager:
     def before_load(self, model_type: ModelType) -> None:
         """
         Called before loading a model to ensure GPU memory is available.
-        
+
         If a different model is currently loaded, it will be unloaded first.
+        Serialized with a lock so concurrent requests cannot load two models at once.
         """
+        with _load_lock:
+            self._prepare_for_load(model_type)
+
+    def _prepare_for_load(self, model_type: ModelType) -> None:
         settings = get_settings()
-        
-        # Check if auto-unload is enabled
+
         if not settings.AUTO_UNLOAD_MODELS:
             logger.debug("AUTO_UNLOAD_MODELS is disabled, skipping model management")
             self._current_model = model_type
             return
 
-        if self._current_model is None:
-            logger.info("No model currently loaded, proceeding with %s", model_type)
-            self._current_model = model_type
-            return
-
-        if self._current_model == model_type:
+        if self._current_model == model_type and self._is_service_loaded(model_type):
             logger.debug("Model %s is already current, no unload needed", model_type)
             return
 
-        # Different model is loaded, unload it first
-        logger.info(
-            "Switching from %s to %s - unloading previous model",
-            self._current_model,
-            model_type,
-        )
-        
-        previous_service = self._services.get(self._current_model)
-        if previous_service and hasattr(previous_service, "unload"):
-            try:
-                previous_service.unload()
-                logger.info("Successfully unloaded %s", self._current_model)
-            except Exception as exc:
-                logger.warning("Failed to unload %s: %s", self._current_model, exc)
+        loaded_models = [
+            name
+            for name in self._services
+            if name != model_type and self._is_service_loaded(name)
+        ]
+        if loaded_models:
+            logger.info(
+                "Switching to %s - unloading previously loaded model(s): %s",
+                model_type,
+                ", ".join(loaded_models),
+            )
 
-        # Always force-free GPU memory after unloading, even if unload() failed
+        for other_model in loaded_models:
+            self._unload_service(other_model)
+
+        if self._current_model not in (None, model_type) and self._is_service_loaded(self._current_model):
+            self._unload_service(self._current_model)
+
         _force_free_gpu_memory()
-
         self._current_model = model_type
+
+    def _is_service_loaded(self, model_type: ModelType) -> bool:
+        service = self._services.get(model_type)
+        return bool(service and getattr(service, "is_loaded", False))
+
+    def _unload_service(self, model_type: ModelType) -> None:
+        service = self._services.get(model_type)
+        if service and hasattr(service, "unload"):
+            try:
+                service.unload()
+                logger.info("Successfully unloaded %s", model_type)
+            except Exception as exc:
+                logger.warning("Failed to unload %s: %s", model_type, exc)
 
     def unload_all(self) -> None:
         """Unload all registered models and free GPU memory."""
