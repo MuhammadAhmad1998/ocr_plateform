@@ -111,3 +111,65 @@
       radial-gradient(at 50% 100%, rgba(52, 246, 242, 0.06) 0, transparent 40%);
   }
 }
+
+/* Advisor onboarding tour (driver.js) */
+.advisor-tour-popover.driver-popover {
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow:
+    0 20px 40px rgba(26, 18, 53, 0.12),
+    0 0 0 1px rgba(125, 83, 222, 0.08);
+  max-width: 360px;
+}
+
+.advisor-tour-popover .driver-popover-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.advisor-tour-popover .advisor-tour-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.advisor-tour-popover .driver-popover-description {
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.advisor-tour-popover .driver-popover-progress-text {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.advisor-tour-popover .driver-popover-footer button {
+  border-radius: calc(var(--radius) - 2px);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 0.4rem 0.85rem;
+  text-shadow: none;
+}
+
+.advisor-tour-popover .driver-popover-next-btn,
+.advisor-tour-popover .driver-popover-done-btn {
+  background: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  border: none !important;
+}
+
+.advisor-tour-popover .driver-popover-prev-btn {
+  background: transparent !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.advisor-tour-popover .driver-popover-close-btn {
+  color: var(--muted-foreground) !important;
+}
