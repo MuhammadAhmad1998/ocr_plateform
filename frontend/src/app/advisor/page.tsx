@@ -147,7 +147,7 @@ export default function AdvisorPage() {
           const result = await api.getDemoResult(job_id);
           if (result.status === "completed") {
             setDemoResult(
-              { text: result.text, confidence: result.confidence, timing_ms: result.timing_ms },
+              { text: result.text ?? undefined, confidence: result.confidence ?? undefined, timing_ms: result.timing_ms ?? undefined },
               "completed"
             );
             if (pollRef.current) clearInterval(pollRef.current);

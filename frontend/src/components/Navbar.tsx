@@ -3,24 +3,34 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, LogOut } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { getToken } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
-const nav = [
+const appNav = [
   { href: "/advisor", label: "Advisor" },
   { href: "/testing", label: "Testing" },
   { href: "/dashboard", label: "Dashboard" },
+  { href: "/docs", label: "Docs" },
   { href: "/pricing", label: "Pricing" },
 ];
+
+const PUBLIC_PATHS = ["/", "/login", "/register", "/docs", "/pricing"];
 
 export function Navbar({ variant = "app" }: { variant?: "marketing" | "app" }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const isAuth =
-    pathname !== "/" && pathname !== "/login" && pathname !== "/register";
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setLoggedIn(!!getToken());
+  }, [pathname]);
+
+  const isPublicPage = PUBLIC_PATHS.includes(pathname);
+  const showAppNav = loggedIn || !isPublicPage;
 
   return (
     <header
@@ -31,23 +41,24 @@ export function Navbar({ variant = "app" }: { variant?: "marketing" | "app" }) {
     >
       <div className="flex h-16 items-center justify-between px-4 lg:h-18 lg:px-8">
         <div className="flex items-center gap-8">
-          <Logo />
-          {isAuth && (
+          <Logo href={loggedIn ? "/dashboard" : "/"} />
+          {showAppNav && (
             <nav className="hidden items-center gap-1 lg:flex">
-              {nav.map((item) => (
+              {appNav.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
                     "relative rounded-lg px-4 py-2 text-sm font-semibold transition-all",
-                    pathname.startsWith(item.href)
+                    pathname === item.href || (item.href !== "/docs" && pathname.startsWith(`${item.href}/`))
                       ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   {item.label}
-                  {pathname.startsWith(item.href) && (
-                    <span className="absolute inset-x-1 -bottom-[17px] h-0.5 bg-primary rounded-t-full" />
+                  {(pathname === item.href ||
+                    (item.href !== "/docs" && pathname.startsWith(`${item.href}/`))) && (
+                    <span className="absolute inset-x-1 -bottom-[17px] h-0.5 rounded-t-full bg-primary" />
                   )}
                 </Link>
               ))}
@@ -57,7 +68,18 @@ export function Navbar({ variant = "app" }: { variant?: "marketing" | "app" }) {
 
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          {isAuth ? (
+          {!loggedIn && (
+            <Link
+              href="/docs"
+              className={cn(
+                buttonVariants({ variant: "ghost", size: "sm" }),
+                "hidden text-muted-foreground sm:inline-flex"
+              )}
+            >
+              API Docs
+            </Link>
+          )}
+          {loggedIn ? (
             <>
               <Button
                 variant="ghost"
@@ -89,7 +111,7 @@ export function Navbar({ variant = "app" }: { variant?: "marketing" | "app" }) {
                 href="/register"
                 className={cn(
                   buttonVariants({ size: "sm" }),
-                  "bg-primary shadow-sm hover:shadow-md transition-all hover:scale-105"
+                  "bg-primary shadow-sm transition-all hover:scale-105 hover:shadow-md"
                 )}
               >
                 Get Started
@@ -99,17 +121,17 @@ export function Navbar({ variant = "app" }: { variant?: "marketing" | "app" }) {
         </div>
       </div>
 
-      {isAuth && mobileMenuOpen && (
+      {loggedIn && mobileMenuOpen && (
         <div className="border-t border-border bg-background lg:hidden">
           <nav className="space-y-1 px-4 py-4">
-            {nav.map((item) => (
+            {appNav.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
                   "block rounded-lg px-4 py-3 text-base font-semibold transition-colors",
-                  pathname.startsWith(item.href)
+                  pathname === item.href || pathname.startsWith(`${item.href}/`)
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}

@@ -1,0 +1,329 @@
+import {
+  fetchPublic,
+  fetchRoot,
+  fetchWithAuth,
+  json,
+} from "./client";
+import type {
+  AdvisorCapabilities,
+  AdvisorDocument,
+  AdvisorSession,
+  ApiKeyCreated,
+  ApiKeyInfo,
+  DemoJobResult,
+  DemoRunResult,
+  Document,
+  EngineHealth,
+  ModelInfo,
+  OcrEngineResult,
+  OcrJob,
+  ServiceStatus,
+  TestingModel,
+  TestingResult,
+  TokenResponse,
+  UsageStats,
+  User,
+} from "./types";
+
+async function uploadForm(path: string, form: FormData) {
+  const res = await fetchWithAuth(path, { method: "POST", body: form });
+  return json(res);
+}
+
+export const v1 = {
+  // ── status ──────────────────────────────────────────────────────────────
+  getStatus: async () => {
+    const res = await fetchPublic("/status/");
+    return json<ServiceStatus>(res);
+  },
+
+  // ── auth ────────────────────────────────────────────────────────────────
+  register: async (email: string, password: string, fullName?: string) => {
+    const res = await fetchPublic("/auth/register/", {
+      method: "POST",
+      body: JSON.stringify({ email, password, full_name: fullName }),
+    });
+    return json<TokenResponse>(res);
+  },
+
+  login: async (email: string, password: string) => {
+    const res = await fetchPublic("/auth/login/", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+    return json<TokenResponse>(res);
+  },
+
+  refresh: async (refreshToken: string) => {
+    const res = await fetchPublic("/auth/refresh/", {
+      method: "POST",
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    return json<TokenResponse>(res);
+  },
+
+  me: async () => {
+    const res = await fetchWithAuth("/auth/me/");
+    return json<User>(res);
+  },
+
+  // ── documents ─────────────────────────────────────────────────────────
+  createDocument: async (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return uploadForm("/documents/", form) as Promise<Document>;
+  },
+
+  listDocuments: async (params?: { limit?: number; offset?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.limit) qs.set("limit", String(params.limit));
+    if (params?.offset) qs.set("offset", String(params.offset));
+    const q = qs.toString();
+    const res = await fetchWithAuth(`/documents/${q ? `?${q}` : ""}`);
+    return json<{ documents: Document[]; total: number }>(res);
+  },
+
+  getDocument: async (documentId: string) => {
+    const res = await fetchWithAuth(`/documents/${documentId}/`);
+    return json<Document>(res);
+  },
+
+  // ── models ────────────────────────────────────────────────────────────
+  listModels: async () => {
+    const res = await fetchWithAuth("/models/");
+    return json<{ models: ModelInfo[] }>(res);
+  },
+
+  // ── advisor ───────────────────────────────────────────────────────────
+  createSession: async (documentId?: string) => {
+    const res = await fetchWithAuth("/advisor/session/", {
+      method: "POST",
+      body: JSON.stringify({ document_id: documentId }),
+    });
+    return json<AdvisorSession>(res);
+  },
+
+  getAdvisorCapabilities: async () => {
+    const res = await fetchWithAuth("/advisor/capabilities/");
+    return json<AdvisorCapabilities>(res);
+  },
+
+  uploadDocument: async (file: File, sessionId?: string) => {
+    const form = new FormData();
+    form.append("file", file);
+    const url = sessionId
+      ? `/advisor/upload/?session_id=${sessionId}`
+      : "/advisor/upload/";
+    const res = await fetchWithAuth(url, { method: "POST", body: form });
+    return json<AdvisorDocument>(res);
+  },
+
+  getSession: async (sessionId: string) => {
+    const res = await fetchWithAuth(`/advisor/session/${sessionId}/`);
+    return json<AdvisorSession>(res);
+  },
+
+  // ── demo ──────────────────────────────────────────────────────────────
+  runDemo: async (sessionId: string, webhookUrl?: string) => {
+    const res = await fetchWithAuth("/demo/run/", {
+      method: "POST",
+      body: JSON.stringify({ session_id: sessionId, webhook_url: webhookUrl }),
+    });
+    return json<DemoRunResult>(res);
+  },
+
+  getDemoResult: async (jobId: string) => {
+    const res = await fetchWithAuth(`/demo/result/${jobId}/`);
+    return json<DemoJobResult>(res);
+  },
+
+  // ── billing ───────────────────────────────────────────────────────────
+  createCheckout: async (tierSlug: string) => {
+    const res = await fetchWithAuth("/billing/checkout/", {
+      method: "POST",
+      body: JSON.stringify({ tier_slug: tierSlug }),
+    });
+    return json<{ checkout_url: string }>(res);
+  },
+
+  getBillingPortal: async () => {
+    const res = await fetchWithAuth("/billing/portal/");
+    return json<{ portal_url: string }>(res);
+  },
+
+  // ── ocr (production) ────────────────────────────────────────────────────
+  submitOcrJob: async (data: { document_id: string; tier_slug?: string; webhook_url?: string }) => {
+    const res = await fetchWithAuth("/ocr/jobs/", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return json<OcrJob>(res);
+  },
+
+  getOcrJob: async (jobId: string) => {
+    const res = await fetchWithAuth(`/ocr/jobs/${jobId}/`);
+    return json<OcrJob>(res);
+  },
+
+  // ── dashboard ─────────────────────────────────────────────────────────
+  getUsage: async () => {
+    const res = await fetchWithAuth("/dashboard/usage/");
+    return json<UsageStats>(res);
+  },
+
+  getJobs: async () => {
+    const res = await fetchWithAuth("/dashboard/jobs/");
+    return json<Array<{ id: string; status: string; job_type: string; pages_processed: number; created_at: string }>>(res);
+  },
+
+  getApiKeys: async () => {
+    const res = await fetchWithAuth("/dashboard/api-keys/");
+    return json<ApiKeyInfo[]>(res);
+  },
+
+  createApiKey: async (name = "Default") => {
+    const res = await fetchWithAuth(`/dashboard/api-keys/?name=${encodeURIComponent(name)}`, {
+      method: "POST",
+    });
+    return json<ApiKeyCreated>(res);
+  },
+
+  revokeApiKey: async (keyId: string) => {
+    const res = await fetchWithAuth(`/dashboard/api-keys/${keyId}/revoke/`, {
+      method: "POST",
+    });
+    return json(res);
+  },
+
+  // ── testing (legacy sandbox) ────────────────────────────────────────────
+  getTestingModels: async () => {
+    const res = await fetchWithAuth("/testing/models/");
+    return json<{ models: TestingModel[] }>(res);
+  },
+
+  runTesting: async (
+    file: File,
+    modelSlug: string,
+    options?: { question?: string; prompt?: string; enableThinking?: boolean; task?: string; ocrType?: string }
+  ) => {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("model_slug", modelSlug);
+    if (options?.question) form.append("question", options.question);
+    if (options?.prompt) form.append("prompt", options.prompt);
+    if (options?.enableThinking) form.append("enable_thinking", "true");
+    if (options?.task) form.append("task", options.task);
+    if (options?.ocrType) form.append("prompt", options.ocrType);
+    const res = await fetchWithAuth("/testing/run/", { method: "POST", body: form });
+    return json<TestingResult>(res);
+  },
+
+  // ── vlm ───────────────────────────────────────────────────────────────
+  vlmChat: async (data: { image_url?: string; prompt: string; file?: File }) => {
+    if (data.file) {
+      const form = new FormData();
+      form.append("file", data.file);
+      form.append("prompt", data.prompt);
+      return uploadForm("/vlm/chat/", form);
+    }
+    const res = await fetchWithAuth("/vlm/chat/", {
+      method: "POST",
+      body: JSON.stringify({ image_url: data.image_url, prompt: data.prompt }),
+    });
+    return json(res);
+  },
+
+  vlmChatMulti: async (data: { messages: unknown[]; file?: File }) => {
+    if (data.file) {
+      const form = new FormData();
+      form.append("file", data.file);
+      form.append("messages", JSON.stringify(data.messages));
+      return uploadForm("/vlm/chat/multi/", form);
+    }
+    const res = await fetchWithAuth("/vlm/chat/multi/", {
+      method: "POST",
+      body: JSON.stringify({ messages: data.messages }),
+    });
+    return json(res);
+  },
+
+  vlmAnalyzePdf: async (file: File, prompt?: string) => {
+    const form = new FormData();
+    form.append("file", file);
+    if (prompt) form.append("prompt", prompt);
+    return uploadForm("/vlm/pdf/analyze/", form);
+  },
+
+  vlmHealth: async () => {
+    const res = await fetchWithAuth("/vlm/health/");
+    return json<EngineHealth>(res);
+  },
+
+  // ── paddle-ocr ────────────────────────────────────────────────────────
+  paddleRecognize: async (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return uploadForm("/paddle-ocr/recognize/", form) as Promise<OcrEngineResult>;
+  },
+
+  paddleAnalyzePdf: async (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return uploadForm("/paddle-ocr/pdf/analyze/", form);
+  },
+
+  paddleHealth: async () => {
+    const res = await fetchWithAuth("/paddle-ocr/health/");
+    return json<EngineHealth>(res);
+  },
+
+  // ── got-ocr ───────────────────────────────────────────────────────────
+  gotRecognize: async (file: File, options?: { task?: string; ocrType?: string }) => {
+    const form = new FormData();
+    form.append("file", file);
+    if (options?.task) form.append("task", options.task);
+    if (options?.ocrType) form.append("ocr_type", options.ocrType);
+    return uploadForm("/got-ocr/recognize/", form) as Promise<OcrEngineResult>;
+  },
+
+  gotAnalyzePdf: async (file: File, options?: { task?: string }) => {
+    const form = new FormData();
+    form.append("file", file);
+    if (options?.task) form.append("task", options.task);
+    return uploadForm("/got-ocr/pdf/analyze/", form);
+  },
+
+  gotHealth: async () => {
+    const res = await fetchWithAuth("/got-ocr/health/");
+    return json<EngineHealth>(res);
+  },
+
+  // ── qianfan-ocr ───────────────────────────────────────────────────────
+  qianfanRecognize: async (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return uploadForm("/qianfan-ocr/recognize/", form) as Promise<OcrEngineResult>;
+  },
+
+  qianfanAnalyzePdf: async (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return uploadForm("/qianfan-ocr/pdf/analyze/", form);
+  },
+
+  qianfanHealth: async () => {
+    const res = await fetchWithAuth("/qianfan-ocr/health/");
+    return json<EngineHealth>(res);
+  },
+
+  // ── health (root) ─────────────────────────────────────────────────────
+  health: async () => {
+    const res = await fetchRoot("/health");
+    return json<{ status: string }>(res);
+  },
+
+  healthReady: async () => {
+    const res = await fetchRoot("/health/ready");
+    return json<{ status: string }>(res);
+  },
+};

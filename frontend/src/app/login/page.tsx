@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, useState, Suspense } from "react";
 import { toast } from "sonner";
 import { ArrowRight, Loader2, Sparkles } from "lucide-react";
 import { FadeIn } from "@/components/fade-in";
@@ -15,7 +15,17 @@ import { Label } from "@/components/ui/label";
 import { api, setTokens } from "@/lib/api";
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") || "/advisor";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,7 +37,7 @@ export default function LoginPage() {
       const tokens = await api.login(email, password);
       setTokens(tokens.access_token, tokens.refresh_token);
       toast.success("Welcome back");
-      router.push("/advisor");
+      router.push(next.startsWith("/") ? next : "/advisor");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Sign in failed");
     } finally {

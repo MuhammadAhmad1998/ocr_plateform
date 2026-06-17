@@ -1,17 +1,18 @@
 "use client";
 
-import { Copy, Key, Loader2, TrendingUp, Activity, Calendar } from "lucide-react";
+import { Copy, Key, Loader2, TrendingUp, Activity, Calendar, ExternalLink, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/fade-in";
 import { Navbar } from "@/components/Navbar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api, getToken } from "@/lib/api";
+import Link from "next/link";
+import { api, ApiError, getToken } from "@/lib/api";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -29,20 +30,49 @@ export default function DashboardPage() {
   >([]);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!getToken()) {
-      router.push("/login");
+      router.push("/login?next=/dashboard");
       return;
     }
-    Promise.all([api.getUsage(), api.getJobs(), api.getApiKeys()])
-      .then(([u, j, k]) => {
-        setUsage(u);
-        setJobs(j);
-        setApiKeys(k);
-      })
-      .catch(() => router.push("/login"))
-      .finally(() => setLoading(false));
+    setError(null);
+    Promise.allSettled([api.getUsage(), api.getJobs(), api.getApiKeys()]).then((results) => {
+      const [usageResult, jobsResult, keysResult] = results;
+
+      if (usageResult.status === "fulfilled") {
+        setUsage(usageResult.value);
+      }
+      if (jobsResult.status === "fulfilled") {
+        setJobs(jobsResult.value);
+      }
+      if (keysResult.status === "fulfilled") {
+        setApiKeys(keysResult.value);
+      }
+
+      const authFailure = results.some(
+        (r) => r.status === "rejected" && r.reason instanceof ApiError && r.reason.status === 401
+      );
+      if (authFailure) {
+        router.push("/login?next=/dashboard");
+        return;
+      }
+
+      const allFailed = results.every((r) => r.status === "rejected");
+      if (allFailed) {
+        const first = results.find((r) => r.status === "rejected") as PromiseRejectedResult;
+        setError(
+          first.reason instanceof Error
+            ? first.reason.message
+            : "Could not load dashboard data. Check that the API is running."
+        );
+      } else if (keysResult.status === "rejected") {
+        setError("Usage loaded, but API keys could not be fetched. Try refreshing the page.");
+      }
+
+      setLoading(false);
+    });
   }, [router]);
 
   async function createKey() {
@@ -53,6 +83,25 @@ export default function DashboardPage() {
       toast.success("API key generated");
     } catch {
       toast.error("Failed to generate API key");
+    }
+  }
+
+  async function revokeKey(keyId: string) {
+    try {
+      await api.revokeApiKey(keyId);
+      setApiKeys(await api.getApiKeys());
+      toast.success("API key revoked");
+    } catch {
+      toast.error("Failed to revoke API key");
+    }
+  }
+
+  async function openBillingPortal() {
+    try {
+      const { portal_url } = await api.getBillingPortal();
+      window.location.href = portal_url;
+    } catch {
+      toast.error("Failed to open billing portal");
     }
   }
 
@@ -83,14 +132,28 @@ export default function DashboardPage() {
       <Navbar />
       <main className="space-y-8 px-4 py-8 lg:px-8">
         <FadeIn>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
               <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
               <p className="text-muted-foreground">
                 Monitor your usage, manage API keys, and track processing history
               </p>
             </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="gap-2" onClick={openBillingPortal}>
+                <ExternalLink className="size-4" />
+                Billing
+              </Button>
+              <Link href="/docs" className={buttonVariants({ variant: "outline", size: "sm" })}>
+                API Docs
+              </Link>
+            </div>
           </div>
+          {error && (
+            <div className="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+              {error}
+            </div>
+          )}
         </FadeIn>
 
         <div className="grid gap-6 lg:grid-cols-3">
@@ -185,9 +248,22 @@ export default function DashboardPage() {
                           <p className="font-semibold text-foreground">{k.name}</p>
                           <p className="mt-0.5 font-mono text-xs text-muted-foreground">{k.key_prefix}…</p>
                         </div>
-                        <Badge variant={k.is_active ? "default" : "secondary"} className="shadow-sm">
-                          {k.is_active ? "Active" : "Inactive"}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={k.is_active ? "default" : "secondary"} className="shadow-sm">
+                            {k.is_active ? "Active" : "Inactive"}
+                          </Badge>
+                          {k.is_active && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 text-muted-foreground hover:text-destructive"
+                              onClick={() => revokeKey(k.id)}
+                              title="Revoke key"
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>

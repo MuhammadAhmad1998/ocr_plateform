@@ -92,6 +92,7 @@ _SCHEMA_PATCHES: tuple[tuple[str, str, str], ...] = (
     ("api_keys", "quota_used", "INTEGER DEFAULT 0"),
     ("api_keys", "expires_at", "TIMESTAMPTZ"),
     ("api_keys", "last_used_at", "TIMESTAMPTZ"),
+    ("api_keys", "scopes", "JSONB DEFAULT '[]'::jsonb"),
 )
 
 
