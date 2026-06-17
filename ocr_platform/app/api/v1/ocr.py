@@ -14,10 +14,11 @@ from app.core.dependencies import (
     DEFAULT_API_KEY_SCOPES,
     VALID_API_KEY_SCOPES,
     get_current_user,
-    get_current_user_or_api_key,
+    get_inference_auth,
     require_api_key_scope,
 )
-from app.core.exceptions import NotFoundError, QuotaExceededError, ValidationError
+from app.core.quota import check_quota, increment_quota, quota_headers
+from app.core.exceptions import NotFoundError, ValidationError
 from app.core.idempotency import (
     check_idempotency,
     hash_request_body,
@@ -39,7 +40,7 @@ OCR_JOBS_ENDPOINT = "POST /api/v1/ocr/jobs/"
 def submit_ocr_job(
     data: OcrJobCreate,
     request: Request,
-    user: User = Depends(get_current_user_or_api_key),
+    user: User = Depends(get_inference_auth),
     db: Session = Depends(get_db),
 ):
     request_id = getattr(request.state, "request_id", None)
@@ -60,7 +61,7 @@ def submit_ocr_job(
             return JSONResponse(
                 content=body,
                 status_code=status_code,
-                headers=_quota_headers(user),
+                headers=quota_headers(request, user),
             )
 
     require_api_key_scope(request, "ocr:write")
@@ -73,11 +74,10 @@ def submit_ocr_job(
     if not doc:
         raise NotFoundError("Document not found")
 
-    sub = user.subscription
-    if sub and sub.quota_used >= sub.quota_limit:
-        raise QuotaExceededError("Quota exceeded")
+    check_quota(request, user)
 
     tier_slug = data.tier_slug or "basic"
+    sub = user.subscription
     if not data.tier_slug and sub and sub.tier_id:
         tier_obj = db.query(Tier).filter(Tier.id == sub.tier_id).first()
         if tier_obj:
@@ -105,9 +105,7 @@ def submit_ocr_job(
         process_ocr_job(db, str(job.id))
         db.refresh(job)
 
-    if sub:
-        sub.quota_used += doc.page_count or 1
-        db.commit()
+    increment_quota(request, user, db, doc.page_count or 1)
 
     response = _job_response(job, db, request_id=request_id)
     if idempotency_key:
@@ -123,7 +121,7 @@ def submit_ocr_job(
     return JSONResponse(
         content=response.model_dump(),
         status_code=status.HTTP_202_ACCEPTED,
-        headers=_quota_headers(user),
+        headers=quota_headers(request, user),
     )
 
 
@@ -131,7 +129,7 @@ def submit_ocr_job(
 def get_ocr_job(
     job_id: str,
     request: Request,
-    user: User = Depends(get_current_user_or_api_key),
+    user: User = Depends(get_inference_auth),
     db: Session = Depends(get_db),
 ):
     job = (
@@ -232,6 +230,8 @@ def create_api_key(
         user_id=user.id,
         key_hash=key_hash,
         key_prefix=prefix,
+        key_hash_algorithm="sha256",
+        key_source="local",
         name=name,
         scopes=normalized_scopes,
     )
@@ -269,14 +269,6 @@ def revoke_api_key(
     }
 
 
-def _quota_headers(user: User) -> dict[str, str]:
-    sub = user.subscription
-    if not sub:
-        return {}
-    return {
-        "X-Quota-Used": str(sub.quota_used),
-        "X-Quota-Limit": str(sub.quota_limit),
-    }
 
 
 def _job_response(job: OcrJob, db: Session, *, request_id: str | None = None) -> OcrJobResponse:

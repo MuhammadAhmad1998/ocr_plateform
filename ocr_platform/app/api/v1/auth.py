@@ -1,6 +1,9 @@
 import uuid
 
 from fastapi import APIRouter, Depends, status
+
+from app.core.config import get_settings
+from app.core.exceptions import AuthorizationError
 from sqlalchemy.orm import Session
 
 from app.accounts.models import SubscriptionProfile, User
@@ -20,8 +23,14 @@ from app.registry.models import Tier
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
+def _ensure_public_auth_enabled() -> None:
+    if get_settings().DISABLE_PUBLIC_AUTH:
+        raise AuthorizationError("Public authentication is disabled for this deployment")
+
+
 @router.post("/register/", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 def register(data: RegisterRequest, db: Session = Depends(get_db)):
+    _ensure_public_auth_enabled()
     if db.query(User).filter(User.email == data.email).first():
         raise ConflictError("Email already registered")
 
@@ -50,6 +59,7 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
 
 @router.post("/login/", response_model=TokenResponse)
 def login(data: LoginRequest, db: Session = Depends(get_db)):
+    _ensure_public_auth_enabled()
     user = db.query(User).filter(User.email == data.email).first()
     if not user or not verify_password(data.password, user.password_hash):
         raise AuthenticationError("Invalid credentials")
@@ -61,6 +71,7 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
 
 @router.post("/refresh/", response_model=TokenResponse)
 def refresh(data: RefreshRequest, db: Session = Depends(get_db)):
+    _ensure_public_auth_enabled()
     payload = decode_token(data.refresh_token)
     if not payload or payload.get("type") != "refresh":
         raise AuthenticationError("Invalid refresh token")

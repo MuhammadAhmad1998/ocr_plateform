@@ -2,7 +2,7 @@
 
 import uuid
 
-from fastapi import APIRouter, Depends, File, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Query, Request, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.accounts.models import User
@@ -10,7 +10,7 @@ from app.advisor.models import Document
 from app.advisor.schemas import DocumentListResponse, DocumentResponse
 from app.api.v1.advisor import upload_document
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_inference_auth, require_api_key_scope
 from app.core.exceptions import NotFoundError
 from app.core.storage import storage
 
@@ -30,22 +30,26 @@ def document_to_response(doc: Document) -> DocumentResponse:
 
 @router.post("/", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)
 async def create_document(
+    request: Request,
     file: UploadFile = File(...),
     session_id: str | None = Query(None),
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_inference_auth),
     db: Session = Depends(get_db),
 ):
     """Upload a document (alias for /advisor/upload/)."""
+    require_api_key_scope(request, "ocr:write")
     return await upload_document(file=file, session_id=session_id, user=user, db=db)
 
 
 @router.get("/", response_model=DocumentListResponse)
 def list_documents(
+    request: Request,
     limit: int = Query(20, ge=1, le=100),
     starting_after: str | None = Query(None),
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_inference_auth),
     db: Session = Depends(get_db),
 ):
+    require_api_key_scope(request, "ocr:read")
     query = db.query(Document).filter(Document.user_id == user.id)
 
     if starting_after:
@@ -76,9 +80,11 @@ def list_documents(
 @router.get("/{document_id}/", response_model=DocumentResponse)
 def get_document(
     document_id: str,
-    user: User = Depends(get_current_user),
+    request: Request,
+    user: User = Depends(get_inference_auth),
     db: Session = Depends(get_db),
 ):
+    require_api_key_scope(request, "ocr:read")
     doc = (
         db.query(Document)
         .filter(Document.id == uuid.UUID(document_id), Document.user_id == user.id)

@@ -12,7 +12,7 @@ from app.api.v1.advisor import upload_document
 from app.api.v2.schemas import V2Envelope
 from app.api.v2.utils import envelope, parse_doc_id, to_doc_id
 from app.core.database import get_db
-from app.core.dependencies import get_current_user_or_api_key
+from app.core.dependencies import get_inference_auth, require_api_key_scope
 from app.core.exceptions import NotFoundError
 from app.core.storage import storage
 
@@ -45,9 +45,10 @@ async def create_document(
     request: Request,
     file: UploadFile = File(...),
     session_id: str | None = Query(None),
-    user: User = Depends(get_current_user_or_api_key),
+    user: User = Depends(get_inference_auth),
     db: Session = Depends(get_db),
 ):
+    require_api_key_scope(request, "ocr:write")
     v1_response: DocumentResponse = await upload_document(
         file=file,
         session_id=session_id,
@@ -70,9 +71,10 @@ def list_documents(
     request: Request,
     limit: int = Query(20, ge=1, le=100),
     starting_after: str | None = Query(None),
-    user: User = Depends(get_current_user_or_api_key),
+    user: User = Depends(get_inference_auth),
     db: Session = Depends(get_db),
 ):
+    require_api_key_scope(request, "ocr:read")
     query = db.query(Document).filter(Document.user_id == user.id)
 
     if starting_after:
@@ -106,9 +108,10 @@ def list_documents(
 def get_document(
     document_id: str,
     request: Request,
-    user: User = Depends(get_current_user_or_api_key),
+    user: User = Depends(get_inference_auth),
     db: Session = Depends(get_db),
 ):
+    require_api_key_scope(request, "ocr:read")
     doc_uuid = parse_doc_id(document_id)
     doc = (
         db.query(Document)

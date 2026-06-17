@@ -15,6 +15,7 @@ from sqlalchemy import text
 
 from app.api.v1.router import api_router as api_v1_router
 from app.api.v2.router import api_router as api_v2_router
+from app.api.internal.v1.router import router as internal_v1_router
 from app.core.config import get_settings
 from app.core.exception_handlers import register_exception_handlers
 from app.core.middleware import (
@@ -56,6 +57,10 @@ OPENAPI_TAGS = [
             "Prefixed ids (`job_`, `doc_`). API key auth by default; JWT optional. "
             "See docs/API_V2_REFERENCE.md."
         ),
+    },
+    {
+        "name": "internal",
+        "description": "AI Platform marketplace integration — key provisioning (PLATFORM_API_KEY required).",
     },
 ]
 
@@ -154,6 +159,7 @@ app.add_middleware(RequestIdMiddleware)
 
 app.include_router(api_v1_router, prefix=settings.API_V1_PREFIX)
 app.include_router(api_v2_router, prefix=settings.API_V2_PREFIX)
+app.include_router(internal_v1_router, prefix="/internal/v1")
 
 storage_path = Path(settings.LOCAL_STORAGE_PATH)
 storage_path.mkdir(parents=True, exist_ok=True)

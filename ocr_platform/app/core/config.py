@@ -69,6 +69,13 @@ class Settings(BaseSettings):
 
     CORS_ORIGINS: str = "http://localhost:3000"
 
+    # AI Platform marketplace integration
+    PLATFORM_API_KEY: str = ""
+    REQUIRE_API_KEY: bool = False
+    DISABLE_PUBLIC_AUTH: bool = False
+    PUBLIC_BASE_URL: str = "http://localhost:8000"
+    STAGING_BASE_URL: str = "http://localhost:8000"
+
     MAX_UPLOAD_SIZE_MB: int = 10
     DEMO_RUNS_PER_SESSION: int = 1
     UPLOADS_PER_SESSION: int = 1

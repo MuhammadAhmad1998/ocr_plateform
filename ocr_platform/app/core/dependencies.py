@@ -1,10 +1,10 @@
-import hashlib
-
 from fastapi import Depends, Header, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.accounts.models import ApiKey, User
+from app.core.api_key_auth import find_api_key, looks_like_api_key, touch_api_key_last_used
+from app.core.config import get_settings
 from app.core.database import get_db
 from app.core.exceptions import AuthenticationError, AuthorizationError
 from app.core.security import decode_token
@@ -34,12 +34,7 @@ def _user_from_jwt(token: str, db: Session) -> User | None:
 
 
 def _user_from_api_key(raw_key: str, db: Session) -> tuple[User, ApiKey]:
-    key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
-    api_key = (
-        db.query(ApiKey)
-        .filter(ApiKey.key_hash == key_hash, ApiKey.is_active.is_(True))
-        .first()
-    )
+    api_key = find_api_key(raw_key, db)
     if not api_key:
         raise AuthenticationError("Invalid API key")
     user = db.query(User).filter(User.id == api_key.user_id).first()
@@ -47,6 +42,7 @@ def _user_from_api_key(raw_key: str, db: Session) -> tuple[User, ApiKey]:
         raise AuthenticationError("User not found")
     if not user.is_active:
         raise AuthenticationError("Account is inactive")
+    touch_api_key_last_used(api_key, db)
     return user, api_key
 
 
@@ -80,6 +76,22 @@ def get_current_user(
     return user
 
 
+def _authenticate_api_key(
+    request: Request,
+    api_key_value: str,
+    db: Session,
+) -> User:
+    user, api_key = _user_from_api_key(api_key_value, db)
+    request.state.auth_method = "api_key"
+    request.state.api_key = api_key
+    if api_key.key_source == "platform":
+        request.state.platform_account_id = str(api_key.platform_account_id)
+        request.state.platform_user_id = str(api_key.platform_user_id)
+        request.state.platform_key_id = str(api_key.platform_key_id)
+    _set_request_user(request, user)
+    return user
+
+
 def get_current_user_or_api_key(
     request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(security),
@@ -87,20 +99,36 @@ def get_current_user_or_api_key(
     db: Session = Depends(get_db),
 ) -> User:
     bearer_token = credentials.credentials if credentials else None
-    api_key_value = (x_api_key or "").strip() or bearer_token
+    header_api_key = (x_api_key or "").strip() or None
+
+    if header_api_key:
+        return _authenticate_api_key(request, header_api_key, db)
 
     if bearer_token:
+        if looks_like_api_key(bearer_token):
+            return _authenticate_api_key(request, bearer_token, db)
+
         user = _user_from_jwt(bearer_token, db)
         if user:
             request.state.auth_method = "jwt"
             _set_request_user(request, user)
             return user
 
-    if api_key_value:
-        user, api_key = _user_from_api_key(api_key_value, db)
-        request.state.auth_method = "api_key"
-        request.state.api_key = api_key
-        _set_request_user(request, user)
-        return user
-
     raise AuthenticationError("Not authenticated")
+
+
+def get_inference_auth(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
+    x_api_key: str | None = Header(None, alias="x-api-key"),
+    db: Session = Depends(get_db),
+) -> User:
+    """Inference routes: API-key-only when REQUIRE_API_KEY=true; otherwise JWT or API key."""
+    settings = get_settings()
+    if settings.REQUIRE_API_KEY:
+        bearer_token = credentials.credentials if credentials else None
+        api_key_value = (x_api_key or "").strip() or bearer_token
+        if not api_key_value:
+            raise AuthenticationError("API key required")
+        return _authenticate_api_key(request, api_key_value, db)
+    return get_current_user_or_api_key(request, credentials, x_api_key, db)

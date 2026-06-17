@@ -97,12 +97,9 @@ def _tier_slug_for_request(request: Request) -> str:
         if user is None:
             key_value = api_key_hdr or bearer
             if key_value:
-                key_hash = hashlib.sha256(key_value.encode()).hexdigest()
-                api_key = (
-                    db.query(ApiKey)
-                    .filter(ApiKey.key_hash == key_hash, ApiKey.is_active.is_(True))
-                    .first()
-                )
+                from app.core.api_key_auth import find_api_key
+
+                api_key = find_api_key(key_value, db)
                 if api_key:
                     user = db.query(User).filter(User.id == api_key.user_id).first()
 

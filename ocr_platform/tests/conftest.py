@@ -15,10 +15,22 @@ os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 os.environ.setdefault("DEBUG", "true")
 os.environ.setdefault("USE_LOCAL_STORAGE", "true")
 os.environ.setdefault("LOCAL_STORAGE_PATH", "/tmp/ocr-test-storage")
+os.environ.setdefault("USE_MOCK_RAG", "true")
 
 from app.core.config import get_settings
 
 get_settings.cache_clear()
+
+
+@pytest.fixture(autouse=True)
+def _sqlite_test_patches(monkeypatch):
+    """Skip PostgreSQL-only startup steps when tests use in-memory SQLite."""
+    if not get_settings().DATABASE_URL.startswith("sqlite"):
+        return
+    monkeypatch.setattr("app.rag.store.ensure_pgvector_extension", lambda: None)
+    monkeypatch.setattr("app.core.db_bootstrap.wait_for_database", lambda engine: None)
+    monkeypatch.setattr("app.core.db_bootstrap.sync_database_schema", lambda engine: None)
+    monkeypatch.setattr("app.seed.seed_database", lambda: None)
 
 
 @pytest.fixture(scope="session")
