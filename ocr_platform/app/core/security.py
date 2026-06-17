@@ -23,16 +23,16 @@ def create_token(data: dict[str, Any], expires_delta: timedelta) -> str:
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
-def create_access_token(subject: str) -> str:
+def create_access_token(subject: str, role: str = "user") -> str:
     return create_token(
-        {"sub": subject, "type": "access"},
+        {"sub": subject, "type": "access", "role": role},
         timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
     )
 
 
-def create_refresh_token(subject: str) -> str:
+def create_refresh_token(subject: str, role: str = "user") -> str:
     return create_token(
-        {"sub": subject, "type": "refresh"},
+        {"sub": subject, "type": "refresh", "role": role},
         timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
     )
 

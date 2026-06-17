@@ -76,6 +76,10 @@ class Settings(BaseSettings):
     PUBLIC_BASE_URL: str = "http://localhost:8000"
     STAGING_BASE_URL: str = "http://localhost:8000"
 
+    # Super Admin bootstrap
+    SUPER_ADMIN_EMAIL: str = ""
+    SUPER_ADMIN_PASSWORD: str = ""
+
     MAX_UPLOAD_SIZE_MB: int = 10
     DEMO_RUNS_PER_SESSION: int = 1
     UPLOADS_PER_SESSION: int = 1

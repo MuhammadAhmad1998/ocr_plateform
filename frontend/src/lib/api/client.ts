@@ -31,6 +31,26 @@ export function getToken(): string | null {
   return localStorage.getItem("access_token");
 }
 
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1])) as { exp?: number };
+    return typeof payload.exp === "number" && payload.exp * 1000 <= Date.now();
+  } catch {
+    return true;
+  }
+}
+
+/** True only when a non-expired access token is stored locally. */
+export function isLoggedIn(): boolean {
+  const token = getToken();
+  if (!token) return false;
+  if (isTokenExpired(token)) {
+    clearTokens();
+    return false;
+  }
+  return true;
+}
+
 export function getRefreshToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("refresh_token");

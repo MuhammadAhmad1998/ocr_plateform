@@ -7,6 +7,7 @@ export interface User {
   id: string;
   email: string;
   full_name: string | null;
+  role: string;
   subscription?: {
     slug: string;
     public_name: string;
@@ -197,4 +198,92 @@ export interface OcrEngineResult {
   timing_ms?: number;
   layout?: Record<string, unknown>;
   pages?: Array<{ page_number: number; text: string; processing_time_ms: number }>;
+}
+
+export interface PlatformStats {
+  total_users: number;
+  active_users: number;
+  inactive_users: number;
+  regular_users: number;
+  super_admins: number;
+  platform_users: number;
+  direct_users: number;
+  signups_last_7_days: number;
+  jobs_last_24h: number;
+  queued_jobs: number;
+  running_jobs: number;
+  failed_jobs_24h: number;
+  pages_this_month: number;
+  users_by_tier: Record<string, { name: string; count: number }>;
+}
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  full_name: string | null;
+  role: string;
+  is_active: boolean;
+  is_platform_user: boolean;
+  created_at: string;
+  tier: {
+    slug: string;
+    name: string;
+    quota_used: number;
+    quota_limit: number;
+  } | null;
+  api_key_count: number;
+  jobs_this_month: number;
+  last_active: string | null;
+}
+
+export interface AdminUserDetail {
+  id: string;
+  email: string;
+  full_name: string | null;
+  role: string;
+  is_active: boolean;
+  is_platform_user: boolean;
+  platform_account_id: string | null;
+  created_at: string;
+  subscription: {
+    tier_slug: string | null;
+    tier_name: string | null;
+    quota_used: number;
+    quota_limit: number;
+    status: string;
+    stripe_customer_id: string | null;
+    stripe_subscription_id: string | null;
+  } | null;
+  api_keys: Array<{
+    id: string;
+    name: string;
+    key_prefix: string;
+    scopes: string[];
+    is_active: boolean;
+    last_used_at: string | null;
+    created_at: string;
+  }>;
+  recent_jobs: Array<{
+    id: string;
+    status: string;
+    job_type: string;
+    pages_processed: number;
+    compute_seconds: number;
+    created_at: string;
+    completed_at: string | null;
+    error_message: string | null;
+  }>;
+  usage_stats: {
+    jobs_this_month: number;
+    pages_this_month: number;
+    total_compute_seconds: number;
+  };
+}
+
+export interface AdminUsersResponse {
+  users: AdminUser[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
 }

@@ -3,34 +3,52 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, LogOut } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { getToken } from "@/lib/api";
+import { clearTokens, isLoggedIn } from "@/lib/api";
 import { cn } from "@/lib/utils";
+
+const marketingNav = [
+  { href: "/docs", label: "Docs" },
+  { href: "/pricing", label: "Pricing" },
+];
 
 const appNav = [
   { href: "/advisor", label: "Advisor" },
   { href: "/testing", label: "Testing" },
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/docs", label: "Docs" },
-  { href: "/pricing", label: "Pricing" },
 ];
 
-const PUBLIC_PATHS = ["/", "/login", "/register", "/docs", "/pricing"];
+function isActive(pathname: string, href: string) {
+  return pathname === href || (href !== "/docs" && pathname.startsWith(`${href}/`));
+}
 
 export function Navbar({ variant = "app" }: { variant?: "marketing" | "app" }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
+
+  const syncAuth = useCallback(() => {
+    setLoggedIn(isLoggedIn());
+    setAuthReady(true);
+  }, []);
 
   useEffect(() => {
-    setLoggedIn(!!getToken());
-  }, [pathname]);
+    syncAuth();
+    window.addEventListener("storage", syncAuth);
+    return () => window.removeEventListener("storage", syncAuth);
+  }, [pathname, syncAuth]);
 
-  const isPublicPage = PUBLIC_PATHS.includes(pathname);
-  const showAppNav = loggedIn || !isPublicPage;
+  const navItems = loggedIn ? [...appNav, ...marketingNav] : marketingNav;
+
+  function handleSignOut() {
+    clearTokens();
+    setLoggedIn(false);
+    window.location.href = "/login";
+  }
 
   return (
     <header
@@ -42,53 +60,38 @@ export function Navbar({ variant = "app" }: { variant?: "marketing" | "app" }) {
       <div className="flex h-16 items-center justify-between px-4 lg:h-18 lg:px-8">
         <div className="flex items-center gap-8">
           <Logo href={loggedIn ? "/dashboard" : "/"} />
-          {showAppNav && (
-            <nav className="hidden items-center gap-1 lg:flex">
-              {appNav.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "relative rounded-lg px-4 py-2 text-sm font-semibold transition-all",
-                    pathname === item.href || (item.href !== "/docs" && pathname.startsWith(`${item.href}/`))
-                      ? "text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {item.label}
-                  {(pathname === item.href ||
-                    (item.href !== "/docs" && pathname.startsWith(`${item.href}/`))) && (
-                    <span className="absolute inset-x-1 -bottom-[17px] h-0.5 rounded-t-full bg-primary" />
-                  )}
-                </Link>
-              ))}
-            </nav>
-          )}
+          <nav className="hidden items-center gap-1 lg:flex">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "relative rounded-lg px-4 py-2 text-sm font-semibold transition-all",
+                  isActive(pathname, item.href)
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {item.label}
+                {isActive(pathname, item.href) && (
+                  <span className="absolute inset-x-1 -bottom-[17px] h-0.5 rounded-t-full bg-primary" />
+                )}
+              </Link>
+            ))}
+          </nav>
         </div>
 
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          {!loggedIn && (
-            <Link
-              href="/docs"
-              className={cn(
-                buttonVariants({ variant: "ghost", size: "sm" }),
-                "hidden text-muted-foreground sm:inline-flex"
-              )}
-            >
-              API Docs
-            </Link>
-          )}
-          {loggedIn ? (
+          {!authReady ? (
+            <div className="h-9 w-24" aria-hidden />
+          ) : loggedIn ? (
             <>
               <Button
                 variant="ghost"
                 size="sm"
                 className="hidden gap-2 text-muted-foreground hover:text-foreground lg:flex"
-                onClick={() => {
-                  localStorage.clear();
-                  window.location.href = "/login";
-                }}
+                onClick={handleSignOut}
               >
                 <LogOut className="size-4" />
                 Sign Out
@@ -124,14 +127,14 @@ export function Navbar({ variant = "app" }: { variant?: "marketing" | "app" }) {
       {loggedIn && mobileMenuOpen && (
         <div className="border-t border-border bg-background lg:hidden">
           <nav className="space-y-1 px-4 py-4">
-            {appNav.map((item) => (
+            {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
                   "block rounded-lg px-4 py-3 text-base font-semibold transition-colors",
-                  pathname === item.href || pathname.startsWith(`${item.href}/`)
+                  isActive(pathname, item.href)
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
@@ -143,10 +146,7 @@ export function Navbar({ variant = "app" }: { variant?: "marketing" | "app" }) {
               variant="ghost"
               size="sm"
               className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive"
-              onClick={() => {
-                localStorage.clear();
-                window.location.href = "/login";
-              }}
+              onClick={handleSignOut}
             >
               <LogOut className="size-4" />
               Sign Out

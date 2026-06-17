@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 OPENAPI_TAGS = [
     {"name": "status", "description": "Public service status, uptime, and model availability."},
     {"name": "auth", "description": "Register, login, refresh tokens, and current user profile."},
+    {"name": "admin", "description": "Super admin endpoints for user management and platform stats."},
     {"name": "documents", "description": "Upload, retrieve, and list documents (public API)."},
     {"name": "models", "description": "List available OCR and VLM models (public API)."},
     {"name": "advisor", "description": "Document upload, chat sessions, and OCR tier recommendations."},

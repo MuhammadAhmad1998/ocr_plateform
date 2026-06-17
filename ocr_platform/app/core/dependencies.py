@@ -76,6 +76,13 @@ def get_current_user(
     return user
 
 
+def require_super_admin(user: User = Depends(get_current_user)) -> User:
+    """Require the current user to be a super admin."""
+    if user.role != "super_admin":
+        raise AuthorizationError("Super admin access required")
+    return user
+
+
 def _authenticate_api_key(
     request: Request,
     api_key_value: str,

@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.accounts.models import SubscriptionProfile, User
+from app.core.config import get_settings
 from app.core.database import SessionLocal
 from app.core.security import hash_password
 from app.ocr_engine.models import KnowledgeDocument
@@ -216,6 +217,7 @@ def seed_database() -> None:
                 email=test_email,
                 password_hash=hash_password("password123"),
                 full_name="Test User",
+                role="user",
             )
             db.add(test_user)
             db.flush()
@@ -227,6 +229,38 @@ def seed_database() -> None:
                 quota_limit=free_tier.quota_limit if free_tier else 50,
             )
             db.add(test_sub)
+
+        # Bootstrap super admin from environment variables
+        settings = get_settings()
+        if settings.SUPER_ADMIN_EMAIL and settings.SUPER_ADMIN_PASSWORD:
+            existing_admin = db.query(User).filter(User.email == settings.SUPER_ADMIN_EMAIL).first()
+            if existing_admin:
+                # Promote existing user to super admin
+                if existing_admin.role != "super_admin":
+                    existing_admin.role = "super_admin"
+                    print(f"Promoted {settings.SUPER_ADMIN_EMAIL} to super admin")
+            else:
+                # Create new super admin
+                admin_user = User(
+                    email=settings.SUPER_ADMIN_EMAIL,
+                    password_hash=hash_password(settings.SUPER_ADMIN_PASSWORD),
+                    full_name="Super Admin",
+                    role="super_admin",
+                )
+                db.add(admin_user)
+                db.flush()
+                
+                # Super admins don't need a subscription profile for now
+                # but we'll create one with unlimited quota for consistency
+                admin_sub = SubscriptionProfile(
+                    user_id=admin_user.id,
+                    tier_id=None,
+                    quota_limit=999999,
+                    quota_used=0,
+                    status="active",
+                )
+                db.add(admin_sub)
+                print(f"Created super admin: {settings.SUPER_ADMIN_EMAIL}")
 
         db.commit()
     finally:

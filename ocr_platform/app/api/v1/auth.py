@@ -38,6 +38,7 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
         email=data.email,
         password_hash=hash_password(data.password),
         full_name=data.full_name,
+        role="user",
     )
     db.add(user)
     db.flush()
@@ -52,8 +53,8 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
     db.commit()
 
     return TokenResponse(
-        access_token=create_access_token(user.email),
-        refresh_token=create_refresh_token(user.email),
+        access_token=create_access_token(user.email, user.role),
+        refresh_token=create_refresh_token(user.email, user.role),
     )
 
 
@@ -64,8 +65,8 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     if not user or not verify_password(data.password, user.password_hash):
         raise AuthenticationError("Invalid credentials")
     return TokenResponse(
-        access_token=create_access_token(user.email),
-        refresh_token=create_refresh_token(user.email),
+        access_token=create_access_token(user.email, user.role),
+        refresh_token=create_refresh_token(user.email, user.role),
     )
 
 
@@ -80,8 +81,8 @@ def refresh(data: RefreshRequest, db: Session = Depends(get_db)):
     if not user:
         raise AuthenticationError("User not found")
     return TokenResponse(
-        access_token=create_access_token(user.email),
-        refresh_token=create_refresh_token(user.email),
+        access_token=create_access_token(user.email, user.role),
+        refresh_token=create_refresh_token(user.email, user.role),
     )
 
 
@@ -102,5 +103,6 @@ def me(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
         id=str(user.id),
         email=user.email,
         full_name=user.full_name,
+        role=user.role,
         subscription=tier_info,
     )

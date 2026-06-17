@@ -79,6 +79,7 @@ def wait_for_database(engine, retries: int = 15, delay_seconds: float = 2.0) -> 
 # Columns added after initial deploy — create_all does not alter existing tables.
 _SCHEMA_PATCHES: tuple[tuple[str, str, str], ...] = (
     ("ocr_jobs", "webhook_url", "VARCHAR(2048)"),
+    ("users", "role", "VARCHAR(20) NOT NULL DEFAULT 'user'"),
     ("users", "platform_account_id", "UUID"),
     ("api_keys", "key_hash_algorithm", "VARCHAR(20) DEFAULT 'sha256'"),
     ("api_keys", "key_source", "VARCHAR(20) DEFAULT 'local'"),

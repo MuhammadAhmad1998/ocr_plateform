@@ -5,6 +5,8 @@ import {
   json,
 } from "./client";
 import type {
+  AdminUserDetail,
+  AdminUsersResponse,
   AdvisorCapabilities,
   AdvisorDocument,
   AdvisorSession,
@@ -17,6 +19,7 @@ import type {
   ModelInfo,
   OcrEngineResult,
   OcrJob,
+  PlatformStats,
   ServiceStatus,
   TestingModel,
   TestingResult,
@@ -325,5 +328,69 @@ export const v1 = {
   healthReady: async () => {
     const res = await fetchRoot("/health/ready");
     return json<{ status: string }>(res);
+  },
+
+  // ── admin ─────────────────────────────────────────────────────────────
+  getPlatformStats: async () => {
+    const res = await fetchWithAuth("/admin/stats/");
+    return json<PlatformStats>(res);
+  },
+
+  listUsers: async (params?: {
+    page?: number;
+    page_size?: number;
+    active_only?: boolean;
+    tier_slug?: string;
+    search?: string;
+  }) => {
+    const qs = new URLSearchParams();
+    if (params?.page) qs.set("page", String(params.page));
+    if (params?.page_size) qs.set("page_size", String(params.page_size));
+    if (params?.active_only) qs.set("active_only", "true");
+    if (params?.tier_slug) qs.set("tier_slug", params.tier_slug);
+    if (params?.search) qs.set("search", params.search);
+    const q = qs.toString();
+    const res = await fetchWithAuth(`/admin/users/${q ? `?${q}` : ""}`);
+    return json<AdminUsersResponse>(res);
+  },
+
+  getUserDetail: async (userId: string) => {
+    const res = await fetchWithAuth(`/admin/users/${userId}`);
+    return json<AdminUserDetail>(res);
+  },
+
+  activateUser: async (userId: string) => {
+    const res = await fetchWithAuth(`/admin/users/${userId}/activate`, {
+      method: "PATCH",
+    });
+    return json<{ message: string }>(res);
+  },
+
+  deactivateUser: async (userId: string) => {
+    const res = await fetchWithAuth(`/admin/users/${userId}/deactivate`, {
+      method: "PATCH",
+    });
+    return json<{ message: string }>(res);
+  },
+
+  updateUserQuota: async (userId: string, quotaLimit: number) => {
+    const res = await fetchWithAuth(`/admin/users/${userId}/quota?quota_limit=${quotaLimit}`, {
+      method: "PATCH",
+    });
+    return json<{ message: string }>(res);
+  },
+
+  updateUserTier: async (userId: string, tierSlug: string) => {
+    const res = await fetchWithAuth(`/admin/users/${userId}/tier?tier_slug=${tierSlug}`, {
+      method: "PATCH",
+    });
+    return json<{ message: string }>(res);
+  },
+
+  revokeUserApiKey: async (userId: string, keyId: string) => {
+    const res = await fetchWithAuth(`/admin/users/${userId}/api-keys/${keyId}`, {
+      method: "DELETE",
+    });
+    return json<{ message: string }>(res);
   },
 };

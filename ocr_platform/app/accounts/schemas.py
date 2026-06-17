@@ -53,6 +53,7 @@ class UserResponse(BaseModel):
     id: str
     email: str
     full_name: str | None
+    role: str
     subscription: TierInfo | None = None
 
     model_config = {"from_attributes": True}

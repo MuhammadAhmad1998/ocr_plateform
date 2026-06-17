@@ -36,8 +36,16 @@ function LoginForm() {
     try {
       const tokens = await api.login(email, password);
       setTokens(tokens.access_token, tokens.refresh_token);
+      
+      // Check user role to determine redirect
+      const user = await api.me();
       toast.success("Welcome back");
-      router.push(next.startsWith("/") ? next : "/advisor");
+      
+      if (user.role === "super_admin") {
+        router.push(next.startsWith("/admin") ? next : "/admin");
+      } else {
+        router.push(next.startsWith("/") && !next.startsWith("/admin") ? next : "/advisor");
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Sign in failed");
     } finally {
