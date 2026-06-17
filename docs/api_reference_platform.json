@@ -1,0 +1,326 @@
+{
+  "service_slug": "ocr",
+  "service_name": "Unified OCR",
+  "base_url": "https://api.ocr.example.com",
+  "staging_base_url": "https://staging.api.ocr.example.com",
+  "api_version_prefix": "/api/v1",
+  "health_check_path": "/health/ready",
+  "auth": {
+    "header": "Authorization",
+    "alternate_header": "x-api-key",
+    "format": "Bearer {API_KEY}",
+    "key_format": "ak_live_* (platform-provisioned) or ocr_* (standalone dev)"
+  },
+  "models": [
+    {
+      "slug": "paddle-ocr-vl",
+      "display_name": "PaddleOCR Vision-Language",
+      "type": "paddle_ocr",
+      "capability_tags": ["ocr", "pdf", "images", "tables", "forms"]
+    },
+    {
+      "slug": "got-ocr2",
+      "display_name": "GOT-OCR 2.0",
+      "type": "got_ocr",
+      "capability_tags": ["ocr", "pdf", "handwriting", "equations", "scientific_pdf"]
+    },
+    {
+      "slug": "qianfan-ocr",
+      "display_name": "Qianfan OCR",
+      "type": "qianfan_ocr",
+      "capability_tags": ["ocr", "pdf", "key_information_extraction", "financial_documents"]
+    }
+  ],
+  "error_codes": [
+    { "http": 400, "code": "BAD_REQUEST", "description": "Malformed request" },
+    { "http": 401, "code": "AUTHENTICATION_ERROR", "description": "Invalid or missing API key" },
+    { "http": 403, "code": "AUTHORIZATION_ERROR", "description": "API key missing required scope" },
+    { "http": 403, "code": "QUOTA_EXCEEDED", "description": "Page quota exhausted" },
+    { "http": 404, "code": "NOT_FOUND", "description": "Resource not found" },
+    { "http": 409, "code": "CONFLICT", "description": "Resource conflict" },
+    { "http": 413, "code": "PAYLOAD_TOO_LARGE", "description": "Upload exceeds size limit" },
+    { "http": 422, "code": "VALIDATION_ERROR", "description": "Request validation failed" },
+    { "http": 429, "code": "RATE_LIMIT_EXCEEDED", "description": "Too many requests" },
+    { "http": 500, "code": "INTERNAL_ERROR", "description": "Unexpected server error" },
+    { "http": 503, "code": "SERVICE_UNAVAILABLE", "description": "Service not ready" },
+    { "http": 504, "code": "INFERENCE_TIMEOUT", "description": "OCR processing timed out" }
+  ],
+  "endpoints": [
+    {
+      "title": "Upload Document",
+      "method": "POST",
+      "path": "/api/v1/documents/",
+      "description": "Upload a PDF or image for OCR processing.",
+      "scopes": ["ocr:write"],
+      "request_headers": {
+        "Authorization": "Bearer {API_KEY}",
+        "Content-Type": "multipart/form-data"
+      },
+      "query_parameters": {
+        "session_id": "optional UUID — attach to advisor session (standalone only)"
+      },
+      "request_body": {
+        "file": "(binary) PDF or image file"
+      },
+      "responses": [
+        {
+          "status": 201,
+          "description": "Document uploaded",
+          "headers": { "X-Request-ID": "abc123" },
+          "body": {
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "filename": "invoice.pdf",
+            "content_type": "application/pdf",
+            "fingerprint": { "type": "pdf" },
+            "page_count": 2,
+            "preview_url": "https://api.ocr.example.com/storage/uploads/invoice.pdf"
+          }
+        },
+        {
+          "status": 401,
+          "error_code": "AUTHENTICATION_ERROR",
+          "body": { "error": "AUTHENTICATION_ERROR", "message": "Not authenticated", "request_id": "..." }
+        },
+        {
+          "status": 403,
+          "error_code": "AUTHORIZATION_ERROR",
+          "body": { "error": "AUTHORIZATION_ERROR", "message": "API key missing required scope: ocr:write" }
+        },
+        {
+          "status": 413,
+          "error_code": "PAYLOAD_TOO_LARGE",
+          "body": { "error": "PAYLOAD_TOO_LARGE", "message": "File too large" }
+        }
+      ],
+      "curl": "curl -X POST \"{base_url}/api/v1/documents/\" -H \"Authorization: Bearer {API_KEY}\" -F \"file=@sample.pdf\""
+    },
+    {
+      "title": "List Documents",
+      "method": "GET",
+      "path": "/api/v1/documents/",
+      "description": "Cursor-paginated list of documents for the authenticated account.",
+      "scopes": ["ocr:read"],
+      "request_headers": { "Authorization": "Bearer {API_KEY}" },
+      "query_parameters": {
+        "limit": "1-100, default 20",
+        "starting_after": "document UUID cursor"
+      },
+      "responses": [
+        {
+          "status": 200,
+          "body": {
+            "data": [
+              {
+                "id": "550e8400-e29b-41d4-a716-446655440000",
+                "filename": "invoice.pdf",
+                "content_type": "application/pdf",
+                "page_count": 2,
+                "preview_url": "https://api.ocr.example.com/storage/uploads/invoice.pdf"
+              }
+            ],
+            "has_more": false
+          }
+        },
+        { "status": 401, "error_code": "AUTHENTICATION_ERROR" },
+        { "status": 403, "error_code": "AUTHORIZATION_ERROR" }
+      ],
+      "curl": "curl \"{base_url}/api/v1/documents/?limit=20\" -H \"Authorization: Bearer {API_KEY}\""
+    },
+    {
+      "title": "Get Document",
+      "method": "GET",
+      "path": "/api/v1/documents/{document_id}/",
+      "description": "Retrieve a single document by ID.",
+      "scopes": ["ocr:read"],
+      "request_headers": { "Authorization": "Bearer {API_KEY}" },
+      "responses": [
+        {
+          "status": 200,
+          "body": {
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "filename": "invoice.pdf",
+            "content_type": "application/pdf",
+            "fingerprint": { "type": "pdf" },
+            "page_count": 2,
+            "preview_url": "https://api.ocr.example.com/storage/uploads/invoice.pdf"
+          }
+        },
+        { "status": 404, "error_code": "NOT_FOUND", "body": { "error": "NOT_FOUND", "message": "Document not found" } },
+        { "status": 401, "error_code": "AUTHENTICATION_ERROR" }
+      ],
+      "curl": "curl \"{base_url}/api/v1/documents/550e8400-e29b-41d4-a716-446655440000/\" -H \"Authorization: Bearer {API_KEY}\""
+    },
+    {
+      "title": "Create OCR Job",
+      "method": "POST",
+      "path": "/api/v1/ocr/jobs/",
+      "description": "Queues an OCR job for an uploaded document.",
+      "scopes": ["ocr:write"],
+      "request_headers": {
+        "Authorization": "Bearer {API_KEY}",
+        "Content-Type": "application/json",
+        "Idempotency-Key": "optional-uuid"
+      },
+      "request_body": {
+        "document_id": "550e8400-e29b-41d4-a716-446655440000",
+        "tier_slug": "basic",
+        "webhook_url": "https://example.com/hooks/ocr"
+      },
+      "responses": [
+        {
+          "status": 202,
+          "description": "Job queued",
+          "headers": { "X-Quota-Used": "1", "X-Quota-Limit": "1000", "X-Request-ID": "abc123" },
+          "body": {
+            "id": "660e8400-e29b-41d4-a716-446655440001",
+            "status": "queued",
+            "job_type": "production",
+            "pages_processed": 0,
+            "result": null,
+            "error_message": null,
+            "request_id": "abc123",
+            "created_at": "2026-06-12T10:00:00+00:00"
+          }
+        },
+        {
+          "status": 403,
+          "error_code": "QUOTA_EXCEEDED",
+          "body": {
+            "error": "QUOTA_EXCEEDED",
+            "message": "Page quota exhausted",
+            "detail": "Page quota exhausted",
+            "request_id": "4d1d02e25cc0453092716c2831066544"
+          }
+        },
+        { "status": 404, "error_code": "NOT_FOUND" },
+        { "status": 401, "error_code": "AUTHENTICATION_ERROR" }
+      ],
+      "curl": "curl -X POST \"{base_url}/api/v1/ocr/jobs/\" -H \"Authorization: Bearer {API_KEY}\" -H \"Content-Type: application/json\" -d '{\"document_id\":\"550e8400-e29b-41d4-a716-446655440000\",\"tier_slug\":\"basic\"}'"
+    },
+    {
+      "title": "Get OCR Job",
+      "method": "GET",
+      "path": "/api/v1/ocr/jobs/{job_id}/",
+      "description": "Poll OCR job status and result.",
+      "scopes": ["ocr:read"],
+      "request_headers": { "Authorization": "Bearer {API_KEY}" },
+      "responses": [
+        {
+          "status": 200,
+          "body": {
+            "id": "660e8400-e29b-41d4-a716-446655440001",
+            "status": "completed",
+            "job_type": "production",
+            "pages_processed": 2,
+            "result": { "text": "...", "pages": [] },
+            "error_message": null,
+            "request_id": "abc123",
+            "created_at": "2026-06-12T10:00:00+00:00"
+          }
+        },
+        { "status": 404, "error_code": "NOT_FOUND" },
+        { "status": 401, "error_code": "AUTHENTICATION_ERROR" }
+      ],
+      "curl": "curl \"{base_url}/api/v1/ocr/jobs/660e8400-e29b-41d4-a716-446655440001/\" -H \"Authorization: Bearer {API_KEY}\""
+    },
+    {
+      "title": "List Models (v2)",
+      "method": "GET",
+      "path": "/api/v2/models/",
+      "description": "Model catalog in v2 envelope format.",
+      "scopes": ["ocr:read"],
+      "request_headers": { "Authorization": "Bearer {API_KEY}" },
+      "responses": [
+        {
+          "status": 200,
+          "body": {
+            "object": "model_catalog",
+            "id": null,
+            "created_at": null,
+            "request_id": "abc123",
+            "data": {
+              "models": [
+                {
+                  "slug": "paddle-ocr-vl",
+                  "display_name": "PaddleOCR Vision-Language",
+                  "type": "paddle_ocr",
+                  "capability_tags": ["ocr", "pdf", "images"]
+                }
+              ]
+            }
+          }
+        },
+        { "status": 401, "error_code": "AUTHENTICATION_ERROR" }
+      ],
+      "curl": "curl \"{base_url}/api/v2/models/\" -H \"Authorization: Bearer {API_KEY}\""
+    },
+    {
+      "title": "Create OCR Job (v2)",
+      "method": "POST",
+      "path": "/api/v2/ocr/jobs/",
+      "description": "Queues an OCR job; returns v2 envelope with job_ prefixed id.",
+      "scopes": ["ocr:write"],
+      "request_headers": {
+        "Authorization": "Bearer {API_KEY}",
+        "Content-Type": "application/json",
+        "Idempotency-Key": "optional-uuid"
+      },
+      "request_body": {
+        "document_id": "doc_550e8400-e29b-41d4-a716-446655440000",
+        "tier_slug": "basic",
+        "webhook_url": "https://example.com/hooks/ocr"
+      },
+      "responses": [
+        {
+          "status": 202,
+          "headers": { "X-Quota-Used": "1", "X-Quota-Limit": "1000" },
+          "body": {
+            "object": "ocr_job",
+            "id": "job_660e8400-e29b-41d4-a716-446655440001",
+            "created_at": "2026-06-12T10:00:00+00:00",
+            "request_id": "abc123",
+            "data": {
+              "status": "queued",
+              "job_type": "production",
+              "pages_processed": 0,
+              "result": null,
+              "error_message": null
+            }
+          }
+        },
+        { "status": 403, "error_code": "QUOTA_EXCEEDED" },
+        { "status": 401, "error_code": "AUTHENTICATION_ERROR" }
+      ],
+      "curl": "curl -X POST \"{base_url}/api/v2/ocr/jobs/\" -H \"Authorization: Bearer {API_KEY}\" -H \"Content-Type: application/json\" -d '{\"document_id\":\"doc_550e8400-e29b-41d4-a716-446655440000\",\"tier_slug\":\"basic\"}'"
+    },
+    {
+      "title": "Get OCR Job (v2)",
+      "method": "GET",
+      "path": "/api/v2/ocr/jobs/{job_id}/",
+      "description": "Poll OCR job status; accepts job_<uuid> or raw UUID.",
+      "scopes": ["ocr:read"],
+      "request_headers": { "Authorization": "Bearer {API_KEY}" },
+      "responses": [
+        {
+          "status": 200,
+          "body": {
+            "object": "ocr_job",
+            "id": "job_660e8400-e29b-41d4-a716-446655440001",
+            "created_at": "2026-06-12T10:00:00+00:00",
+            "request_id": "abc123",
+            "data": {
+              "status": "completed",
+              "job_type": "production",
+              "pages_processed": 2,
+              "result": { "text": "..." },
+              "error_message": null
+            }
+          }
+        },
+        { "status": 404, "error_code": "NOT_FOUND" },
+        { "status": 401, "error_code": "AUTHENTICATION_ERROR" }
+      ],
+      "curl": "curl \"{base_url}/api/v2/ocr/jobs/job_660e8400-e29b-41d4-a716-446655440001/\" -H \"Authorization: Bearer {API_KEY}\""
+    }
+  ]
+}
