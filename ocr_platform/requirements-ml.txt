@@ -1,0 +1,3 @@
+# Optional GPU/ML stack for OCR model inference inside Docker.
+# Default compose setup runs API + worker without these (mock RAG, no eager model load).
+# To enable: pip install -r requirements-ml.txt inside the container, or extend the Dockerfile.

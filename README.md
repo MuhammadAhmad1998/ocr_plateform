@@ -57,35 +57,33 @@ OCR/
 
 ## Quick start (Docker)
 
-The fastest way to run the full backend stack:
+Clone the repo and start the **full stack** (Postgres, Redis, API, Celery worker, and frontend):
 
 ```bash
-# 1. Copy environment file and adjust as needed
-cp .env.example .env
-
-# 2. Start Postgres, Redis, API, and Celery worker
 docker compose up --build
 ```
 
+No `.env` file is required — defaults live in `.env.docker`. To override settings, copy `.env.example` to `.env` (optional).
+
 | Service | URL |
 |---------|-----|
+| Frontend | http://localhost:3000 |
 | API | http://localhost:8000 |
 | Swagger docs | http://localhost:8000/docs |
 | PostgreSQL | `localhost:5433` (user `postgres`, password `root`) |
 | Redis | `localhost:6379` |
 
-Then start the frontend:
+**Default super admin** (from `.env.docker`): `admin@localhost` / `admin123`
+
+**Test user** (seeded on first API start): `test@example.com` / `password123`
+
+For hot-reload during development:
 
 ```bash
-cd frontend
-echo "NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1" > .env.local
-npm install
-npm run dev
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 ```
 
-Open http://localhost:3000.
-
-> **Note:** OCR model inference requires a CUDA-capable GPU and large model downloads. For local development without a GPU, the API, advisor (mock RAG), auth, and billing flows still work; set `USE_MOCK_RAG=true` and disable eager model loading in `.env`.
+> **Note:** OCR model inference requires a CUDA-capable GPU and large model downloads. The default Docker setup uses mock RAG and CPU device settings so the platform runs without a GPU. Add API keys to `.env` for live LLM advisor chat.
 
 ## Local development (without Docker API)
 
@@ -229,7 +227,7 @@ Before going live, review [ocr_platform/docs/PRODUCTION_CHECKLIST.md](ocr_platfo
 - Deploy Celery workers separately from the API process
 
 Health endpoints: `GET /health` (liveness), `GET /api/v1/status/` (service status and model availability).
-ß
+
 ## License
 
 Proprietary — all rights reserved unless otherwise noted.
