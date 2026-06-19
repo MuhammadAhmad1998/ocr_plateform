@@ -1,23 +1,24 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  Award,
   CheckCircle2,
   FileSearch,
+  Globe,
   Lock,
   MessageSquare,
   Shield,
-  Zap,
+  Sparkles,
+  Star,
   TrendingUp,
-  Award,
-  Globe,
+  Zap,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { AdvisorDemoWidget } from "@/components/AdvisorDemoWidget";
 import { FadeIn } from "@/components/fade-in";
 import { Navbar } from "@/components/Navbar";
 import { SiteFooter } from "@/components/site-footer";
-import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 const tiers = [
@@ -25,6 +26,7 @@ const tiers = [
     slug: "free",
     name: "Starter",
     price: "Free",
+    accent: "indigo" as const,
     features: ["50 pages / month", "PDF text extraction", "AI advisor included"],
   },
   {
@@ -32,6 +34,7 @@ const tiers = [
     name: "Essential",
     price: "$29",
     period: "/mo",
+    accent: "cyan" as const,
     features: ["500 pages / month", "Tables & forms", "REST API access"],
   },
   {
@@ -39,32 +42,41 @@ const tiers = [
     name: "Professional",
     price: "$99",
     period: "/mo",
-    features: ["5,000 pages / month", "Equations & handwriting", "Priority processing"],
+    accent: "fuchsia" as const,
+    features: [
+      "5,000 pages / month",
+      "Equations & handwriting",
+      "Priority processing",
+    ],
     highlight: true,
   },
   {
     slug: "enterprise",
     name: "Enterprise",
     price: "Custom",
+    accent: "amber" as const,
     features: ["Unlimited volume", "Custom fine-tuning", "Dedicated SLA"],
   },
 ];
 
-const steps = [
+const steps: { icon: LucideIcon; title: string; description: string }[] = [
   {
     icon: MessageSquare,
     title: "Chat with the advisor",
-    description: "Tell us about your document types, volume, and accuracy needs — our AI agent guides the conversation.",
+    description:
+      "Tell us about your document types, volume, and accuracy needs — our AI agent guides the conversation.",
   },
   {
-    icon: Zap,
+    icon: Sparkles,
     title: "Get your recommendation",
-    description: "Receive a personalized tier match based on your requirements — no guesswork, just smart suggestions.",
+    description:
+      "Receive a personalised tier match based on your requirements — no guesswork, just smart suggestions.",
   },
   {
     icon: FileSearch,
     title: "See it in action",
-    description: "Upload a sample document and run a live OCR demo to validate your recommendation before subscribing.",
+    description:
+      "Upload a sample document and run a live OCR demo to validate your recommendation before subscribing.",
   },
 ];
 
@@ -75,285 +87,429 @@ const trust = [
 ];
 
 const stats = [
-  { icon: TrendingUp, value: "99.8%", label: "Accuracy rate" },
-  { icon: Zap, value: "<2s", label: "Average processing" },
-  { icon: Globe, value: "50+", label: "Languages supported" },
-  { icon: Award, value: "SOC 2", label: "Certified platform" },
+  { icon: TrendingUp, value: "99.8%", label: "Accuracy rate", accent: "indigo" as const },
+  { icon: Zap, value: "<2s", label: "Average processing", accent: "cyan" as const },
+  { icon: Globe, value: "50+", label: "Languages supported", accent: "emerald" as const },
+  { icon: Award, value: "SOC 2", label: "Certified platform", accent: "fuchsia" as const },
 ];
+
+const PALETTE = {
+  indigo: {
+    gradient: "from-indigo-500/12 via-violet-500/6 to-indigo-500/3",
+    border: "border-indigo-500/30",
+    iconBg: "bg-gradient-to-br from-indigo-500 to-violet-500 shadow-indigo-500/30",
+    text: "text-indigo-700 dark:text-indigo-300",
+    check: "text-indigo-500",
+    checkBg: "bg-indigo-500/15",
+    priceGradient: "from-indigo-600 to-violet-600 dark:from-indigo-300 dark:to-violet-300",
+  },
+  cyan: {
+    gradient: "from-cyan-500/12 via-sky-500/6 to-cyan-500/3",
+    border: "border-cyan-500/30",
+    iconBg: "bg-gradient-to-br from-cyan-500 to-sky-500 shadow-cyan-500/30",
+    text: "text-cyan-700 dark:text-cyan-300",
+    check: "text-cyan-500",
+    checkBg: "bg-cyan-500/15",
+    priceGradient: "from-cyan-600 to-sky-600 dark:from-cyan-300 dark:to-sky-300",
+  },
+  fuchsia: {
+    gradient: "from-fuchsia-500/15 via-rose-500/10 to-amber-500/8",
+    border: "border-fuchsia-500/40",
+    iconBg:
+      "bg-gradient-to-br from-fuchsia-500 via-rose-500 to-amber-500 shadow-fuchsia-500/40",
+    text: "text-fuchsia-700 dark:text-fuchsia-300",
+    check: "text-fuchsia-500",
+    checkBg: "bg-fuchsia-500/15",
+    priceGradient:
+      "from-fuchsia-600 via-rose-500 to-amber-500 dark:from-fuchsia-300 dark:via-rose-300 dark:to-amber-300",
+  },
+  emerald: {
+    gradient: "from-emerald-500/12 via-teal-500/6 to-emerald-500/3",
+    border: "border-emerald-500/30",
+    iconBg: "bg-gradient-to-br from-emerald-500 to-teal-500 shadow-emerald-500/30",
+    text: "text-emerald-700 dark:text-emerald-300",
+    check: "text-emerald-500",
+    checkBg: "bg-emerald-500/15",
+    priceGradient: "from-emerald-600 to-teal-600 dark:from-emerald-300 dark:to-teal-300",
+  },
+  amber: {
+    gradient: "from-amber-500/12 via-orange-500/6 to-amber-500/3",
+    border: "border-amber-500/30",
+    iconBg: "bg-gradient-to-br from-amber-500 to-orange-500 shadow-amber-500/30",
+    text: "text-amber-700 dark:text-amber-300",
+    check: "text-amber-500",
+    checkBg: "bg-amber-500/15",
+    priceGradient: "from-amber-600 to-orange-600 dark:from-amber-300 dark:to-orange-300",
+  },
+} as const;
+
+type Accent = keyof typeof PALETTE;
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen overflow-hidden bg-background">
+      <BgOrbs />
       <Navbar variant="marketing" />
 
-      <main>
-        <section className="relative overflow-hidden gradient-mesh">
-          {/* Animated Background Logo */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-            <div className="animate-spin-slow opacity-[0.12]">
-              <svg
-                width="900"
-                height="900"
-                viewBox="0 0 480 480"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="text-primary"
-              >
-                {/* Planet circle */}
-                <circle cx="240" cy="240" r="120" fill="currentColor" opacity="0.7" />
-                
-                {/* Orbital rings */}
-                <ellipse
-                  cx="240"
-                  cy="240"
-                  rx="180"
-                  ry="60"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  fill="none"
-                  opacity="0.5"
-                />
-                <ellipse
-                  cx="240"
-                  cy="240"
-                  rx="180"
-                  ry="60"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  fill="none"
-                  opacity="0.4"
-                  transform="rotate(120 240 240)"
-                />
-                
-                {/* Orbital dots */}
-                <circle cx="420" cy="240" r="10" fill="currentColor" opacity="0.6">
-                  <animateTransform
-                    attributeName="transform"
-                    type="rotate"
-                    from="0 240 240"
-                    to="360 240 240"
-                    dur="20s"
-                    repeatCount="indefinite"
-                  />
-                </circle>
-                <circle cx="60" cy="240" r="8" fill="currentColor" opacity="0.5">
-                  <animateTransform
-                    attributeName="transform"
-                    type="rotate"
-                    from="180 240 240"
-                    to="540 240 240"
-                    dur="20s"
-                    repeatCount="indefinite"
-                  />
-                </circle>
-                <circle cx="240" cy="180" r="9" fill="currentColor" opacity="0.55">
-                  <animateTransform
-                    attributeName="transform"
-                    type="rotate"
-                    from="90 240 240"
-                    to="450 240 240"
-                    dur="20s"
-                    repeatCount="indefinite"
-                  />
-                </circle>
-              </svg>
+      <main className="relative z-10">
+        {/* ============ HERO ============ */}
+        <section className="relative px-4 pt-12 pb-20 sm:pt-20 sm:pb-28 lg:px-8 lg:pt-24 lg:pb-32">
+          <FadeIn className="mx-auto max-w-4xl text-center">
+            <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/60 px-3.5 py-1.5 text-xs font-semibold text-foreground/70 shadow-sm backdrop-blur">
+              <span className="relative flex size-2">
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+              </span>
+              <span>AI-powered tier recommendations</span>
+              <span className="h-3 w-px bg-border" />
+              <span className="text-fuchsia-600 dark:text-fuchsia-400">New</span>
             </div>
-          </div>
 
-          <div className="relative z-10 px-4 py-24 sm:py-32 lg:px-8">
-            <FadeIn className="mx-auto max-w-3xl text-center">
-              <p className="mb-6 text-sm font-semibold uppercase tracking-[0.2em] text-primary">
-                Document intelligence
-              </p>
-              <h1 className="mb-6 text-balance text-5xl font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl">
-                The right OCR tier for{" "}
-                <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  every document
-                </span>
-              </h1>
-              <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
-                Planet OCR's AI advisor understands your needs, recommends the ideal processing tier, and lets you
-                validate with a live demo — buy with confidence, not guesswork.
-              </p>
-              <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <Link
-                  href="/register"
-                  className={cn(
-                    buttonVariants({ size: "lg" }),
-                    "group gap-2 bg-primary px-8 py-6 text-base font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
-                  )}
-                >
-                  Get Started Free
-                  <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
-                </Link>
-                <Link
-                  href="/login"
-                  className={cn(
-                    buttonVariants({ variant: "outline", size: "lg" }),
-                    "px-8 py-6 text-base font-semibold hover-scale"
-                  )}
-                >
-                  Sign In
-                </Link>
-              </div>
-              <p className="mt-6 text-sm text-muted-foreground">
-                No credit card required • 50 pages included free
-              </p>
-            </FadeIn>
+            <h1 className="text-balance text-5xl font-extrabold leading-[1.05] tracking-tight text-foreground sm:text-6xl lg:text-7xl">
+              The right OCR tier for{" "}
+              <span className="bg-gradient-to-br from-indigo-600 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent dark:from-indigo-300 dark:via-fuchsia-300 dark:to-amber-300">
+                every document.
+              </span>
+            </h1>
 
-            <FadeIn delay={0.2} className="mx-auto mt-16 max-w-5xl">
-              <div className="grid grid-cols-2 gap-6 sm:gap-8 lg:grid-cols-4">
-                {stats.map((stat, i) => (
+            <p className="mx-auto mt-7 max-w-2xl text-balance text-lg leading-relaxed text-muted-foreground sm:text-xl">
+              Planet OCR&apos;s AI advisor understands your needs, recommends the ideal processing
+              tier, and lets you validate with a live demo — buy with confidence, not guesswork.
+            </p>
+
+            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+              <Link
+                href="/register"
+                className={cn(
+                  buttonVariants({ size: "lg" }),
+                  "group h-13 gap-2 rounded-full bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-amber-500 px-7 text-base font-bold text-white shadow-xl shadow-fuchsia-500/30 transition-all hover:scale-[1.02] hover:shadow-2xl"
+                )}
+              >
+                Get Started Free
+                <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
+              </Link>
+              <Link
+                href="/advisor"
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "lg" }),
+                  "h-13 gap-2 rounded-full border-2 bg-background/60 px-7 text-base font-bold backdrop-blur hover:scale-[1.02]"
+                )}
+              >
+                <Sparkles className="size-4 text-fuchsia-500" />
+                Try the Advisor
+              </Link>
+            </div>
+
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="size-4 text-emerald-500" />
+                No credit card required
+              </span>
+              <span className="hidden text-border sm:inline">·</span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="size-4 text-emerald-500" />
+                50 free pages
+              </span>
+              <span className="hidden text-border sm:inline">·</span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="size-4 text-emerald-500" />
+                Cancel anytime
+              </span>
+            </div>
+          </FadeIn>
+
+          {/* Stats */}
+          <FadeIn delay={0.15} className="mx-auto mt-20 max-w-6xl">
+            <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+              {stats.map((stat, i) => {
+                const c = PALETTE[stat.accent];
+                const Icon = stat.icon;
+                return (
                   <div
                     key={stat.label}
-                    className="group rounded-2xl border border-border bg-card/50 p-6 text-center backdrop-blur-sm transition-all hover:shadow-lg hover:-translate-y-1"
+                    className={cn(
+                      "group relative overflow-hidden rounded-3xl border-2 bg-gradient-to-br p-5 text-center shadow-md transition-all hover:-translate-y-1 hover:shadow-xl",
+                      c.gradient,
+                      c.border
+                    )}
                     style={{ animationDelay: `${i * 0.1}s` }}
                   >
-                    <div className="mb-3 inline-flex rounded-full bg-primary/10 p-3">
-                      <stat.icon className="size-6 text-primary" />
-                    </div>
-                    <div className="text-2xl font-bold text-foreground sm:text-3xl">{stat.value}</div>
-                    <div className="mt-1 text-sm text-muted-foreground">{stat.label}</div>
-                  </div>
-                ))}
-              </div>
-            </FadeIn>
-          </div>
-
-          <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
-            <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-primary to-accent opacity-20 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]" />
-          </div>
-        </section>
-
-        <section className="border-y border-border bg-muted/30 py-24">
-          <div className="px-4 lg:px-8">
-            <FadeIn className="mb-16 text-center">
-              <h2 className="text-4xl font-bold tracking-tight text-foreground">How Planet OCR Works</h2>
-              <p className="mt-4 text-lg text-muted-foreground">
-                Three simple steps to your perfect OCR tier
-              </p>
-            </FadeIn>
-            <div className="grid gap-8 lg:grid-cols-3">
-              {steps.map((step, i) => (
-                <FadeIn key={step.title} delay={0.1 + i * 0.1}>
-                  <Card className="group relative h-full overflow-hidden border-border bg-card hover-lift">
-                    <div className="absolute right-0 top-0 h-full w-1 bg-gradient-to-b from-primary to-accent opacity-0 transition-opacity group-hover:opacity-100" />
-                    <CardHeader className="pb-4">
-                      <div className="mb-4 inline-flex rounded-xl bg-primary/10 p-3 ring-1 ring-primary/20">
-                        <step.icon className="size-7 text-primary" />
+                    <div className="pointer-events-none absolute -right-6 -top-6 size-20 rounded-full bg-white/30 blur-2xl dark:bg-white/10" />
+                    <div className="relative space-y-3">
+                      <div
+                        className={cn(
+                          "mx-auto flex size-11 items-center justify-center rounded-2xl text-white shadow-lg transition-transform group-hover:scale-110",
+                          c.iconBg
+                        )}
+                      >
+                        <Icon className="size-5" />
                       </div>
-                      <div className="mb-2 text-sm font-semibold text-primary">Step {i + 1}</div>
-                      <CardTitle className="text-xl">{step.title}</CardTitle>
-                      <CardDescription className="text-base leading-relaxed">
-                        {step.description}
-                      </CardDescription>
-                    </CardHeader>
-                  </Card>
-                </FadeIn>
-              ))}
-            </div>
-
-            <FadeIn delay={0.4} className="mt-16 flex justify-center">
-              <AdvisorDemoWidget />
-            </FadeIn>
-          </div>
-        </section>
-
-        <section className="bg-background py-16">
-          <div className="px-4 lg:px-8">
-            <FadeIn className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
-              {trust.map((item) => (
-                <div
-                  key={item.label}
-                  className="flex items-center gap-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <div className="rounded-lg bg-primary/10 p-2">
-                    <item.icon className="size-5 text-primary" />
+                      <div
+                        className={cn(
+                          "bg-gradient-to-br bg-clip-text text-3xl font-extrabold tracking-tight text-transparent sm:text-4xl",
+                          c.priceGradient
+                        )}
+                      >
+                        {stat.value}
+                      </div>
+                      <div className="text-xs font-medium text-muted-foreground sm:text-sm">
+                        {stat.label}
+                      </div>
+                    </div>
                   </div>
-                  {item.label}
-                </div>
-              ))}
-            </FadeIn>
-          </div>
+                );
+              })}
+            </div>
+          </FadeIn>
         </section>
 
-        <section className="border-t border-border bg-gradient-to-b from-muted/50 to-background py-24">
-          <div className="px-4 lg:px-8">
-            <FadeIn className="mb-16 text-center">
-              <h2 className="text-4xl font-bold tracking-tight text-foreground">Transparent Pricing</h2>
-              <p className="mt-4 text-lg text-muted-foreground">
-                Capability-based tiers — no opaque model names, just what you need.
-              </p>
-            </FadeIn>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-              {tiers.map((tier, i) => (
-                <FadeIn key={tier.slug} delay={0.1 + i * 0.08}>
-                  <Card
+        {/* ============ HOW IT WORKS ============ */}
+        <section className="relative px-4 py-20 lg:px-8 lg:py-24">
+          <FadeIn className="mx-auto mb-14 max-w-2xl text-center">
+            <p className="mb-3 text-xs font-extrabold uppercase tracking-wider text-fuchsia-600 dark:text-fuchsia-400">
+              How it works
+            </p>
+            <h2 className="bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent sm:text-5xl">
+              From upload to insight in 3 steps
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg">
+              An AI-guided workflow that ends with a real OCR demo on your own document.
+            </p>
+          </FadeIn>
+
+          <div className="mx-auto grid max-w-6xl gap-5 md:grid-cols-3">
+            {steps.map((step, i) => {
+              const accents: Accent[] = ["indigo", "cyan", "fuchsia"];
+              const c = PALETTE[accents[i]];
+              const Icon = step.icon;
+              return (
+                <FadeIn key={step.title} delay={0.1 + i * 0.08}>
+                  <div
                     className={cn(
-                      "group relative flex h-full flex-col overflow-hidden transition-all hover-lift",
-                      tier.highlight
-                        ? "border-2 border-primary shadow-xl ring-4 ring-primary/10"
-                        : "border-border shadow-sm"
+                      "group relative h-full overflow-hidden rounded-3xl border-2 bg-gradient-to-br p-7 shadow-md transition-all hover:-translate-y-1 hover:shadow-xl",
+                      c.gradient,
+                      c.border
                     )}
                   >
-                    {tier.highlight && (
-                      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-accent to-primary" />
-                    )}
-                    {tier.highlight && (
-                      <Badge className="absolute -right-12 top-6 rotate-45 bg-accent px-12 py-1 text-xs font-bold text-accent-foreground shadow-sm">
-                        Popular
-                      </Badge>
-                    )}
-                    <CardHeader className="pb-8">
-                      <CardTitle className="text-xl">{tier.name}</CardTitle>
-                      <div className="mt-4 flex items-baseline gap-1">
-                        <span className="text-4xl font-bold text-primary">{tier.price}</span>
-                        {tier.period && (
-                          <span className="text-base text-muted-foreground">{tier.period}</span>
-                        )}
+                    <div className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full bg-white/20 blur-3xl dark:bg-white/5" />
+                    <div className="relative space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={cn(
+                            "flex size-12 items-center justify-center rounded-2xl text-white shadow-lg transition-transform group-hover:scale-110",
+                            c.iconBg
+                          )}
+                        >
+                          <Icon className="size-6" />
+                        </div>
+                        <span
+                          className={cn(
+                            "rounded-full bg-background/70 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider backdrop-blur",
+                            c.text
+                          )}
+                        >
+                          Step {i + 1}
+                        </span>
                       </div>
-                    </CardHeader>
-                    <CardContent className="flex-1">
-                      <ul className="space-y-3">
-                        {tier.features.map((f) => (
-                          <li key={f} className="flex items-start gap-3 text-sm">
-                            <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-primary" />
-                            <span className="text-muted-foreground">{f}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
+                      <h3 className="text-xl font-bold text-foreground">{step.title}</h3>
+                      <p className="text-sm leading-relaxed text-muted-foreground">
+                        {step.description}
+                      </p>
+                    </div>
+                  </div>
                 </FadeIn>
-              ))}
-            </div>
+              );
+            })}
           </div>
+
+          <FadeIn delay={0.4} className="mt-14 flex justify-center">
+            <AdvisorDemoWidget />
+          </FadeIn>
         </section>
 
-        <section className="bg-gradient-to-br from-primary/5 via-accent/5 to-background py-24">
-          <FadeIn className="mx-auto max-w-4xl px-4 text-center lg:px-8">
-            <h2 className="text-4xl font-bold tracking-tight text-foreground">
-              Ready to Find Your Perfect Tier?
-            </h2>
-            <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-              Start a conversation with our AI advisor to get your personalized tier recommendation,
-              then optionally test with a live demo before you commit.
+        {/* ============ TRUST STRIP ============ */}
+        <FadeIn className="px-4 py-12 lg:px-8">
+          <div className="mx-auto max-w-5xl">
+            <div className="grid grid-cols-1 gap-3 rounded-3xl border border-border/60 bg-card/60 p-4 shadow-sm backdrop-blur sm:grid-cols-3 sm:gap-2">
+              {trust.map((item, i) => {
+                const accents: Accent[] = ["emerald", "indigo", "fuchsia"];
+                const c = PALETTE[accents[i]];
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={item.label}
+                    className="group flex items-center justify-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-foreground/80 transition-all hover:bg-muted/50"
+                  >
+                    <div
+                      className={cn(
+                        "flex size-9 items-center justify-center rounded-xl text-white shadow-md transition-transform group-hover:scale-110",
+                        c.iconBg
+                      )}
+                    >
+                      <Icon className="size-4" />
+                    </div>
+                    {item.label}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </FadeIn>
+
+        {/* ============ PRICING TEASER ============ */}
+        <section className="relative px-4 py-20 lg:px-8 lg:py-24">
+          <FadeIn className="mx-auto mb-14 max-w-2xl text-center">
+            <p className="mb-3 text-xs font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+              Transparent pricing
             </p>
+            <h2 className="bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent sm:text-5xl">
+              Capability-based tiers
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg">
+              No opaque model names — just what you actually need.
+            </p>
+          </FadeIn>
+
+          <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-2 lg:grid-cols-4">
+            {tiers.map((tier, i) => {
+              const c = PALETTE[tier.accent];
+              const isHighlight = !!tier.highlight;
+              return (
+                <FadeIn key={tier.slug} delay={0.1 + i * 0.06} className="h-full">
+                  <div className={cn("group relative h-full", isHighlight && "lg:-my-2")}>
+                    {isHighlight && (
+                      <div className="pointer-events-none absolute -inset-2 rounded-[2rem] bg-gradient-to-br from-fuchsia-500/30 via-rose-500/20 to-amber-500/30 opacity-70 blur-xl transition-opacity group-hover:opacity-100" />
+                    )}
+                    <div
+                      className={cn(
+                        "relative flex h-full flex-col overflow-hidden rounded-3xl border-2 bg-gradient-to-br p-6 shadow-md transition-all",
+                        c.gradient,
+                        isHighlight
+                          ? cn(c.border, "bg-card shadow-2xl")
+                          : "border-border/70 hover:-translate-y-1 hover:shadow-xl"
+                      )}
+                    >
+                      <div className="pointer-events-none absolute -right-8 -top-8 size-28 rounded-full bg-white/20 blur-3xl dark:bg-white/5" />
+                      {isHighlight && (
+                        <div className="absolute -top-3.5 left-1/2 z-10 -translate-x-1/2">
+                          <div className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-fuchsia-500 via-rose-500 to-amber-500 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-white shadow-lg shadow-fuchsia-500/40">
+                            <Star className="size-3 fill-current" />
+                            Popular
+                          </div>
+                        </div>
+                      )}
+                      <div className="relative space-y-4">
+                        <h3 className="text-lg font-bold text-foreground">{tier.name}</h3>
+                        <div className="flex items-baseline gap-1">
+                          <span
+                            className={cn(
+                              "bg-gradient-to-br bg-clip-text text-4xl font-extrabold tracking-tight text-transparent",
+                              c.priceGradient
+                            )}
+                          >
+                            {tier.price}
+                          </span>
+                          {tier.period && (
+                            <span className="text-sm font-medium text-muted-foreground">
+                              {tier.period}
+                            </span>
+                          )}
+                        </div>
+                        <ul className="space-y-2.5 border-t border-border/60 pt-4">
+                          {tier.features.map((f) => (
+                            <li key={f} className="flex items-start gap-2.5 text-sm">
+                              <div
+                                className={cn(
+                                  "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full",
+                                  c.checkBg
+                                )}
+                              >
+                                <CheckCircle2 className={cn("size-3.5", c.check)} />
+                              </div>
+                              <span className="leading-relaxed text-foreground/85">{f}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </FadeIn>
+              );
+            })}
+          </div>
+
+          <FadeIn delay={0.4} className="mt-10 text-center">
             <Link
-              href="/register"
+              href="/pricing"
               className={cn(
-                buttonVariants({ size: "lg" }),
-                "group mt-10 gap-2 bg-primary px-8 py-6 text-base font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+                buttonVariants({ variant: "outline", size: "lg" }),
+                "gap-2 rounded-full border-2 hover:scale-[1.02]"
               )}
             >
-              Create Free Account
-              <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
+              Compare all plans
+              <ArrowRight className="size-4" />
             </Link>
+          </FadeIn>
+        </section>
+
+        {/* ============ FINAL CTA ============ */}
+        <section className="px-4 py-16 lg:px-8 lg:py-20">
+          <FadeIn className="mx-auto max-w-5xl">
+            <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-indigo-500/15 via-fuchsia-500/10 to-amber-500/15 p-8 text-center shadow-2xl sm:p-14">
+              <div className="pointer-events-none absolute -right-20 -top-20 size-72 rounded-full bg-fuchsia-500/30 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-24 -left-12 size-72 rounded-full bg-indigo-500/30 blur-3xl" />
+              <div className="relative">
+                <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-amber-500 text-white shadow-xl shadow-fuchsia-500/40">
+                  <Sparkles className="size-6" />
+                </div>
+                <h2 className="bg-gradient-to-br from-indigo-600 via-fuchsia-500 to-amber-500 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent dark:from-indigo-300 dark:via-fuchsia-300 dark:to-amber-300 sm:text-5xl">
+                  Ready to find your perfect tier?
+                </h2>
+                <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+                  Start a conversation with our AI advisor, get a personalised tier recommendation,
+                  then validate with a live OCR demo before you commit.
+                </p>
+                <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                  <Link
+                    href="/register"
+                    className={cn(
+                      buttonVariants({ size: "lg" }),
+                      "group h-13 gap-2 rounded-full bg-foreground px-7 text-base font-bold text-background shadow-xl hover:scale-[1.02] hover:opacity-90"
+                    )}
+                  >
+                    Create Free Account
+                    <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                  <Link
+                    href="/advisor"
+                    className={cn(
+                      buttonVariants({ variant: "outline", size: "lg" }),
+                      "h-13 gap-2 rounded-full border-2 bg-background/70 px-7 text-base font-bold backdrop-blur hover:scale-[1.02]"
+                    )}
+                  >
+                    Try the Advisor
+                  </Link>
+                </div>
+              </div>
+            </div>
           </FadeIn>
         </section>
       </main>
 
       <SiteFooter />
+    </div>
+  );
+}
+
+/* ============= COMPONENTS ============= */
+
+function BgOrbs() {
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className="absolute -left-32 top-10 size-[28rem] rounded-full bg-indigo-500/10 blur-3xl dark:bg-indigo-500/15" />
+      <div className="absolute right-0 top-[20%] size-[28rem] rounded-full bg-fuchsia-500/10 blur-3xl dark:bg-fuchsia-500/15" />
+      <div className="absolute left-1/4 top-[60%] size-[26rem] rounded-full bg-cyan-500/8 blur-3xl dark:bg-cyan-500/12" />
+      <div className="absolute -bottom-32 right-1/4 size-[28rem] rounded-full bg-amber-500/10 blur-3xl dark:bg-amber-500/15" />
     </div>
   );
 }

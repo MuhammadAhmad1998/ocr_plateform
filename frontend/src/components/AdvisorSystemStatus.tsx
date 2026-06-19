@@ -10,7 +10,12 @@ interface AdvisorSystemStatusProps {
 export function AdvisorSystemStatus({ capabilities, className }: AdvisorSystemStatusProps) {
   if (!capabilities) {
     return (
-      <div className={cn("rounded-lg border border-dashed border-border py-4 text-center text-xs text-muted-foreground", className)}>
+      <div
+        className={cn(
+          "rounded-lg border border-dashed border-border py-4 text-center text-xs text-muted-foreground",
+          className
+        )}
+      >
         Loading advisor mode…
       </div>
     );
@@ -21,40 +26,40 @@ export function AdvisorSystemStatus({ capabilities, className }: AdvisorSystemSt
 
   return (
     <div className={cn("space-y-3 text-sm", className)}>
-      <div className="flex items-center justify-between gap-2">
-        <span className="flex items-center gap-1.5 text-muted-foreground">
+      <div className="flex items-center justify-between gap-2 rounded-lg border border-border/70 bg-muted/30 px-3 py-2.5">
+        <span className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
           <Database className="size-3.5" />
           Knowledge base
         </span>
         <span
           className={cn(
-            "rounded-full px-2 py-0.5 text-[10px] font-medium uppercase",
+            "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
             ragReady
               ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
               : "bg-amber-500/15 text-amber-700 dark:text-amber-400"
           )}
         >
-          {ragReady ? `RAG · ${capabilities.indexed_chunks} chunks` : "Mock RAG"}
+          {ragReady ? `RAG · ${capabilities.indexed_chunks}` : "Mock"}
         </span>
       </div>
-      <div className="flex items-center justify-between gap-2">
-        <span className="flex items-center gap-1.5 text-muted-foreground">
+      <div className="flex items-center justify-between gap-2 rounded-lg border border-border/70 bg-muted/30 px-3 py-2.5">
+        <span className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
           <Bot className="size-3.5" />
           Response engine
         </span>
         <span
           className={cn(
-            "rounded-full px-2 py-0.5 text-[10px] font-medium uppercase",
+            "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
             llmReady
               ? "bg-blue-500/15 text-blue-700 dark:text-blue-400"
               : "bg-orange-500/15 text-orange-700 dark:text-orange-400"
           )}
         >
-          {llmReady ? `${capabilities.llm_provider} LLM` : "Scripted"}
+          {llmReady ? capabilities.llm_provider : "Scripted"}
         </span>
       </div>
       {(!ragReady || !llmReady) && (
-        <div className="flex gap-2 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-300">
+        <div className="flex gap-2 rounded-lg bg-amber-500/10 px-3 py-2.5 text-xs leading-relaxed text-amber-800 dark:text-amber-300">
           <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
           <p>
             {!llmReady && "Set GROQ_API_KEY and restart the API. "}
