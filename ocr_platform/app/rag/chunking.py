@@ -15,6 +15,7 @@ ENGINE_SLUGS = {
     "GOT-OCR-2.0": "got-ocr2",
     "PaddleOCR": "paddle-ocr-vl",
     "Qianfan-OCR": "qianfan-ocr",
+    "Infinity-Parser2-Flash": "infinity-parser2-flash",
     "Global": "platform",
 }
 

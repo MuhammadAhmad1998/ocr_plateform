@@ -57,6 +57,21 @@ _ENGINE_SAMPLE_TEXT: dict[str, str] = {
         "Requested amount: $45,000  Term: 36 months\n"
         "Collateral: commercial property — Block 7, Lot 12"
     ),
+    "infinity-parser2-flash": (
+        "QUARTERLY REPORT — Q1 2026\n"
+        "Revenue by Region          | Units | Growth\n"
+        "North America              | 12.4M | +8.2%\n"
+        "Europe                     |  8.1M | +5.1%\n"
+        "Figure 1: Regional sales chart (bar chart)\n"
+        "Formula: ROI = (Gain - Cost) / Cost"
+    ),
+    "infinity-parser2-flash-enterprise": (
+        "ANNUAL FINANCIAL STATEMENT\n"
+        "Consolidated Balance Sheet (multi-column)\n"
+        "Assets | 2025 | 2024 | Change\n"
+        "Chart: YoY revenue trend\n"
+        "Chemical notation: H2SO4 + 2NaOH -> Na2SO4 + 2H2O"
+    ),
 }
 
 _DEFAULT_SAMPLE_TEXT = (
@@ -87,6 +102,21 @@ _ENGINE_FINGERPRINTS: dict[str, dict] = {
         "doc_type": "financial",
         "has_tables": True,
         "layout_complexity": "moderate",
+    },
+    "infinity-parser2-flash": {
+        "doc_type": "report",
+        "has_tables": True,
+        "has_charts": True,
+        "has_equations": True,
+        "layout_complexity": "complex",
+    },
+    "infinity-parser2-flash-enterprise": {
+        "doc_type": "report",
+        "has_tables": True,
+        "has_charts": True,
+        "has_equations": True,
+        "layout_complexity": "complex",
+        "page_count": 12,
     },
 }
 

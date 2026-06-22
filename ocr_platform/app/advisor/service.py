@@ -57,8 +57,10 @@ AVAILABLE ENGINES ONLY:
 - paddle-ocr-vl (basic tier)
 - got-ocr2 (pro tier - handwriting, equations)
 - qianfan-ocr (pro tier - KIE, medical, financial)
+- infinity-parser2-flash (pro tier - fast document parsing, layout, tables)
 - got-ocr2-enterprise (enterprise tier)
 - qianfan-ocr-enterprise (enterprise tier)
+- infinity-parser2-flash-enterprise (enterprise tier)
 
 IMPORTANT: NEVER recommend TrOCR, trocr-base, trocr-handwritten, or any other engines not in the list above.
 Use the knowledge base context and fingerprint analysis below to guide your questions."""
@@ -374,14 +376,17 @@ class AdvisorService:
             elif primary == "basic":
                 engine_slug = "paddle-ocr-vl"
             elif primary == "pro":
-                # Choose between GOT-OCR and Qianfan based on use case
                 if features.get("handwriting") or features.get("equations"):
                     engine_slug = "got-ocr2"
+                elif features.get("charts") or fingerprint.get("layout_complexity") == "complex":
+                    engine_slug = "infinity-parser2-flash"
                 else:
                     engine_slug = "qianfan-ocr"
             else:  # enterprise
                 if features.get("handwriting") or features.get("equations"):
                     engine_slug = "got-ocr2-enterprise"
+                elif features.get("charts") or fingerprint.get("layout_complexity") == "complex":
+                    engine_slug = "infinity-parser2-flash-enterprise"
                 else:
                     engine_slug = "qianfan-ocr-enterprise"
             engine = registry_service.get_engine_by_slug(db, engine_slug)

@@ -92,6 +92,7 @@ export interface ServiceStatus {
     paddle: boolean;
     got: boolean;
     qianfan: boolean;
+    infinity_parser: boolean;
   };
   degraded: {
     database: boolean;
@@ -154,7 +155,7 @@ export interface ApiKeyCreated {
 export interface TestingModel {
   slug: string;
   display_name: string;
-  type: "ocr" | "vlm" | "paddle_ocr" | "qianfan_ocr" | "got_ocr";
+  type: "ocr" | "vlm" | "paddle_ocr" | "qianfan_ocr" | "got_ocr" | "infinity_parser";
   adapter_type: string;
   capability_tags: string[];
 }
@@ -162,7 +163,7 @@ export interface TestingModel {
 export interface TestingResult {
   model_slug: string;
   model_name: string;
-  model_type: "ocr" | "vlm" | "paddle_ocr" | "qianfan_ocr" | "got_ocr";
+  model_type: "ocr" | "vlm" | "paddle_ocr" | "qianfan_ocr" | "got_ocr" | "infinity_parser";
   status: string;
   filename: string;
   result: {
@@ -174,7 +175,9 @@ export interface TestingResult {
     question?: string;
     prompt?: string;
     task?: string;
+    task_type?: string;
     ocr_type?: string;
+    output_format?: string;
   };
 }
 

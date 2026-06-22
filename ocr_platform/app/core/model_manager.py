@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 _load_lock = Lock()
 
-ModelType = Literal["vlm", "paddle_ocr", "qianfan_ocr", "got_ocr"]
+ModelType = Literal["vlm", "paddle_ocr", "qianfan_ocr", "got_ocr", "infinity_parser"]
 
 
 def _force_free_gpu_memory() -> None:

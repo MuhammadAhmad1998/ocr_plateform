@@ -51,6 +51,7 @@ OPENAPI_TAGS = [
     {"name": "paddle-ocr", "description": "PaddleOCR-VL document OCR."},
     {"name": "got-ocr", "description": "GOT-OCR2 document OCR."},
     {"name": "qianfan-ocr", "description": "Qianfan-OCR document OCR."},
+    {"name": "infinity-parser", "description": "Infinity-Parser2-Flash document parsing."},
     {
         "name": "V2",
         "description": (
@@ -117,6 +118,15 @@ async def lifespan(app: FastAPI):
             logger.info("GOT-OCR model preloaded at startup")
         except RuntimeError as exc:
             logger.warning("GOT-OCR preload skipped: %s", exc)
+
+    if settings.INFINITY_PARSER_ENABLED and settings.INFINITY_PARSER_EAGER_LOAD:
+        from app.infinity_parser.service import infinity_parser_service
+
+        try:
+            infinity_parser_service.load()
+            logger.info("Infinity-Parser2-Flash model preloaded at startup")
+        except RuntimeError as exc:
+            logger.warning("Infinity-Parser2 preload skipped: %s", exc)
 
     yield
 

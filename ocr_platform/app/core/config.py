@@ -122,6 +122,17 @@ class Settings(BaseSettings):
     GOT_OCR_MAX_PDF_PAGES: int = 50
     GOT_OCR_EAGER_LOAD: bool = False
 
+    INFINITY_PARSER_ENABLED: bool = True
+    INFINITY_PARSER_MODEL_ID: str = "infly/Infinity-Parser2-Flash"
+    INFINITY_PARSER_TORCH_DTYPE: str = "bfloat16"
+    INFINITY_PARSER_DEVICE: str = "auto"
+    INFINITY_PARSER_MAX_NEW_TOKENS: int = 8192
+    INFINITY_PARSER_MIN_PIXELS: int = 2048
+    INFINITY_PARSER_MAX_PIXELS: int = 16777216
+    INFINITY_PARSER_PDF_DPI: int = 144
+    INFINITY_PARSER_MAX_PDF_PAGES: int = 50
+    INFINITY_PARSER_EAGER_LOAD: bool = False
+
     # Model memory management
     AUTO_UNLOAD_MODELS: bool = True  # Automatically unload models when switching
 

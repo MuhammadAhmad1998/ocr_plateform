@@ -9,6 +9,7 @@ from pypdf import PdfReader
 
 from app.core.config import get_settings
 from app.got_ocr.service import got_ocr_service
+from app.infinity_parser.service import infinity_parser_service
 from app.vlm.pdf_utils import image_bytes_to_pil, pdf_bytes_to_images
 
 settings = get_settings()
@@ -145,6 +146,68 @@ class GotOCRAdapter(BaseAdapter):
         )
 
 
+class InfinityParserAdapter(BaseAdapter):
+    adapter_type = "infinity-parser2-flash"
+
+    def run(self, content: bytes, content_type: str, options: dict | None = None) -> OcrOutput:
+        import asyncio
+
+        start = time.time()
+        filename = (options or {}).get("filename", "")
+        task_type = (options or {}).get("task_type") or "doc2md"
+        text_parts: list[str] = []
+        pages: list[dict[str, Any]] = []
+
+        def _run_async(coro):
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    import concurrent.futures
+                    with concurrent.futures.ThreadPoolExecutor() as pool:
+                        return pool.submit(asyncio.run, coro).result()
+                return loop.run_until_complete(coro)
+            except RuntimeError:
+                return asyncio.run(coro)
+
+        if content_type == "application/pdf" or filename.lower().endswith(".pdf"):
+            images = pdf_bytes_to_images(content, dpi=settings.INFINITY_PARSER_PDF_DPI)
+            for page_number, image in enumerate(images, start=1):
+                page_text, elapsed_ms = _run_async(
+                    infinity_parser_service.recognize(image=image, task_type=task_type)
+                )
+                text_parts.append(f"--- Page {page_number} ---\n{page_text}")
+                pages.append(
+                    {
+                        "page_number": page_number,
+                        "text": page_text,
+                        "processing_time_ms": round(elapsed_ms, 2),
+                        "source": "infinity_parser",
+                    }
+                )
+        else:
+            image = image_bytes_to_pil(content)
+            page_text, elapsed_ms = _run_async(
+                infinity_parser_service.recognize(image=image, task_type=task_type)
+            )
+            text_parts.append(page_text)
+            pages.append(
+                {
+                    "page_number": 1,
+                    "text": page_text,
+                    "processing_time_ms": round(elapsed_ms, 2),
+                    "source": "infinity_parser",
+                }
+            )
+
+        elapsed = int((time.time() - start) * 1000)
+        return OcrOutput(
+            text="\n\n".join(text_parts),
+            layout={"pages": len(pages), "engine": self.adapter_type, "pages_detail": pages},
+            confidence=0.94,
+            timing_ms=elapsed,
+        )
+
+
 ADAPTERS: dict[str, BaseAdapter] = {
     "tesseract": TesseractAdapter(),
     "trocr-base": TesseractAdapter(),
@@ -155,6 +218,7 @@ ADAPTERS: dict[str, BaseAdapter] = {
     "doctr": MockNeuralAdapter(),
     "nanonets-ocr2-3b": GotOCRAdapter(),
     "got-ocr2": GotOCRAdapter(),
+    "infinity-parser2-flash": InfinityParserAdapter(),
 }
 
 

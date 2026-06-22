@@ -37,6 +37,7 @@ export const API_TAGS: ApiTag[] = [
   { id: "paddle-ocr", name: "Paddle OCR", description: "PaddleOCR-VL document OCR." },
   { id: "got-ocr", name: "GOT OCR", description: "GOT-OCR2 document OCR." },
   { id: "qianfan-ocr", name: "Qianfan OCR", description: "Qianfan-OCR document OCR." },
+  { id: "infinity-parser", name: "Infinity Parser", description: "Infinity-Parser2-Flash document parsing." },
   { id: "v2", name: "API v2", description: "Modern envelope API with prefixed ids (job_, doc_). API key auth by default." },
   { id: "internal", name: "Internal", description: "AI Platform marketplace integration — PLATFORM_API_KEY required." },
   { id: "health", name: "Health", description: "Liveness and readiness probes." },
@@ -111,6 +112,11 @@ export const API_ENDPOINTS: ApiEndpoint[] = [
   { id: "qianfan-recognize", tag: "qianfan-ocr", method: "POST", path: "/api/v1/qianfan-ocr/recognize/", summary: "Qianfan OCR Recognize", auth: "jwt_or_api_key", version: "v1" },
   { id: "qianfan-pdf", tag: "qianfan-ocr", method: "POST", path: "/api/v1/qianfan-ocr/pdf/analyze/", summary: "Qianfan OCR Analyze PDF", auth: "jwt_or_api_key", version: "v1" },
   { id: "qianfan-health", tag: "qianfan-ocr", method: "GET", path: "/api/v1/qianfan-ocr/health/", summary: "Qianfan OCR Health", auth: "none", version: "v1" },
+
+  // infinity-parser
+  { id: "infinity-recognize", tag: "infinity-parser", method: "POST", path: "/api/v1/infinity-parser/recognize/", summary: "Infinity Parser Recognize", auth: "jwt_or_api_key", version: "v1" },
+  { id: "infinity-pdf", tag: "infinity-parser", method: "POST", path: "/api/v1/infinity-parser/pdf/analyze/", summary: "Infinity Parser Analyze PDF", auth: "jwt_or_api_key", version: "v1" },
+  { id: "infinity-health", tag: "infinity-parser", method: "GET", path: "/api/v1/infinity-parser/health/", summary: "Infinity Parser Health", auth: "none", version: "v1" },
 
   // v2
   { id: "v2-ocr-submit", tag: "v2", method: "POST", path: "/api/v2/ocr/jobs/", summary: "Submit OCR Job", auth: "jwt_or_api_key", version: "v2" },

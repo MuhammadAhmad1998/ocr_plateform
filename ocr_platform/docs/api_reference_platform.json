@@ -29,6 +29,12 @@
       "display_name": "Qianfan OCR",
       "type": "qianfan_ocr",
       "capability_tags": ["ocr", "pdf", "key_information_extraction", "financial_documents"]
+    },
+    {
+      "slug": "infinity-parser2-flash",
+      "display_name": "Infinity-Parser2-Flash",
+      "type": "infinity_parser",
+      "capability_tags": ["ocr", "pdf", "layout", "tables", "charts", "formulas", "markdown"]
     }
   ],
   "error_codes": [

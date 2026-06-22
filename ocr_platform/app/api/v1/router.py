@@ -8,6 +8,7 @@ from app.api.v1 import (
     demo,
     documents,
     got_ocr,
+    infinity_parser,
     models,
     ocr,
     paddle_ocr,
@@ -32,3 +33,4 @@ api_router.include_router(vlm.router)
 api_router.include_router(paddle_ocr.router)
 api_router.include_router(qianfan_ocr.router)
 api_router.include_router(got_ocr.router)
+api_router.include_router(infinity_parser.router)

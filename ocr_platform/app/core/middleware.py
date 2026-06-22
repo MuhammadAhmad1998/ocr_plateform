@@ -24,6 +24,7 @@ INFERENCE_PATH_PREFIXES = (
     "/api/v1/paddle-ocr/",
     "/api/v1/got-ocr/",
     "/api/v1/qianfan-ocr/",
+    "/api/v1/infinity-parser/",
 )
 
 DEPRECATED_PATHS: dict[str, str] = {

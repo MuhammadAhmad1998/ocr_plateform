@@ -32,4 +32,5 @@ pytest>=8.0.0
 pytest-asyncio>=0.23.0
 
 # VLM / OCR models (optional locally): pip install -r requirements-ml.txt
+# Infinity-Parser2-Flash also needs: pip install qwen-vl-utils
 # See requirements-ml.txt for platform notes (Intel Mac is limited to torch 2.2.x).

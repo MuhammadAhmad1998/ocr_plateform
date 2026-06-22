@@ -17,6 +17,9 @@ _ENGINE_SLUG_ALIASES: dict[str, str] = {
     "got-ocr 2.0": "got-ocr2",
     "qianfan": "qianfan-ocr",
     "qianfan-ocr-enterprise": "qianfan-ocr-enterprise",
+    "infinity-parser2-flash": "infinity-parser2-flash",
+    "infinity-parser2-flash-enterprise": "infinity-parser2-flash-enterprise",
+    "infinity-parser": "infinity-parser2-flash",
     "paddle-ocr": "paddle-ocr-free",
     "paddleocr-vl": "paddle-ocr-vl",
 }

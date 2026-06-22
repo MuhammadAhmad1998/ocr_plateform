@@ -207,16 +207,24 @@ export const v1 = {
   runTesting: async (
     file: File,
     modelSlug: string,
-    options?: { question?: string; prompt?: string; enableThinking?: boolean; task?: string; ocrType?: string }
+    options?: {
+      outputFormat?: string;
+      question?: string;
+      prompt?: string;
+      enableThinking?: boolean;
+      task?: string;
+      ocrType?: string;
+    }
   ) => {
     const form = new FormData();
     form.append("file", file);
     form.append("model_slug", modelSlug);
+    if (options?.outputFormat) form.append("output_format", options.outputFormat);
     if (options?.question) form.append("question", options.question);
     if (options?.prompt) form.append("prompt", options.prompt);
     if (options?.enableThinking) form.append("enable_thinking", "true");
     if (options?.task) form.append("task", options.task);
-    if (options?.ocrType) form.append("prompt", options.ocrType);
+    if (options?.ocrType) form.append("ocr_type", options.ocrType);
     const res = await fetchWithAuth("/testing/run/", { method: "POST", body: form });
     return json<TestingResult>(res);
   },
@@ -316,6 +324,38 @@ export const v1 = {
 
   qianfanHealth: async () => {
     const res = await fetchWithAuth("/qianfan-ocr/health/");
+    return json<EngineHealth>(res);
+  },
+
+  // ── infinity-parser ─────────────────────────────────────────────────────
+  infinityRecognize: async (
+    file: File,
+    options?: { taskType?: string; customPrompt?: string; maxNewTokens?: number; enableThinking?: boolean }
+  ) => {
+    const form = new FormData();
+    form.append("file", file);
+    if (options?.taskType) form.append("task_type", options.taskType);
+    if (options?.customPrompt) form.append("custom_prompt", options.customPrompt);
+    if (options?.maxNewTokens) form.append("max_new_tokens", String(options.maxNewTokens));
+    if (options?.enableThinking) form.append("enable_thinking", "true");
+    return uploadForm("/infinity-parser/recognize/", form) as Promise<OcrEngineResult>;
+  },
+
+  infinityAnalyzePdf: async (
+    file: File,
+    options?: { taskType?: string; customPrompt?: string; maxNewTokens?: number; enableThinking?: boolean }
+  ) => {
+    const form = new FormData();
+    form.append("file", file);
+    if (options?.taskType) form.append("task_type", options.taskType);
+    if (options?.customPrompt) form.append("custom_prompt", options.customPrompt);
+    if (options?.maxNewTokens) form.append("max_new_tokens", String(options.maxNewTokens));
+    if (options?.enableThinking) form.append("enable_thinking", "true");
+    return uploadForm("/infinity-parser/pdf/analyze/", form);
+  },
+
+  infinityHealth: async () => {
+    const res = await fetchWithAuth("/infinity-parser/health/");
     return json<EngineHealth>(res);
   },
 

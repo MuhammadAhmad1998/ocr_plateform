@@ -100,6 +100,31 @@ def seed_database() -> None:
                 },
                 cost_profile="medium",
             ),
+            # Infinity-Parser2-Flash - Pro tier (fast document parsing)
+            dict(
+                slug="infinity-parser2-flash",
+                tier_slug="pro",
+                display_name="Infinity-Parser2-Flash",
+                adapter_type="infinity-parser2-flash",
+                capability_tags=[
+                    "printed_text",
+                    "tables",
+                    "charts",
+                    "formulas",
+                    "layout_analysis",
+                    "markdown",
+                    "multi_column",
+                    "document_parsing",
+                ],
+                benchmark_scores={
+                    "pdf": 0.92,
+                    "form": 0.90,
+                    "table": 0.92,
+                    "layout": 0.91,
+                    "parsebench": 0.72,
+                },
+                cost_profile="low",
+            ),
             # GOT-OCR 2.0 Enterprise - Full capabilities
             dict(
                 slug="got-ocr2-enterprise",
@@ -153,6 +178,34 @@ def seed_database() -> None:
                 },
                 cost_profile="high",
             ),
+            # Infinity-Parser2-Flash Enterprise
+            dict(
+                slug="infinity-parser2-flash-enterprise",
+                tier_slug="enterprise",
+                display_name="Infinity-Parser2-Flash Enterprise",
+                adapter_type="infinity-parser2-flash",
+                capability_tags=[
+                    "printed_text",
+                    "tables",
+                    "charts",
+                    "formulas",
+                    "layout_analysis",
+                    "markdown",
+                    "multi_column",
+                    "document_parsing",
+                    "chemical_formulas",
+                    "document_vqa",
+                ],
+                benchmark_scores={
+                    "pdf": 0.94,
+                    "form": 0.92,
+                    "table": 0.94,
+                    "layout": 0.93,
+                    "parsebench": 0.73,
+                    "chart": 0.80,
+                },
+                cost_profile="medium",
+            ),
         ]
 
         for spec in engine_specs:
@@ -189,6 +242,12 @@ def seed_database() -> None:
                 doc_type="research_paper",
                 capability_tags=["key_information_extraction", "medical_documents", "financial_documents"],
                 content="Qianfan OCR specializes in structured data extraction with advanced KIE capabilities for medical and financial documents.",
+            ),
+            dict(
+                title="Infinity-Parser2-Flash Document Parsing",
+                doc_type="research_paper",
+                capability_tags=["document_parsing", "layout_analysis", "tables", "charts", "markdown"],
+                content="Infinity-Parser2-Flash is a 2B parameter fast document parser with SOTA layout analysis, table/chart/formula parsing, and Markdown output.",
             ),
             dict(
                 title="Professional Tier Spec",

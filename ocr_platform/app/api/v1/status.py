@@ -54,6 +54,7 @@ def get_status():
             "paddle": settings.PADDLE_OCR_ENABLED,
             "got": settings.GOT_OCR_ENABLED,
             "qianfan": settings.QIANFAN_OCR_ENABLED,
+            "infinity_parser": settings.INFINITY_PARSER_ENABLED,
         },
         "degraded": degraded,
     }

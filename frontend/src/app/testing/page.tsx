@@ -1,8 +1,8 @@
 "use client";
 
-import { FileText, Loader2, Play, Upload, X } from "lucide-react";
+import { Copy, FileText, Loader2, Play, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/fade-in";
 import { Navbar } from "@/components/Navbar";
@@ -12,11 +12,78 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { api, getToken, type TestingModel, type TestingResult } from "@/lib/api";
+import {
+  formatOutputFormatLabel,
+  OCR_OUTPUT_FORMATS,
+  SUPPORTED_TESTING_MODEL_TYPES,
+  tryFormatJson,
+  type OcrOutputFormat,
+} from "@/lib/ocr-formats";
 import { cn } from "@/lib/utils";
 
 type ProcessStatus = "idle" | "running" | "completed" | "failed";
+
+const selectClassName = cn(
+  "flex h-12 w-full rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm",
+  "ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+);
+
+function ResultViewer({ text, outputFormat }: { text: string; outputFormat?: string }) {
+  const { formatted, isJson } = useMemo(() => tryFormatJson(text), [text]);
+  const showPretty = isJson || outputFormat === "json";
+
+  async function copyText(value: string) {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success("Copied to clipboard");
+    } catch {
+      toast.error("Failed to copy");
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex justify-end">
+        <Button variant="outline" size="sm" className="gap-2" onClick={() => copyText(formatted)}>
+          <Copy className="size-4" />
+          Copy output
+        </Button>
+      </div>
+
+      {showPretty ? (
+        <Tabs defaultValue="pretty">
+          <TabsList>
+            <TabsTrigger value="pretty">Pretty</TabsTrigger>
+            <TabsTrigger value="raw">Raw</TabsTrigger>
+          </TabsList>
+          <TabsContent value="pretty">
+            <ScrollArea className="h-[32rem] rounded-xl border-2 border-border bg-slate-950 p-6 shadow-inner">
+              <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-green-400">
+                {formatted}
+              </pre>
+            </ScrollArea>
+          </TabsContent>
+          <TabsContent value="raw">
+            <ScrollArea className="h-[32rem] rounded-xl border-2 border-border bg-slate-950 p-6 shadow-inner">
+              <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-green-400">
+                {text}
+              </pre>
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
+      ) : (
+        <ScrollArea className="h-[32rem] rounded-xl border-2 border-border bg-slate-950 p-6 shadow-inner">
+          <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-green-400">
+            {text}
+          </pre>
+        </ScrollArea>
+      )}
+    </div>
+  );
+}
 
 export default function TestingPage() {
   const router = useRouter();
@@ -25,13 +92,10 @@ export default function TestingPage() {
   const [models, setModels] = useState<TestingModel[]>([]);
   const [loadingModels, setLoadingModels] = useState(true);
   const [selectedModel, setSelectedModel] = useState("");
+  const [outputFormat, setOutputFormat] = useState<OcrOutputFormat>("markdown");
+  const [customInstruction, setCustomInstruction] = useState("");
+  const [enableThinking, setEnableThinking] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [vlmQuestion, setVlmQuestion] = useState(
-    "Extract all text from this document. Return only the extracted text, preserving layout where possible."
-  );
-  const [paddleTask, setPaddleTask] = useState("ocr");
-  const [qianfanPrompt, setQianfanPrompt] = useState("Parse this document to Markdown.");
-  const [gotOcrType, setGotOcrType] = useState("ocr");
   const [status, setStatus] = useState<ProcessStatus>("idle");
   const [result, setResult] = useState<TestingResult | null>(null);
 
@@ -44,12 +108,8 @@ export default function TestingPage() {
     api
       .getTestingModels()
       .then((data) => {
-        // Filter to only show paddle_ocr, got_ocr, qianfan, and vlm models
-        const filteredModels = data.models.filter((model) => 
-          model.type === "paddle_ocr" ||
-          model.type === "got_ocr" || 
-          model.type === "qianfan_ocr" || 
-          model.type === "vlm"
+        const filteredModels = data.models.filter((model) =>
+          SUPPORTED_TESTING_MODEL_TYPES.has(model.type)
         );
         setModels(filteredModels);
         if (filteredModels.length > 0) {
@@ -64,10 +124,8 @@ export default function TestingPage() {
   }, [router]);
 
   const selectedModelInfo = models.find((m) => m.slug === selectedModel);
-  const isVlm = selectedModelInfo?.type === "vlm";
-  const isPaddleOcr = selectedModelInfo?.type === "paddle_ocr";
-  const isQianfanOcr = selectedModelInfo?.type === "qianfan_ocr";
-  const isGotOcr = selectedModelInfo?.type === "got_ocr";
+  const supportsThinking =
+    selectedModelInfo?.type === "vlm" || selectedModelInfo?.type === "infinity_parser";
 
   function handleFileSelect(selected: File) {
     setFile(selected);
@@ -90,10 +148,9 @@ export default function TestingPage() {
 
     try {
       const response = await api.runTesting(file, selectedModel, {
-        question: isVlm ? vlmQuestion : undefined,
-        prompt: isQianfanOcr ? qianfanPrompt : undefined,
-        task: isPaddleOcr ? paddleTask : undefined,
-        ocrType: isGotOcr ? gotOcrType : undefined,
+        outputFormat,
+        prompt: customInstruction.trim() || undefined,
+        enableThinking: supportsThinking ? enableThinking : undefined,
       });
       setResult(response);
       setStatus("completed");
@@ -128,7 +185,7 @@ export default function TestingPage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">OCR Testing Lab</h1>
             <p className="mt-2 text-lg text-muted-foreground">
-              Upload a document and test OCR with any configured model to compare results.
+              Upload a document, pick a model and output format, then compare OCR results.
             </p>
           </div>
         </FadeIn>
@@ -170,7 +227,12 @@ export default function TestingPage() {
                         {(file.size / 1024).toFixed(1)} KB
                       </p>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={clearFile} className="shrink-0 hover:bg-destructive/10 hover:text-destructive">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={clearFile}
+                      className="shrink-0 hover:bg-destructive/10 hover:text-destructive"
+                    >
                       <X className="size-5" />
                     </Button>
                   </div>
@@ -188,20 +250,19 @@ export default function TestingPage() {
                     <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary">
                       2
                     </div>
-                    <Label htmlFor="model" className="text-base font-semibold text-foreground">Select OCR Model</Label>
+                    <Label htmlFor="model" className="text-base font-semibold text-foreground">
+                      Select OCR Model
+                    </Label>
                   </div>
                   <select
                     id="model"
                     value={selectedModel}
                     onChange={(e) => setSelectedModel(e.target.value)}
-                    className={cn(
-                      "flex h-12 w-full rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm",
-                      "ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                    )}
+                    className={selectClassName}
                   >
                     {models.map((model) => (
                       <option key={model.slug} value={model.slug}>
-                        {model.display_name} ({model.type.toUpperCase()})
+                        {model.display_name}
                       </option>
                     ))}
                   </select>
@@ -216,64 +277,54 @@ export default function TestingPage() {
                   )}
                 </div>
 
-                {isVlm && (
-                  <div className="space-y-2">
-                    <Label htmlFor="question">VLM prompt (optional)</Label>
-                    <Textarea
-                      id="question"
-                      value={vlmQuestion}
-                      onChange={(e) => setVlmQuestion(e.target.value)}
-                      rows={3}
-                      placeholder="Question or instruction for the vision model…"
+                <div className="space-y-3">
+                  <Label htmlFor="output-format" className="text-base font-semibold text-foreground">
+                    Output Format
+                  </Label>
+                  <select
+                    id="output-format"
+                    value={outputFormat}
+                    onChange={(e) => setOutputFormat(e.target.value as OcrOutputFormat)}
+                    className={selectClassName}
+                  >
+                    {OCR_OUTPUT_FORMATS.map((format) => (
+                      <option key={format.value} value={format.value}>
+                        {format.label} — {format.description}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-muted-foreground">
+                    Format is mapped automatically per model (e.g. JSON uses layout extraction on
+                    Infinity-Parser2-Flash, table mode on PaddleOCR).
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="custom-instruction">Custom instruction (optional)</Label>
+                  <Textarea
+                    id="custom-instruction"
+                    value={customInstruction}
+                    onChange={(e) => setCustomInstruction(e.target.value)}
+                    rows={3}
+                    placeholder="Override the default prompt for this output format…"
+                  />
+                </div>
+
+                {supportsThinking && (
+                  <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-muted/20 px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={enableThinking}
+                      onChange={(e) => setEnableThinking(e.target.checked)}
+                      className="size-4 rounded border-input"
                     />
-                  </div>
-                )}
-
-                {isQianfanOcr && (
-                  <div className="space-y-2">
-                    <Label htmlFor="qianfan-prompt">Qianfan-OCR prompt (optional)</Label>
-                    <Textarea
-                      id="qianfan-prompt"
-                      value={qianfanPrompt}
-                      onChange={(e) => setQianfanPrompt(e.target.value)}
-                      rows={3}
-                      placeholder="Instruction for document parsing…"
-                    />
-                  </div>
-                )}
-
-                {isGotOcr && (
-                  <div className="space-y-2">
-                    <Label htmlFor="got-ocr-type">GOT-OCR recognition type</Label>
-                    <select
-                      id="got-ocr-type"
-                      value={gotOcrType}
-                      onChange={(e) => setGotOcrType(e.target.value)}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <option value="ocr">Plain text OCR</option>
-                      <option value="format">Format OCR (preserves layout &amp; structure)</option>
-                    </select>
-                  </div>
-                )}
-
-                {isPaddleOcr && (
-                  <div className="space-y-2">
-                    <Label htmlFor="task">Recognition task</Label>
-                    <select
-                      id="task"
-                      value={paddleTask}
-                      onChange={(e) => setPaddleTask(e.target.value)}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <option value="ocr">OCR (text extraction)</option>
-                      <option value="table">Table recognition</option>
-                      <option value="chart">Chart recognition</option>
-                      <option value="formula">Formula recognition</option>
-                      <option value="spotting">Text spotting</option>
-                      <option value="seal">Seal recognition</option>
-                    </select>
-                  </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Enable thinking mode</p>
+                      <p className="text-xs text-muted-foreground">
+                        Slower but may improve complex document reasoning
+                      </p>
+                    </div>
+                  </label>
                 )}
 
                 <Button
@@ -332,7 +383,7 @@ export default function TestingPage() {
                     <div className="flex items-center gap-3">
                       <Loader2 className="size-6 animate-spin text-primary" />
                       <span className="text-base font-semibold text-foreground">
-                        Processing with {selectedModelInfo?.display_name}...
+                        Processing with {selectedModelInfo?.display_name}…
                       </span>
                     </div>
                     <div className="space-y-3">
@@ -360,8 +411,13 @@ export default function TestingPage() {
                   <div className="space-y-4">
                     <div className="flex flex-wrap gap-2">
                       <Badge className="bg-primary px-3 py-1 text-xs font-bold shadow-sm">
-                        {result.model_type.toUpperCase()}
+                        {result.model_type.replace(/_/g, " ").toUpperCase()}
                       </Badge>
+                      {result.result.output_format && (
+                        <Badge variant="outline" className="px-3 py-1 shadow-sm">
+                          {formatOutputFormatLabel(result.result.output_format)}
+                        </Badge>
+                      )}
                       {result.result.confidence != null && (
                         <Badge variant="secondary" className="px-3 py-1 shadow-sm">
                           {(result.result.confidence * 100).toFixed(0)}% confidence
@@ -378,11 +434,10 @@ export default function TestingPage() {
                         </Badge>
                       )}
                     </div>
-                    <ScrollArea className="h-[32rem] rounded-xl border-2 border-border bg-slate-950 p-6 shadow-inner">
-                      <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-green-400">
-                        {result.result.text}
-                      </pre>
-                    </ScrollArea>
+                    <ResultViewer
+                      text={result.result.text}
+                      outputFormat={result.result.output_format}
+                    />
                   </div>
                 )}
               </CardContent>

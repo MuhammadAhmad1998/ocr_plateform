@@ -24,6 +24,7 @@ RATE_LIMITED_PREFIXES = (
     "/api/v1/paddle-ocr/",
     "/api/v1/got-ocr/",
     "/api/v1/qianfan-ocr/",
+    "/api/v1/infinity-parser/",
 )
 
 _redis_client = None
