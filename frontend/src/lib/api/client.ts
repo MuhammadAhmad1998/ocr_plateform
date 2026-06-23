@@ -31,9 +31,20 @@ export function getToken(): string | null {
   return localStorage.getItem("access_token");
 }
 
+function base64UrlDecode(input: string): string {
+  let normalized = input.replace(/-/g, "+").replace(/_/g, "/");
+  const pad = normalized.length % 4;
+  if (pad === 2) normalized += "==";
+  else if (pad === 3) normalized += "=";
+  else if (pad !== 0) throw new Error("Invalid base64url");
+  return atob(normalized);
+}
+
 function isTokenExpired(token: string): boolean {
   try {
-    const payload = JSON.parse(atob(token.split(".")[1])) as { exp?: number };
+    const parts = token.split(".");
+    if (parts.length !== 3 || !parts[1]) return true;
+    const payload = JSON.parse(base64UrlDecode(parts[1])) as { exp?: number };
     return typeof payload.exp === "number" && payload.exp * 1000 <= Date.now();
   } catch {
     return true;
@@ -83,24 +94,27 @@ type FetchOptions = RequestInit & {
   baseUrl?: string;
   apiKey?: string | null;
   skipAuthRedirect?: boolean;
+  noAuth?: boolean;
 };
 
 async function request(url: string, options: FetchOptions = {}) {
-  const { baseUrl = API_V1_URL, apiKey, skipAuthRedirect, ...init } = options;
+  const { baseUrl = API_V1_URL, apiKey, skipAuthRedirect, noAuth, ...init } = options;
   const headers: Record<string, string> = {
     ...(init.headers as Record<string, string>),
   };
 
-  const token = getToken();
-  const key = apiKey ?? getApiKey();
-  // Dashboard/advisor routes require JWT; only send API key when explicitly requested
-  // or when no JWT is available (production OCR integrations).
-  if (key && !token) {
-    headers["x-api-key"] = key;
-  } else if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  } else if (key) {
-    headers["x-api-key"] = key;
+  if (!noAuth) {
+    const token = getToken();
+    const key = apiKey ?? getApiKey();
+    // Dashboard/advisor routes require JWT; only send API key when explicitly requested
+    // or when no JWT is available (production OCR integrations).
+    if (key && !token) {
+      headers["x-api-key"] = key;
+    } else if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else if (key) {
+      headers["x-api-key"] = key;
+    }
   }
 
   if (!(init.body instanceof FormData)) {
@@ -132,7 +146,7 @@ export async function fetchWithAuth(path: string, options: RequestInit = {}) {
 }
 
 export async function fetchPublic(path: string, options: RequestInit = {}) {
-  return request(path, { ...options, skipAuthRedirect: true });
+  return request(path, { ...options, skipAuthRedirect: true, noAuth: true });
 }
 
 export async function fetchV2(path: string, options: RequestInit = {}) {
@@ -140,7 +154,7 @@ export async function fetchV2(path: string, options: RequestInit = {}) {
 }
 
 export async function fetchRoot(path: string, options: RequestInit = {}) {
-  return request(path, { ...options, baseUrl: API_ROOT, skipAuthRedirect: true });
+  return request(path, { ...options, baseUrl: API_ROOT, skipAuthRedirect: true, noAuth: true });
 }
 
 export async function json<T>(res: Response): Promise<T> {

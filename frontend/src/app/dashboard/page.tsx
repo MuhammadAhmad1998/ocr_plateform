@@ -23,7 +23,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/fade-in";
-import { Navbar } from "@/components/Navbar";
+import { AppSidebar } from "@/components/AppSidebar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, ApiError, getToken } from "@/lib/api";
@@ -120,6 +120,19 @@ function getStatusMeta(status: string) {
   return STATUS_META[status] ?? STATUS_META.queued;
 }
 
+const ALLOWED_STRIPE_PORTAL_HOSTS = ["billing.stripe.com", "checkout.stripe.com"];
+function isAllowedStripePortalUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:") return false;
+    return ALLOWED_STRIPE_PORTAL_HOSTS.some(
+      (h) => url.hostname === h || url.hostname.endsWith(`.${h}`)
+    );
+  } catch {
+    return false;
+  }
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const [usage, setUsage] = useState<Usage | null>(null);
@@ -207,6 +220,9 @@ export default function DashboardPage() {
   async function openBillingPortal() {
     try {
       const { portal_url } = await api.getBillingPortal();
+      if (!isAllowedStripePortalUrl(portal_url)) {
+        throw new Error("Unexpected billing portal URL");
+      }
       window.location.href = portal_url;
     } catch {
       toast.error("Failed to open billing portal");
@@ -236,9 +252,9 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="relative min-h-screen overflow-hidden bg-background">
+      <div className="relative min-h-screen overflow-hidden bg-background lg:pl-72">
         <BgOrbs />
-        <Navbar />
+        <AppSidebar />
         <main className="relative z-10 space-y-8 px-4 py-8 lg:px-8">
           <Skeleton className="h-40 rounded-3xl" />
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -258,9 +274,9 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
+    <div className="relative min-h-screen overflow-hidden bg-background lg:pl-72">
       <BgOrbs />
-      <Navbar />
+      <AppSidebar />
 
       <main className="relative z-10 space-y-8 px-4 py-8 lg:px-8">
         {/* ============ HERO ============ */}

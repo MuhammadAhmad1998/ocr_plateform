@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/fade-in";
-import { Navbar } from "@/components/Navbar";
+import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -22,10 +22,29 @@ const tierFeatures: Record<string, string[]> = {
   enterprise: ["Unlimited volume", "Custom fine-tuning", "Dedicated SLA support"],
 };
 
+const ALLOWED_TIERS = new Set(Object.keys(tierFeatures));
+const ALLOWED_CHECKOUT_HOSTS = [
+  "checkout.stripe.com",
+  "billing.stripe.com",
+];
+
+function isAllowedStripeUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:") return false;
+    return ALLOWED_CHECKOUT_HOSTS.some(
+      (h) => url.hostname === h || url.hostname.endsWith(`.${h}`)
+    );
+  } catch {
+    return false;
+  }
+}
+
 function CheckoutContent() {
   const router = useRouter();
   const params = useSearchParams();
-  const tier = params.get("tier") || "pro";
+  const rawTier = params.get("tier");
+  const tier = rawTier && ALLOWED_TIERS.has(rawTier) ? rawTier : "pro";
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -36,6 +55,9 @@ function CheckoutContent() {
     setLoading(true);
     try {
       const { checkout_url } = await api.createCheckout(tier);
+      if (!isAllowedStripeUrl(checkout_url)) {
+        throw new Error("Unexpected checkout URL");
+      }
       window.location.href = checkout_url;
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Checkout failed");
@@ -183,8 +205,8 @@ function CheckoutContent() {
 
 export default function CheckoutPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-      <Navbar />
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 lg:pl-72">
+      <AppSidebar />
       <main className="px-4 py-16 lg:px-8">
         <Suspense
           fallback={

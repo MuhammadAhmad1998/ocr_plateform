@@ -33,6 +33,54 @@ async function uploadForm(path: string, form: FormData) {
   return json(res);
 }
 
+const PRIVATE_HOSTS = new Set([
+  "localhost",
+  "0.0.0.0",
+  "::",
+  "::1",
+  "[::1]",
+  "[::]",
+]);
+function isSafeRemoteImageUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:" && url.protocol !== "http:") return false;
+    let host = url.hostname.toLowerCase();
+    if (!host) return false;
+    if (host.startsWith("[") && host.endsWith("]")) host = host.slice(1, -1);
+    if (PRIVATE_HOSTS.has(host)) return false;
+    if (
+      host.endsWith(".internal") ||
+      host.endsWith(".local") ||
+      host.endsWith(".localhost")
+    ) {
+      return false;
+    }
+    // IPv4 reserved / private ranges
+    if (/^127\./.test(host)) return false;                                // loopback
+    if (/^10\./.test(host)) return false;                                 // RFC1918
+    if (/^192\.168\./.test(host)) return false;                           // RFC1918
+    if (/^172\.(1[6-9]|2\d|3[01])\./.test(host)) return false;            // RFC1918
+    if (/^169\.254\./.test(host)) return false;                           // link-local
+    if (/^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(host)) return false; // CGNAT 100.64/10
+    if (/^198\.(1[89])\./.test(host)) return false;                       // 198.18/15 benchmark
+    if (/^0\./.test(host)) return false;                                  // 0.0.0.0/8
+    if (/^22[4-9]\./.test(host) || /^23\d\./.test(host)) return false;    // 224-239 multicast
+    if (/^2[4-5]\d\./.test(host)) return false;                           // 240-255 reserved
+    // IPv6 reserved
+    if (host.includes(":")) {
+      if (/^::1?$/.test(host)) return false;
+      if (/^f[cd]/i.test(host)) return false;       // ULA fc00::/7
+      if (/^fe[89ab]/i.test(host)) return false;    // link-local fe80::/10
+      if (/^ff/i.test(host)) return false;          // multicast
+      if (/^::ffff:/i.test(host)) return false;     // IPv4-mapped (block all — be strict)
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export const v1 = {
   // ── status ──────────────────────────────────────────────────────────────
   getStatus: async () => {
@@ -228,6 +276,9 @@ export const v1 = {
       form.append("file", data.file);
       form.append("prompt", data.prompt);
       return uploadForm("/vlm/chat/", form);
+    }
+    if (data.image_url && !isSafeRemoteImageUrl(data.image_url)) {
+      throw new Error("Invalid image_url: must be a public http(s) URL");
     }
     const res = await fetchWithAuth("/vlm/chat/", {
       method: "POST",

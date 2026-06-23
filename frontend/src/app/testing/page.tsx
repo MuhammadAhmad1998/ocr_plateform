@@ -23,7 +23,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/fade-in";
-import { Navbar } from "@/components/Navbar";
+import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -301,9 +301,9 @@ export default function TestingPage() {
 
   if (loadingModels) {
     return (
-      <div className="relative min-h-screen overflow-hidden bg-background">
+      <div className="relative min-h-screen overflow-hidden bg-background lg:pl-72">
         <BgOrbs />
-        <Navbar />
+        <AppSidebar />
         <main className="relative z-10 space-y-8 px-4 py-8 lg:px-8">
           <Skeleton className="h-40 rounded-3xl" />
           <div className="grid gap-6 lg:grid-cols-2">
@@ -316,9 +316,9 @@ export default function TestingPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
+    <div className="relative min-h-screen overflow-hidden bg-background lg:pl-72">
       <BgOrbs />
-      <Navbar />
+      <AppSidebar />
 
       <main className="relative z-10 space-y-8 px-4 py-8 lg:px-8">
         {/* ========== HERO ========== */}

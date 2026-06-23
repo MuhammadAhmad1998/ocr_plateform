@@ -40,10 +40,17 @@ const HIGHLIGHTS = [
   { icon: Shield, label: "SOC-ready, encrypted in transit" },
 ];
 
+function safeNextPath(raw: string | null, fallback: string): string {
+  if (!raw) return fallback;
+  if (!raw.startsWith("/")) return fallback;
+  if (raw.startsWith("//") || raw.startsWith("/\\")) return fallback;
+  return raw;
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/advisor";
+  const next = safeNextPath(searchParams.get("next"), "/advisor");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -131,10 +138,15 @@ function LoginForm() {
                       <Mail className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="email"
+                        name="email"
                         type="email"
                         placeholder="you@company.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        autoComplete="username"
+                        inputMode="email"
+                        spellCheck={false}
+                        maxLength={320}
                         className="h-12 rounded-xl border-2 border-border/60 bg-background pl-10 pr-3 text-base shadow-sm transition-all focus-visible:border-fuchsia-500/60 focus-visible:ring-2 focus-visible:ring-fuchsia-500/20"
                         required
                       />
@@ -160,10 +172,13 @@ function LoginForm() {
                       <Lock className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="password"
+                        name="password"
                         type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        autoComplete="current-password"
+                        maxLength={128}
                         className="h-12 rounded-xl border-2 border-border/60 bg-background pl-10 pr-11 text-base shadow-sm transition-all focus-visible:border-fuchsia-500/60 focus-visible:ring-2 focus-visible:ring-fuchsia-500/20"
                         required
                       />

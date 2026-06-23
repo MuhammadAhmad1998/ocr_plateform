@@ -25,7 +25,7 @@ import { ChatMessageContent } from "@/components/ChatMessageContent";
 import { AdvisorSystemStatus } from "@/components/AdvisorSystemStatus";
 import { DemoResults } from "@/components/DemoResults";
 import { DemoUpload } from "@/components/DemoUpload";
-import { Navbar } from "@/components/Navbar";
+import { AppSidebar } from "@/components/AppSidebar";
 import { RecommendationCard } from "@/components/RecommendationCard";
 import { ResponseModeBadge } from "@/components/ResponseModeBadge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -261,9 +261,9 @@ export default function AdvisorPage() {
 
   if (initLoading) {
     return (
-      <div className="relative flex min-h-screen flex-col overflow-hidden bg-background">
+      <div className="relative flex min-h-screen flex-col overflow-hidden bg-background lg:pl-72">
         <BackgroundOrbs />
-        <Navbar />
+        <AppSidebar />
         <div className="flex flex-1 items-center justify-center">
           <div className="space-y-6 text-center">
             <div className="relative mx-auto size-20">
@@ -287,9 +287,9 @@ export default function AdvisorPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-background">
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-background lg:pl-72">
       <BackgroundOrbs />
-      <Navbar />
+      <AppSidebar />
 
       <main className="relative z-10 flex w-full flex-1 flex-col gap-8 px-4 py-8 lg:gap-10 lg:px-8">
         {/* ============= HERO ============= */}

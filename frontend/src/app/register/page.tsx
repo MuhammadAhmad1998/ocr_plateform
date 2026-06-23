@@ -85,6 +85,16 @@ export default function RegisterPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+    if (pwMeter.score < 3) {
+      toast.error(
+        "Please use a stronger password (mix upper/lowercase, numbers and symbols)"
+      );
+      return;
+    }
     setLoading(true);
     try {
       const tokens = await api.register(email, password, fullName || undefined);
@@ -151,9 +161,12 @@ export default function RegisterPage() {
                       <User className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="name"
+                        name="name"
                         placeholder="Alex Morgan"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
+                        autoComplete="name"
+                        maxLength={120}
                         className="h-12 rounded-xl border-2 border-border/60 bg-background pl-10 text-base shadow-sm transition-all focus-visible:border-fuchsia-500/60 focus-visible:ring-2 focus-visible:ring-fuchsia-500/20"
                       />
                     </div>
@@ -170,10 +183,15 @@ export default function RegisterPage() {
                       <Mail className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="email"
+                        name="email"
                         type="email"
                         placeholder="you@company.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        autoComplete="username"
+                        inputMode="email"
+                        spellCheck={false}
+                        maxLength={320}
                         className="h-12 rounded-xl border-2 border-border/60 bg-background pl-10 text-base shadow-sm transition-all focus-visible:border-fuchsia-500/60 focus-visible:ring-2 focus-visible:ring-fuchsia-500/20"
                         required
                       />
@@ -191,10 +209,13 @@ export default function RegisterPage() {
                       <Lock className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="password"
+                        name="password"
                         type={showPassword ? "text" : "password"}
                         placeholder="At least 8 characters"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        autoComplete="new-password"
+                        maxLength={128}
                         className="h-12 rounded-xl border-2 border-border/60 bg-background pl-10 pr-11 text-base shadow-sm transition-all focus-visible:border-fuchsia-500/60 focus-visible:ring-2 focus-visible:ring-fuchsia-500/20"
                         minLength={8}
                         required
