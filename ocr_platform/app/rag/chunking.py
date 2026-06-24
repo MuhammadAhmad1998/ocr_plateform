@@ -47,6 +47,8 @@ CAPABILITY_KEYWORDS = {
     "multi_language": ["language", "multilingual", "192", "109"],
     "scientific_pdf": ["scientific", "academic", "research paper"],
     "printed_text": ["printed text", "plain text", "ocr"],
+    "layout_analysis": ["layout", "bbox", "doc2json", "reading order", "bounding box"],
+    "document_parsing": ["document parsing", "doc2md", "parsebench", "olmocr"],
 }
 
 

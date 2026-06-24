@@ -7,9 +7,13 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ARG NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-RUN npm run build
+RUN if [ -z "$NEXT_PUBLIC_API_URL" ]; then \
+      echo "ERROR: NEXT_PUBLIC_API_URL build-arg is required (use https:// in production)." >&2; \
+      exit 1; \
+    fi && \
+    npm run build
 
 FROM node:20-alpine AS runner
 WORKDIR /app

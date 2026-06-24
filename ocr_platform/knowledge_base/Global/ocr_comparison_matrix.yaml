@@ -165,39 +165,101 @@ engines:
       - "Document Q&A and understanding"
       - "Challenging layouts with cluttered elements"
 
+  infinity-parser2-flash:
+    model_id: "infly/Infinity-Parser2-Flash"
+    display_name: "Infinity-Parser2-Flash"
+    tier: "pro / enterprise"
+    parameters: "2B"
+    source: "https://huggingface.co/infly/Infinity-Parser2-Flash"
+
+    strengths:
+      - "Speed-optimized document parsing (3.68x vs 7B predecessor)"
+      - "Native layout JSON with bounding boxes (doc2json)"
+      - "Direct Markdown conversion (doc2md)"
+      - "Strong table and formula parsing (PubTabNet 92.41%, UniMERNet 96.5%)"
+      - "Multi-column reading-order recovery"
+      - "Excellent EN/ZH business and financial documents"
+
+    capabilities:
+      plain_text: "excellent"
+      tables: "excellent"
+      formulas: "excellent"
+      charts: "good"
+      handwriting: "moderate"
+      multi_column: "excellent"
+      layout_analysis: "excellent (explicit bbox JSON)"
+      formatted_output: "excellent (Markdown, HTML tables, LaTeX)"
+      document_parsing: "excellent"
+      key_information_extraction: "no"
+
+    benchmarks:
+      olmocr_bench: 86.0
+      parsebench: 72.2
+      omnidocbench_v16: 91.98
+      pubtabnet_val: 92.41
+      unimernet: 96.5
+      chart2table: 80.49
+      docvqa_val: 93.16
+
+    task_modes:
+      - "doc2md"
+      - "doc2json"
+      - "custom"
+
+    limitations:
+      - "Primarily English and Chinese (multilingual degradation)"
+      - "No bold/italic/strikethrough capture"
+      - "Weaker on rotated multi-oriented elements"
+      - "Not specialized for handwriting or KIE"
+      - "Flash trades some accuracy vs Infinity-Parser2-Pro"
+
+    best_for:
+      - "Fast PDF-to-Markdown pipelines"
+      - "Layout-aware JSON for downstream systems"
+      - "Financial and business reports"
+      - "RAG document ingestion"
+      - "High-throughput EN/ZH document parsing"
+
 # Side-by-side comparison
 comparison_matrix:
   model_size:
     got-ocr2: "580M (smallest)"
     paddle-ocr-vl: "0.9B (compact)"
+    infinity-parser2-flash: "2B (Flash)"
     qianfan-ocr: "4B (largest)"
   
   language_support:
     got-ocr2: "Multi-lingual (not specified)"
     paddle-ocr-vl: "109 languages"
+    infinity-parser2-flash: "English + Chinese (primary)"
     qianfan-ocr: "192 languages (most comprehensive)"
   
   architecture:
     got-ocr2: "End-to-end encoder-decoder"
     paddle-ocr-vl: "Two-stage (layout + recognition)"
+    infinity-parser2-flash: "VLM image-text-to-text (doc2md/doc2json)"
     qianfan-ocr: "End-to-end with optional thinking phase"
   
   unique_features:
     got-ocr2: "Interactive region OCR, dynamic resolution"
     paddle-ocr-vl: "Task-specific modes, ultra-compact"
+    infinity-parser2-flash: "Fast layout JSON + Markdown, Flash throughput"
     qianfan-ocr: "Layout-as-Thought, document Q&A"
   
   best_accuracy:
     got-ocr2: "Formatted output, interactive OCR"
     paddle-ocr-vl: "Tables (SOTA), real-world robustness"
+    infinity-parser2-flash: "Fast document parsing, layout JSON pipelines"
     qianfan-ocr: "Key information extraction, layout analysis"
   
   inference_speed:
     got-ocr2: "Fast (smallest model)"
     paddle-ocr-vl: "Fast (efficient architecture)"
+    infinity-parser2-flash: "Fastest doc parsing (Flash variant)"
     qianfan-ocr: "Moderate (largest model, W8A8 quantization available)"
   
   deployment_complexity:
     got-ocr2: "Low"
     paddle-ocr-vl: "Low (compact)"
+    infinity-parser2-flash: "Low-Medium (requires qwen-vl-utils)"
     qianfan-ocr: "Moderate (requires transformers>=5.8.0)"

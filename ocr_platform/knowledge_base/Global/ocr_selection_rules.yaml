@@ -89,8 +89,8 @@ routing_rules:
       output_format: ["markdown", "latex", "tikz"]
     action:
       tier: "pro"
-      engines: ["got-ocr2", "qianfan-ocr", "paddle-ocr-vl"]
-      reasoning: "These engines support structured formatted output"
+      engines: ["got-ocr2", "infinity-parser2-flash", "qianfan-ocr", "paddle-ocr-vl"]
+      reasoning: "GOT-OCR for LaTeX/TikZ; Infinity-Parser2-Flash for fast Markdown; others for structured output"
       confidence: "high"
   
   rule_multilingual_global:
@@ -122,8 +122,8 @@ routing_rules:
       speed_priority: "high"
     action:
       tier: "pro"
-      engines: ["got-ocr2", "paddle-ocr-vl"]
-      reasoning: "Smaller models (580M, 0.9B) provide better throughput"
+      engines: ["infinity-parser2-flash", "got-ocr2", "paddle-ocr-vl"]
+      reasoning: "Infinity Flash and compact models provide best throughput for document parsing"
       confidence: "medium"
   
   rule_interactive_workflow:
@@ -135,6 +135,53 @@ routing_rules:
       engines: ["got-ocr2"]
       reasoning: "GOT-OCR 2.0 has unique interactive region-level OCR"
       confidence: "high"
+
+  rule_fast_document_parsing:
+    condition:
+      task: "document_parsing"
+      OR:
+        - output_format: "markdown"
+        - output_format: "layout_json"
+      speed_priority: "high"
+    action:
+      tier: "pro"
+      engines: ["infinity-parser2-flash", "paddle-ocr-vl", "qianfan-ocr"]
+      reasoning: "Infinity-Parser2-Flash is optimized for fast doc2md/doc2json pipelines"
+      confidence: "high"
+
+  rule_layout_json_bbox:
+    condition:
+      output_format: "layout_json"
+      OR:
+        - requires_bbox: true
+        - layout_analysis: "explicit"
+    action:
+      tier: "pro"
+      engines: ["infinity-parser2-flash", "qianfan-ocr"]
+      reasoning: "Infinity-Parser2-Flash doc2json provides bbox + category per element natively"
+      confidence: "high"
+
+  rule_financial_report_en_zh:
+    condition:
+      doc_type: "report"
+      has_tables: true
+      languages: ["en", "zh"]
+    action:
+      tier: "pro"
+      engines: ["infinity-parser2-flash", "paddle-ocr-vl"]
+      reasoning: "Strong on financial tables and multi-column EN/ZH reports"
+      confidence: "high"
+
+  rule_rag_ingestion:
+    condition:
+      task: "rag_preprocessing"
+      output_format: "markdown"
+      has_handwriting: false
+    action:
+      tier: "pro"
+      engines: ["infinity-parser2-flash", "got-ocr2", "qianfan-ocr"]
+      reasoning: "doc2md produces clean Markdown chunks for vector ingestion"
+      confidence: "medium"
 
 # Engine scoring weights (used by registry_service._score_engine)
 scoring_weights:

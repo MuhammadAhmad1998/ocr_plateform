@@ -98,7 +98,40 @@ templates:
       - Handles formulas, tables, charts, and diagrams
       - Fast inference with 580M parameter model
       
-      **Alternative:** Qianfan-OCR for more comprehensive document intelligence features.
+      **Alternative:** Infinity-Parser2-Flash for fast full-page Markdown or layout JSON with bboxes.
+    alternative_tier: "pro"
+    alternative_engine: "infinity-parser2-flash"
+
+  fast_document_parsing_layout:
+    primary_tier: "pro"
+    primary_engine: "infinity-parser2-flash"
+    message: |
+      For fast document parsing with {output_format} output, I recommend the **Professional tier** using **Infinity-Parser2-Flash**.
+      
+      **Why Infinity-Parser2-Flash?**
+      - Speed-optimized 2B model (3.68× throughput vs 7B predecessor)
+      - **doc2md** for Markdown or **doc2json** for layout elements with bounding boxes
+      - Strong tables (92.41% PubTabNet) and formulas (96.5% UniMERNet)
+      - Excellent for EN/ZH business reports and RAG ingestion pipelines
+      - 86.0% olmOCR-bench, 91.98% OmniDocBench-v1.6
+      
+      **Alternative:** GOT-OCR 2.0 if you need interactive region OCR or TikZ/LaTeX specialty output.
+    alternative_tier: "pro"
+    alternative_engine: "got-ocr2"
+
+  rag_markdown_ingestion:
+    primary_tier: "pro"
+    primary_engine: "infinity-parser2-flash"
+    message: |
+      For bulk PDF-to-Markdown ingestion into your knowledge base, I recommend the **Professional tier** using **Infinity-Parser2-Flash** with **doc2md**.
+      
+      **Why Infinity-Parser2-Flash?**
+      - One-shot Markdown conversion per page
+      - Fast throughput for high-volume corpora
+      - Clean heading and table structure for chunking
+      - API: POST /api/v1/infinity-parser/pdf/analyze/
+      
+      **Alternative:** Qianfan-OCR for multilingual corpora beyond English/Chinese.
     alternative_tier: "pro"
     alternative_engine: "qianfan-ocr"
   

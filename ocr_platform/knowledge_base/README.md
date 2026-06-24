@@ -7,7 +7,7 @@
 
 This knowledge base supports the Unified OCR Platform's intelligent advisor chatbot. It provides:
 - **Platform tier capabilities** (Starter, Essential, Professional, Enterprise)
-- **OCR engine profiles** (GOT-OCR 2.0, PaddleOCR-VL, Qianfan-OCR)
+- **OCR engine profiles** (GOT-OCR 2.0, PaddleOCR-VL, Qianfan-OCR, Infinity-Parser2-Flash)
 - **Routing rules** for tier + engine recommendations
 - **Case studies** for grounded explanations
 - **Technical references** for detailed understanding
@@ -43,11 +43,23 @@ knowledge_base/
 │   └── case_studies/
 │       └── invoice_batch_processing.yaml
 │
-└── Qianfan-OCR/                        # 4B params, document intelligence
+├── Qianfan-OCR/                        # 4B params, document intelligence
+│   ├── capability_profile.yaml
+│   ├── routing_guide.yaml
+│   └── case_studies/
+│       └── kie_medical_claims.yaml
+│
+└── Infinity-Parser2-Flash/             # 2B params, fast document parsing
     ├── capability_profile.yaml
+    ├── limitations.yaml
+    ├── supported_formats.yaml
+    ├── language_support.yaml
     ├── routing_guide.yaml
+    ├── latency_cost_profile.yaml
+    ├── technical_summary.md
     └── case_studies/
-        └── kie_medical_claims.yaml
+        ├── financial_report_doc2json.yaml
+        └── high_volume_markdown_rag.yaml
 ```
 
 ## Confidence Levels
@@ -151,24 +163,26 @@ class RAGRetriever:
 
 ## Engine Comparison Quick Reference
 
-| Aspect | GOT-OCR 2.0 | PaddleOCR-VL | Qianfan-OCR |
-|--------|-------------|--------------|-------------|
-| **Size** | 580M ⚡ | 0.9B | 4B |
-| **Speed** | Fastest | Fast | Moderate |
-| **Tables** | Excellent | **SOTA** ⭐ | Excellent |
-| **Formulas** | Excellent | **SOTA** ⭐ | Excellent |
-| **Formatted Output** | **SOTA** ⭐ | Good | Excellent |
-| **Interactive OCR** | **Unique** ⭐ | No | No |
-| **Handwriting** | Moderate | Good | **Excellent** ⭐ |
-| **Languages** | Multi-lingual | 109 | **192** ⭐ |
-| **Layout Analysis** | Implicit | Explicit (2-stage) | Layout-as-Thought |
-| **KIE Tasks** | No | No | **SOTA** ⭐ |
-| **Document Q&A** | No | No | **Unique** ⭐ |
+| Aspect | GOT-OCR 2.0 | PaddleOCR-VL | Infinity-Parser2-Flash | Qianfan-OCR |
+|--------|-------------|--------------|------------------------|-------------|
+| **Size** | 580M ⚡ | 0.9B | 2B | 4B |
+| **Speed** | Fastest | Fast | **Fast doc parsing** ⚡ | Moderate |
+| **Tables** | Excellent | **SOTA** ⭐ | Excellent | Excellent |
+| **Formulas** | Excellent | **SOTA** ⭐ | Excellent | Excellent |
+| **Formatted Output** | **SOTA** ⭐ | Good | Excellent (doc2md) | Excellent |
+| **Layout JSON + bbox** | No | Structured modes | **Native** ⭐ | Layout-as-Thought |
+| **Interactive OCR** | **Unique** ⭐ | No | No | No |
+| **Handwriting** | Moderate | Good | Moderate | **Excellent** ⭐ |
+| **Languages** | Multi-lingual | 109 | EN/ZH primary | **192** ⭐ |
+| **Layout Analysis** | Implicit | Explicit (2-stage) | Explicit (doc2json) | Layout-as-Thought |
+| **KIE Tasks** | No | No | No | **SOTA** ⭐ |
+| **Document Q&A** | No | No | Good (DocVQA) | **Unique** ⭐ |
 
 ### When to Use Each Engine
 
 **GOT-OCR 2.0** → Formatted output, interactive OCR, speed, charts  
 **PaddleOCR-VL** → Business documents, SOTA tables, invoices, seals  
+**Infinity-Parser2-Flash** → Fast doc parsing, layout JSON, Markdown RAG pipelines, EN/ZH reports  
 **Qianfan-OCR** → KIE, handwriting, document Q&A, complex layouts, 192 languages
 
 ## Tier Recommendation Logic

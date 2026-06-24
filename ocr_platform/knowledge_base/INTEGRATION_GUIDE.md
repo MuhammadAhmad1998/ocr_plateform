@@ -35,7 +35,7 @@ class RAGRetriever:
             self._load_yaml(yaml_file, engine="platform", category="global")
         
         # Engine-specific files
-        for engine_dir in ["GOT-OCR-2.0", "PaddleOCR", "Qianfan-OCR"]:
+        for engine_dir in ["GOT-OCR-2.0", "PaddleOCR", "Qianfan-OCR", "Infinity-Parser2-Flash"]:
             engine_path = self.kb_path / engine_dir
             
             # Main files

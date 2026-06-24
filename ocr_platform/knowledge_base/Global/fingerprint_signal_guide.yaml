@@ -73,7 +73,14 @@ routing_logic:
     priority: "high"
     required_capability: "scientific_pdf"
     recommended_tier: "pro"
-    recommended_engines: ["nougat-base", "got-ocr2", "qianfan-ocr"]
+    recommended_engines: ["nougat-base", "got-ocr2", "qianfan-ocr", "infinity-parser2-flash"]
+
+  report_with_layout:
+    priority: "high"
+    required_capability: "document_parsing"
+    recommended_tier: "pro"
+    recommended_engines: ["infinity-parser2-flash", "paddle-ocr-vl", "qianfan-ocr"]
+    note: "Financial/business reports with tables, charts, multi-column layout"
     
   simple_form:
     priority: "low"

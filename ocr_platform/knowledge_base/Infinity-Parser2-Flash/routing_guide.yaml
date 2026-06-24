@@ -1,0 +1,216 @@
+# Infinity-Parser2-Flash Routing Guide
+# Confidence: heuristic (routing recommendations)
+# Source: Capability analysis + platform routing logic + HuggingFace benchmarks
+
+# When to route to Infinity-Parser2-Flash
+primary_use_cases:
+
+  fast_document_parsing:
+    priority: "critical"
+    conditions:
+      - "User needs PDF/image to Markdown conversion"
+      - "Throughput and latency are priorities"
+      - "Bulk document digitization pipeline"
+    confidence: "high"
+    reasoning: "Flash variant engineered for low-latency inference (3.68x vs 7B predecessor)"
+    example: "Nightly batch of 2,000 report PDFs to Markdown for search indexing"
+
+  layout_json_required:
+    priority: "critical"
+    conditions:
+      - "Downstream system needs bounding boxes per element"
+      - "Need element categories (table, formula, figure, etc.)"
+      - "Spatial provenance for compliance or audit"
+    confidence: "high"
+    reasoning: "doc2json outputs bbox + category + formatted text in reading order"
+    example: "Regulatory filing parser feeding structured JSON to validation service"
+
+  financial_and_business_reports:
+    priority: "high"
+    conditions:
+      - "Multi-column tables and charts"
+      - "Annual reports, quarterly statements, US/A-Stock filings"
+      - "Wide frameless tables"
+    confidence: "high"
+    reasoning: "Strong PubTabNet (92.41%) and financial document examples in model card"
+    example: "Equity research report with regional revenue tables and bar charts"
+
+  multi_column_reading_order:
+    priority: "high"
+    conditions:
+      - "Magazine, newspaper, or asymmetric column layouts"
+      - "Non-trivial reading order recovery needed"
+    confidence: "high"
+    reasoning: "Explicit layout analysis with reading-order sorting in doc2json"
+    example: "Historical newspaper digitization"
+
+  academic_paper_formulas:
+    priority: "high"
+    conditions:
+      - "arXiv-style papers with dense math"
+      - "LaTeX formula output needed"
+      - "English or Chinese academic content"
+    confidence: "high"
+    reasoning: "96.5% UniMERNet; LaTeX output for formula elements"
+    example: "Research PDF archive conversion with formula preservation"
+
+  rag_ingestion_preprocessing:
+    priority: "medium"
+    conditions:
+      - "Documents feed a RAG or search system"
+      - "Markdown chunks preferred"
+      - "Moderate layout complexity"
+    confidence: "high"
+    reasoning: "doc2md produces clean Markdown; 91.98% OmniDocBench-v1.6 overall"
+    example: "Enterprise knowledge base ingestion from scanned policy PDFs"
+
+  chart_and_table_mixed_reports:
+    priority: "medium"
+    conditions:
+      - "Reports with both tables and charts"
+      - "Chart2Table-style structured extraction"
+    confidence: "medium"
+    reasoning: "80.49% Chart2Table; tables stronger than charts"
+    example: "Operations dashboard PDF exports"
+
+# When NOT to route to Infinity-Parser2-Flash
+avoid_for:
+
+  handwriting_primary:
+    reason: "Not specialized for handwriting"
+    alternative: "Route to Qianfan-OCR or GOT-OCR 2.0"
+    confidence: "high"
+
+  interactive_region_ocr:
+    reason: "No coordinate-guided interactive OCR"
+    alternative: "Route to GOT-OCR 2.0"
+    confidence: "high"
+
+  global_multilingual:
+    reason: "Primarily English and Chinese; degrades on multilingual"
+    alternative: "Route to Qianfan-OCR (192 languages) or PaddleOCR-VL (109)"
+    confidence: "high"
+
+  dedicated_kie:
+    reason: "Structural layout JSON ≠ semantic field extraction for invoices/IDs"
+    alternative: "Route to Qianfan-OCR for KIE workflows"
+    confidence: "high"
+
+  maximum_table_sota:
+    reason: "PaddleOCR-VL has higher OmniDocBench table scores in some benchmarks"
+    alternative: "Route to PaddleOCR-VL for table-specialist SOTA needs"
+    confidence: "medium"
+    note: "Infinity Flash is still strong (92.41% PubTabNet)"
+
+  fine_text_styling:
+    reason: "Bold/italic/strikethrough not captured"
+    alternative: "Accept limitation or use specialized formatting pipelines"
+    confidence: "documented"
+
+  rotated_tables:
+    reason: "Multi-oriented elements reduce accuracy"
+    alternative: "Preprocess (deskew) or use Qianfan/Paddle layout pipelines"
+    confidence: "documented"
+
+decision_tree:
+
+  step_1_check_output_structure:
+    question: "Does the user need layout JSON with bboxes?"
+    if_yes: "ROUTE TO Infinity-Parser2-Flash with doc2json"
+    if_no: "Continue to step 2"
+
+  step_2_check_speed_priority:
+    question: "Is fast document parsing a priority?"
+    if_yes: "ROUTE TO Infinity-Parser2-Flash with doc2md"
+    if_no: "Continue to step 3"
+
+  step_3_check_language:
+    question: "Is content primarily English or Chinese?"
+    if_no: "AVOID → Use Qianfan-OCR or PaddleOCR-VL"
+    if_yes: "Continue to step 4"
+
+  step_4_check_special_needs:
+    question: "Any special requirements?"
+    options:
+      handwriting: "AVOID → Qianfan-OCR"
+      interactive_ocr: "AVOID → GOT-OCR 2.0"
+      kie: "AVOID → Qianfan-OCR"
+      formulas_latex: "Infinity-Parser2-Flash is strong"
+      tables_charts: "Infinity-Parser2-Flash is strong"
+      default: "Infinity-Parser2-Flash is a good document parsing choice"
+
+confidence_scores:
+
+  high_confidence_routing:
+    scenarios:
+      layout_json_pipeline: 0.95
+      fast_markdown_conversion: 0.92
+      financial_reports_en_zh: 0.90
+      academic_formulas_latex: 0.88
+      multi_column_layouts: 0.88
+
+  medium_confidence_routing:
+    scenarios:
+      chart_heavy_reports: 0.75
+      rag_preprocessing: 0.80
+      custom_prompts: 0.60
+
+  low_confidence_routing:
+    scenarios:
+      handwriting: 0.25
+      multilingual_global: 0.35
+      kie_invoices: 0.40
+      rotated_layouts: 0.45
+
+tier_recommendations:
+
+  pro:
+    primary: true
+    engine_slug: "infinity-parser2-flash"
+    reasoning: "Default Pro-tier engine for fast document parsing, layout, tables"
+    use_cases:
+      - "PDF to Markdown pipelines"
+      - "Business report parsing"
+      - "Layout JSON for integrations"
+
+  enterprise:
+    primary: true
+    engine_slug: "infinity-parser2-flash-enterprise"
+    reasoning: "Higher quota and extended capability tags (chemical, document VQA)"
+    use_cases:
+      - "Large-scale document parsing"
+      - "Complex multi-column financial statements"
+      - "Chart and chemical notation in enterprise reports"
+
+  basic:
+    not_recommended: true
+    reasoning: "Document parsing engine requires Pro tier on platform"
+
+when_to_compare:
+
+  infinity_vs_paddle:
+    test_if: "Table-heavy business documents"
+    compare: "Table structure accuracy and speed"
+    expected: "Paddle may edge on SOTA tables; Infinity strong on unified doc2json layout"
+
+  infinity_vs_got:
+    test_if: "Need formatted Markdown vs interactive region OCR"
+    compare: "Output format and workflow fit"
+    expected: "Infinity for layout JSON and speed; GOT for interactive OCR and TikZ/SMILES"
+
+  infinity_vs_qianfan:
+    test_if: "Complex KIE or multilingual"
+    compare: "Field extraction and language coverage"
+    expected: "Qianfan for KIE/VQA; Infinity for fast EN/ZH document parsing"
+
+fallback_scenarios:
+
+  if_infinity_fails:
+    common_causes:
+      - "Non EN/ZH content"
+      - "Heavy handwriting"
+      - "Extreme rotation or scan quality"
+    fallback_order:
+      1: "Try PaddleOCR-VL (tables, 109 languages)"
+      2: "Try Qianfan-OCR (KIE, 192 languages, layout reasoning)"
+      3: "Try GOT-OCR 2.0 (formatted output, interactive OCR)"

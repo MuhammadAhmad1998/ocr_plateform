@@ -1,0 +1,101 @@
+# Case Study: Financial Report Layout JSON Pipeline
+# Confidence: heuristic (synthesized use case)
+
+case_id: "infinity_financial_report_doc2json"
+title: "Extracting Structured Layout from Quarterly Financial Reports"
+engine: "infinity-parser2-flash"
+tier: "pro"
+
+user_profile:
+  role: "Data engineer"
+  organization: "Mid-size asset management firm"
+  goal: "Ingest EN/ZH quarterly PDFs into a layout-aware search and compliance index"
+
+document_characteristics:
+  doc_type: "report"
+  page_count: 24
+  content:
+    - "Multi-column revenue tables"
+    - "Bar chart figures with captions"
+    - "Inline ROI formulas"
+    - "Headers and footnotes"
+  layout_complexity: "complex"
+  has_tables: true
+  has_charts: true
+  has_equations: true
+  languages: ["en"]
+  file_format: "PDF"
+
+user_requirements:
+  - "Bounding box per layout element for audit trail"
+  - "Tables as HTML, formulas as LaTeX"
+  - "Reading order preserved for full-text search"
+  - "Process 500+ reports per month"
+  - "Low latency per page for nightly batch window"
+
+why_infinity_parser2_flash:
+  primary_reasons:
+    - "doc2json outputs bbox + category + formatted text in one pass"
+    - "92.41% PubTabNet — strong on financial tables"
+    - "Flash variant optimized for throughput in batch pipelines"
+    - "Pro tier cost_profile low relative to 4B alternatives"
+
+  specific_advantages:
+    layout_json: "13 element categories map directly to indexer schema"
+    table_format: "HTML tables slot into downstream validators"
+    formula_format: "LaTeX formulas stored separately from body text"
+    speed: "Faster than Qianfan for straightforward EN report parsing"
+
+alternative_considered:
+  engine: "qianfan-ocr"
+  reason_not_chosen: "4B model overkill for structural layout without KIE field templates"
+  note: "Qianfan better if semantic field extraction from filings is required"
+
+workflow:
+  steps:
+    1:
+      action: "Upload PDF via POST /infinity-parser/pdf/analyze/"
+      parameters: "task_type=doc2json"
+    2:
+      action: "Receive per-page JSON layout arrays"
+      output: "bbox, category, text per element"
+    3:
+      action: "Index elements into OpenSearch with spatial metadata"
+    4:
+      action: "Compliance team queries by region + table type"
+
+results:
+  accuracy:
+    tables: "High structure fidelity on US-Stock style reports"
+    formulas: "LaTeX usable with minor cleanup"
+    reading_order: "Correct on asymmetric multi-column pages"
+    overall: "Production-ready with spot checks on chart pages"
+
+  processing_time:
+    note: "Meets nightly batch SLA on single A100 replica"
+    per_page: "TBD — benchmark on your hardware"
+
+  user_satisfaction: "high"
+  post_processing_required: "Chart pages occasionally need manual review"
+
+lessons_learned:
+  - "doc2json preferred over doc2md when search needs element types"
+  - "Chart-heavy pages benefit from enable_thinking on hard layouts"
+  - "144 DPI sufficient for born-digital PDFs; raise DPI for poor scans"
+
+cost_benefit:
+  monthly_volume: "600 reports × ~20 pages = 12,000 pages"
+  tier: "Professional (5,000 pages/month — may need Enterprise upgrade)"
+  outcome: "Replaced manual tagging workflow"
+  roi: "Positive within one quarter"
+
+tags:
+  - "financial_reports"
+  - "layout_json"
+  - "doc2json"
+  - "tables"
+  - "multi_column"
+  - "document_parsing"
+
+confidence: "high"
+applicability: "Similar use cases: regulatory filings, annual reports, equity research PDFs"

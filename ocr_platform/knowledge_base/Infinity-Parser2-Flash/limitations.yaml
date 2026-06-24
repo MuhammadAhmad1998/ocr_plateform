@@ -1,0 +1,110 @@
+# Infinity-Parser2-Flash Limitations
+# Confidence: documented + heuristic
+# Source: HuggingFace model card, platform integration
+
+known_limitations:
+
+  language_coverage:
+    severity: "moderate"
+    description: "Primarily optimized for English and Chinese documents"
+    impact: "Performance degrades on multilingual or rare-script content"
+    alternative: "Use Qianfan-OCR (192 languages) or PaddleOCR-VL (109 languages) for global multilingual workloads"
+    confidence: "documented"
+
+  handwriting:
+    severity: "moderate"
+    description: "Not specialized for handwriting-heavy documents"
+    alternative: "Use Qianfan-OCR or GOT-OCR 2.0 Enterprise for handwriting-primary content"
+    confidence: "heuristic"
+
+  fine_grained_text_formatting:
+    severity: "low"
+    description: "Does not capture bold, italic, strikethrough, or other inline style metadata"
+    workaround: "Use doc2json for structure; apply styling heuristics downstream if needed"
+    confidence: "documented"
+
+  rotated_or_multi_oriented_elements:
+    severity: "moderate"
+    description: "Accuracy reduced for tables or text rotated at varying angles"
+    alternative: "Pre-deskew images; consider PaddleOCR-VL or Qianfan for heavily rotated layouts"
+    confidence: "documented"
+
+  complex_chart_layouts:
+    severity: "moderate"
+    description: "Chart parsing weaker on unusually complex chart layouts"
+    note: "Chart2Table 80.49% is strong but not SOTA vs PaddleOCR-VL on some chart tasks"
+    confidence: "documented"
+
+  multimodal_instruction_following:
+    severity: "low"
+    description: "May not reliably follow complex multi-step visual instructions in custom prompts"
+    workaround: "Prefer built-in doc2md and doc2json task types over elaborate custom prompts"
+    confidence: "documented"
+
+  interactive_region_ocr:
+    severity: "low"
+    description: "No coordinate-guided interactive OCR like GOT-OCR 2.0"
+    alternative: "Use GOT-OCR 2.0 for region-of-interest workflows"
+    confidence: "heuristic"
+
+  key_information_extraction:
+    severity: "moderate"
+    description: "Layout JSON is structural, not a dedicated KIE field-extraction model"
+    alternative: "Use Qianfan-OCR for invoice/receipt/ID field extraction with semantic understanding"
+    confidence: "heuristic"
+
+  pro_vs_pro_accuracy:
+    severity: "low"
+    description: "Flash trades some accuracy for speed vs Infinity-Parser2-Pro"
+    examples:
+      olmocr_bench: "86.0 (Flash) vs 87.6 (Pro)"
+      parsebench: "72.2 (Flash) vs 74.3 (Pro)"
+      omnidocbench_v16: "91.98 (Flash) vs 93.95 (Pro)"
+    confidence: "documented"
+
+performance_constraints:
+
+  gpu_requirements:
+    description: "GPU recommended for production inference (2B VLM)"
+    cpu_performance: "Possible via transformers backend but slow"
+    recommended: "CUDA-capable GPU with sufficient VRAM for 2B BF16 model"
+    confidence: "verified (platform config)"
+
+  dependencies:
+    required: "qwen-vl-utils for vision preprocessing"
+    optional: "flash-attn for faster inference in external infinity_parser2 wrapper"
+    confidence: "verified (platform code)"
+
+  pdf_processing:
+    description: "PDFs converted to per-page images; no native cross-page context in single call"
+    max_pages: 50
+    dpi: 144
+    confidence: "verified (platform config)"
+
+  output_length:
+    description: "Default max_new_tokens 8192 may truncate very dense pages"
+    mitigation: "Increase max_new_tokens or split dense pages"
+    confidence: "verified (platform config)"
+
+  model_exclusivity:
+    description: "Platform loads one heavy model at a time via model_manager"
+    note: "Infinity-Parser shares GPU with other engines; cold swap adds latency"
+    confidence: "verified (platform architecture)"
+
+when_not_to_use:
+  scenarios:
+    - "Primary content is handwriting (use Qianfan-OCR or GOT-OCR 2.0)"
+    - "Need interactive coordinate-based region OCR (use GOT-OCR 2.0)"
+    - "Documents in many languages beyond English/Chinese (use Qianfan-OCR)"
+    - "Dedicated KIE from invoices/receipts with semantic field mapping (use Qianfan-OCR)"
+    - "Maximum absolute parsing accuracy regardless of latency (consider Infinity-Parser2-Pro externally, or Qianfan-OCR)"
+    - "Need bold/italic/strikethrough preservation in output"
+    - "Heavily rotated or skewed table layouts without preprocessing"
+
+mitigation_strategies:
+  - "Use doc2json when downstream needs bboxes and element types"
+  - "Use doc2md for simpler Markdown-first pipelines"
+  - "Deskew and preprocess scans before upload"
+  - "Validate chart and table output on representative samples"
+  - "Enable thinking mode for harder layout pages when latency allows"
+  - "Set INFINITY_PARSER_EAGER_LOAD=true in production to avoid cold starts"

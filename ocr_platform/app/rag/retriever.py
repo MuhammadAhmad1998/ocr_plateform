@@ -69,6 +69,7 @@ DOC_TYPE_ENGINE_HINTS = {
     "form": "paddle-ocr-vl",
     "scientific": "got-ocr2",
     "medical_form": "qianfan-ocr",
+    "report": "infinity-parser2-flash",
 }
 
 

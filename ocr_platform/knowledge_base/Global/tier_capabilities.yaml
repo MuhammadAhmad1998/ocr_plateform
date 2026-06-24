@@ -1,7 +1,7 @@
 # Platform Tier Capabilities
 # Confidence: verified
 # Source: ocr_platform/app/seed.py, ocr_platform/app/registry/models.py
-# Updated: Removed TrOCR engines, now using PaddleOCR, GOT-OCR 2.0, and Qianfan OCR only
+# Updated: PaddleOCR, GOT-OCR 2.0, Qianfan OCR, and Infinity-Parser2-Flash
 
 tiers:
   free:
@@ -57,6 +57,7 @@ tiers:
     engines:
       - "GOT-OCR 2.0 (handwriting, equations, advanced features)"
       - "Qianfan OCR (KIE, structured extraction)"
+      - "Infinity-Parser2-Flash (fast document parsing, layout JSON, tables)"
     features:
       - "All Basic features"
       - "Mathematical equations (LaTeX)"
@@ -64,6 +65,8 @@ tiers:
       - "Multi-language support (100+ languages)"
       - "Chart and diagram understanding"
       - "Key Information Extraction (KIE)"
+      - "Fast PDF-to-Markdown and layout JSON (doc2md / doc2json)"
+      - "Layout analysis with bounding boxes"
       - "Medical and financial document processing"
       - "Format preservation"
       - "Priority processing"
@@ -89,11 +92,14 @@ tiers:
     engines:
       - "GOT-OCR 2.0 Enterprise (91%+ handwriting, 94%+ equations)"
       - "Qianfan OCR Enterprise (95%+ invoice accuracy)"
+      - "Infinity-Parser2-Flash Enterprise (layout, charts, chemical notation)"
     features:
       - "All Professional features"
       - "Unlimited page processing"
       - "Custom model fine-tuning"
       - "Multi-column complex layouts"
+      - "Enterprise-scale document parsing with layout JSON"
+      - "Chart and chemical formula parsing"
       - "Geometric shapes and diagrams"
       - "Musical notation"
       - "Molecular formulas"

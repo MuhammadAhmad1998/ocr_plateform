@@ -1,0 +1,149 @@
+# Infinity-Parser2-Flash Latency and Cost Profile
+# Confidence: documented + placeholder (platform-specific benchmarks TBD)
+# Source: HuggingFace model card throughput claims, platform config
+
+model_specifications:
+  parameters: "2B"
+  architecture: "Vision-language image-text-to-text"
+  variant: "Flash (speed-optimized)"
+  dtype: "bfloat16 (platform default)"
+
+theoretical_performance:
+
+  relative_to_alternatives:
+    vs_infinity_parser_7b:
+      comparison: "Flash vs predecessor 7B model"
+      expectation: "3.68x throughput (441 → 1,624 tokens/sec per model card)"
+      confidence: "documented"
+
+    vs_got_ocr2:
+      comparison: "Infinity Flash (2B) vs GOT-OCR 2.0 (580M)"
+      expectation: "GOT smaller but different task focus; Infinity optimized for full-page doc parsing"
+      confidence: "medium (theoretical)"
+
+    vs_qianfan:
+      comparison: "Infinity Flash (2B) vs Qianfan (4B)"
+      expectation: "Infinity Flash significantly faster for document-to-Markdown pipelines"
+      confidence: "high (theoretical)"
+
+  inference_characteristics:
+    vision_encoding: "Qwen-VL style with configurable min/max pixels"
+    decoding: "Up to 8192 tokens default on platform"
+    pdf_mode: "Per-page parallel processing via asyncio.gather"
+
+latency_estimates:
+  note: "PLACEHOLDER — benchmark on your GPU infrastructure"
+
+  single_page_doc2md:
+    description: "A4 business report, tables + text"
+    estimated_latency: "TBD - benchmark needed"
+    factors:
+      - "GPU type"
+      - "enable_thinking (adds reasoning overhead)"
+      - "Page pixel density"
+
+  single_page_doc2json:
+    description: "Layout JSON with 20+ elements"
+    estimated_latency: "TBD - benchmark needed"
+    note: "Longer prompts and JSON output may increase decode time"
+
+  ten_page_pdf:
+    description: "10-page PDF, doc2md per page"
+    estimated_latency: "TBD - benchmark needed"
+    note: "Pages run concurrently but share single model lock"
+
+  dense_academic_page:
+    description: "Formula-heavy arXiv page"
+    estimated_latency: "TBD - benchmark needed"
+
+cold_start_considerations:
+
+  model_loading:
+    description: "2B VLM load into GPU on first request"
+    estimated_time: "TBD - typically 15-45 seconds depending on GPU and network"
+    mitigation: "Set INFINITY_PARSER_EAGER_LOAD=true"
+    platform_default: false
+
+  model_manager:
+    description: "Switching from another engine unloads previous model"
+    impact: "Cold swap latency if users alternate engines"
+    confidence: "verified"
+
+cost_profile:
+
+  compute_cost:
+    type: "GPU inference"
+    relative_cost:
+      vs_qianfan: "Lower (smaller model, Flash variant)"
+      vs_got: "Moderate (2B vs 580M)"
+    platform_tier: "Pro (low cost_profile) / Enterprise (medium)"
+
+  storage_cost:
+    model_size: "~4 GB (2B BF16 weights approximate)"
+    note: "One-time download from HuggingFace"
+
+scaling_characteristics:
+
+  throughput:
+    strength: "Flash variant designed for high tokens/sec"
+    pdf_parallelism: "Concurrent per-page tasks within one request"
+
+  concurrent_requests:
+    note: "Single asyncio lock serializes inference per service instance"
+    recommendation: "Horizontal scale API replicas for concurrent users"
+
+cost_optimization_strategies:
+
+  use_doc2md_when_possible:
+    benefit: "Simpler output, often faster decode than large JSON layouts"
+
+  disable_thinking_by_default:
+    benefit: "Lower latency unless layout is exceptionally hard"
+    use_thinking_when: "Complex multi-column or dense historical documents"
+
+  right_size_dpi:
+    setting: "INFINITY_PARSER_PDF_DPI=144"
+    trade_off: "Higher DPI improves OCR, increases pixels and latency"
+
+  eager_loading:
+    setting: "INFINITY_PARSER_EAGER_LOAD=true"
+    benefit: "Eliminates first-request load penalty in production"
+
+platform_settings:
+  INFINITY_PARSER_ENABLED: true
+  INFINITY_PARSER_MODEL_ID: "infly/Infinity-Parser2-Flash"
+  INFINITY_PARSER_TORCH_DTYPE: "bfloat16"
+  INFINITY_PARSER_DEVICE: "auto"
+  INFINITY_PARSER_MAX_NEW_TOKENS: 8192
+  INFINITY_PARSER_MIN_PIXELS: 2048
+  INFINITY_PARSER_MAX_PIXELS: 16777216
+  INFINITY_PARSER_PDF_DPI: 144
+  INFINITY_PARSER_MAX_PDF_PAGES: 50
+  INFINITY_PARSER_EAGER_LOAD: false
+
+benchmarking_recommendations:
+  priority_high:
+    - "Measure doc2md vs doc2json latency on representative PDFs"
+    - "Compare with and without enable_thinking"
+    - "Profile 50-page PDF ceiling behavior"
+  priority_medium:
+    - "Throughput test vs GOT-OCR and PaddleOCR on same corpus"
+    - "Cold start vs warm latency distribution"
+
+cost_vs_quality_matrix:
+
+  fastest_doc_parsing:
+    engine: "infinity-parser2-flash"
+    use_when: "EN/ZH documents, Markdown or layout JSON, speed priority"
+
+  balanced_tables:
+    engine: "paddle-ocr-vl"
+    use_when: "Table SOTA and 109 languages"
+
+  highest_intelligence:
+    engine: "qianfan-ocr"
+    use_when: "KIE, VQA, 192 languages, layout reasoning"
+
+  interactive_formatted:
+    engine: "got-ocr2"
+    use_when: "Interactive OCR, TikZ, SMILES, multi-page formatted output"

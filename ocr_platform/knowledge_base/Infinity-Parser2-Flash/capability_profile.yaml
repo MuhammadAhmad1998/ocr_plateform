@@ -1,0 +1,181 @@
+# Infinity-Parser2-Flash Capability Profile
+# Confidence: documented
+# Source: https://huggingface.co/infly/Infinity-Parser2-Flash, ocr_platform/app/infinity_parser/service.py
+
+model_info:
+  model_id: "infly/Infinity-Parser2-Flash"
+  display_name: "Infinity-Parser2-Flash"
+  full_name: "Infinity-Parser2 Flash"
+  developer: "infly (INF Technology)"
+  parameters: "2B"
+  architecture: "Vision-language image-text-to-text (Qwen-VL family)"
+  release_date: "May 2026"
+  variant: "Flash (low-latency inference variant)"
+  sibling_model: "infly/Infinity-Parser2-Pro (higher accuracy)"
+
+core_concept:
+  philosophy: "Unified multi-task document understanding with fast inference"
+  focus: "End-to-end document parsing — layout analysis, element extraction, and structured output in one model"
+  training: "Multi-task reinforcement learning with verifiable rewards across parsing, charts, formulas, and VQA"
+
+strengths:
+  primary:
+    - "Fast document parsing variant (3.68x throughput vs Infinity-Parser-7B predecessor)"
+    - "Strong document parsing benchmarks (86.0% olmOCR-bench, 72.2% ParseBench)"
+    - "Native layout-aware output with bounding boxes (doc2json mode)"
+    - "Direct Markdown conversion (doc2md mode)"
+    - "Unified handling of text, tables, formulas, figures, and captions"
+    - "Excellent table parsing (92.41% PubTabNet val)"
+    - "Strong formula recognition (96.5% UniMERNet)"
+    - "Good chart-to-table parsing (80.49% Chart2Table)"
+    - "Explicit reading-order recovery for complex multi-column layouts"
+
+  output_formats:
+    markdown: "Excellent — doc2md task"
+    layout_json: "Excellent — doc2json with bbox, category, and formatted text per element"
+    tables: "HTML format in layout JSON"
+    formulas: "LaTeX format in layout JSON"
+    custom: "Prompt-driven via custom task_type"
+
+capabilities:
+
+  document_parsing_doc2md:
+    performance: "excellent"
+    task_type: "doc2md"
+    output: "Markdown preserving document structure"
+    benchmark:
+      omnidocbench_v16: 91.98
+      olmocr_bench: 86.0
+      parsebench: 72.2
+    use_cases:
+      - "Converting PDFs and scans to Markdown"
+      - "Documentation pipelines"
+      - "RAG ingestion preprocessing"
+      - "Content management system migration"
+
+  layout_analysis_doc2json:
+    performance: "excellent"
+    task_type: "doc2json"
+    output: "JSON object with bbox, category, and text per layout element"
+    layout_categories:
+      - "header"
+      - "title"
+      - "text"
+      - "figure"
+      - "table"
+      - "formula"
+      - "figure_caption"
+      - "table_caption"
+      - "formula_caption"
+      - "figure_footnote"
+      - "table_footnote"
+      - "page_footnote"
+      - "footer"
+    benchmark:
+      omnidocbench_v15_layout: 73.07
+      doclaynet_miou: 64.97
+    use_cases:
+      - "Downstream layout-aware pipelines"
+      - "Structured document digitization"
+      - "Element-level indexing and search"
+      - "Compliance and audit workflows needing spatial provenance"
+
+  tables:
+    performance: "excellent"
+    output: "HTML in doc2json; Markdown tables in doc2md"
+    benchmark:
+      pubtabnet_val: 92.41
+    notes: "Strong on financial reports and wide frameless tables"
+
+  mathematical_formulas:
+    performance: "excellent"
+    output: "LaTeX in doc2json"
+    benchmark:
+      unimernet: 96.5
+    types:
+      - "Inline formulas"
+      - "Display equations"
+      - "Multi-line academic notation"
+
+  charts:
+    performance: "good"
+    benchmark:
+      chart2table: 80.49
+      chart2json: 67.66
+    notes: "Chart2Table competitive; complex chart layouts may need validation"
+
+  multi_column_layouts:
+    performance: "excellent"
+    features:
+      - "Reading order recovery"
+      - "Asymmetric column handling"
+      - "Magazine and newspaper layouts"
+    use_cases:
+      - "Financial statements"
+      - "Annual reports"
+      - "Historical newspapers"
+      - "Academic papers (arXiv)"
+
+  figures_and_captions:
+    performance: "good"
+    behavior: "Figure regions detected with empty text; captions extracted separately"
+    categories: ["figure", "figure_caption", "figure_footnote"]
+
+  document_vqa:
+    performance: "good"
+    benchmark:
+      docvqa_val: 93.16
+      infovqa_val: 75.94
+    note: "Strong on DocVQA; Flash variant trades some VQA accuracy for speed"
+
+  chemical_formulas:
+    performance: "moderate"
+    benchmark:
+      cosyn_chemical: 62.08
+    note: "Enterprise tier variant emphasizes chemical parsing use cases"
+
+  enable_thinking:
+    performance: "supported"
+    platform_support: true
+    note: "Optional reasoning phase via enable_thinking parameter in platform API"
+
+input_specifications:
+  resolution:
+    min_pixels: 2048
+    max_pixels: 16777216
+    note: "Dynamic pixel budget via qwen-vl-utils; platform mirrors HuggingFace defaults"
+
+  formats:
+    images: ["PNG", "JPEG", "JPG"]
+    documents: ["PDF"]
+
+  processing:
+    pdf_dpi: 144
+    max_pdf_pages: 50
+    page_mode: "Per-page inference (pages processed concurrently)"
+
+platform_integration:
+  engine_slugs:
+    pro: "infinity-parser2-flash"
+    enterprise: "infinity-parser2-flash-enterprise"
+  api_endpoints:
+    - "POST /api/v1/infinity-parser/recognize/"
+    - "POST /api/v1/infinity-parser/pdf/analyze/"
+  task_types:
+    - "doc2md"
+    - "doc2json"
+    - "custom"
+  parameters:
+    - "task_type"
+    - "custom_prompt (required when task_type=custom)"
+    - "enable_thinking"
+    - "max_new_tokens (default 8192)"
+
+ideal_use_cases:
+  - "Fast bulk PDF-to-Markdown conversion"
+  - "Layout-aware JSON extraction for RAG or search pipelines"
+  - "Financial and business reports with tables and charts"
+  - "Multi-column documents needing reading-order recovery"
+  - "Academic papers with formulas (LaTeX output)"
+  - "High-throughput document parsing where latency matters"
+  - "English and Chinese business documents"

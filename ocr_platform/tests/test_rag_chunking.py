@@ -16,6 +16,7 @@ def test_load_knowledge_chunks_returns_sections():
     assert "paddle-ocr-vl" in engines
     assert "got-ocr2" in engines
     assert "qianfan-ocr" in engines
+    assert "infinity-parser2-flash" in engines
 
 
 def test_case_study_chunks_are_atomic():

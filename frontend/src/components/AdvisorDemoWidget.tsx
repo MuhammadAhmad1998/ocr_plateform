@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { FileText, Sparkles, Zap } from "lucide-react";
 
 const ADVISOR_RESPONSE =
   "Based on your tables and multi-column layout, Professional tier is the best fit.";
@@ -30,11 +31,9 @@ export function AdvisorDemoWidget() {
     setShowCursor(false);
     setShowLive(false);
 
-    // Step 1: fade in upload message
     timerRef.current = setTimeout(() => {
       setPhase("upload");
 
-      // Step 2: start streaming after 800ms
       timerRef.current = setTimeout(() => {
         setPhase("streaming");
         setShowCursor(true);
@@ -46,20 +45,17 @@ export function AdvisorDemoWidget() {
           if (idx >= ADVISOR_RESPONSE.length) {
             clearInterval(intervalRef.current!);
 
-            // Hide cursor after done
             timerRef.current = setTimeout(() => {
               setShowCursor(false);
               setPhase("done");
 
-              // Step 3: show live demo message after 500ms
               timerRef.current = setTimeout(() => {
                 setShowLive(true);
                 setPhase("live");
 
-                // Step 4: loop after 2.5s
                 timerRef.current = setTimeout(() => {
                   runSequence();
-                }, 2500);
+                }, 2800);
               }, 500);
             }, 300);
           }
@@ -68,7 +64,6 @@ export function AdvisorDemoWidget() {
     }, 300);
   }
 
-  // Spinner tick
   useEffect(() => {
     if (phase !== "live") return;
     const id = setInterval(() => {
@@ -84,73 +79,116 @@ export function AdvisorDemoWidget() {
   }, []);
 
   return (
-    <div
-      suppressHydrationWarning
-      className="advisor-widget-root w-full max-w-2xl overflow-hidden rounded-xl border border-border bg-card shadow-lg"
-      style={{ position: "relative" }}
-    >
-      {/* Particle shimmer background */}
-      <div className="advisor-bg-particles" aria-hidden>
-        {[...Array(6)].map((_, i) => (
-          <span key={i} className="particle" />
-        ))}
-      </div>
+    <div suppressHydrationWarning className="relative w-full max-w-2xl">
+      {/* Outer gradient glow */}
+      <div className="pointer-events-none absolute -inset-1 rounded-3xl bg-gradient-to-br from-indigo-500/30 via-fuchsia-500/20 to-amber-500/30 opacity-70 blur-xl" />
 
-      {/* Title bar */}
-      <div className="border-b border-border bg-muted/50 px-5 py-3">
-        <div className="flex items-center gap-2">
-          <div className="size-2.5 rounded-full bg-accent/80" />
-          <div className="size-2.5 rounded-full bg-primary/40" />
-          <div className="size-2.5 rounded-full bg-muted-foreground/30" />
-          <span className="ml-2 text-xs text-muted-foreground">Advisor session</span>
-        </div>
-      </div>
-
-      {/* Messages */}
-      <div className="space-y-3 p-5 text-sm">
-        {/* Upload status */}
-        <div
-          className="advisor-msg rounded-xl bg-muted px-4 py-3 text-muted-foreground"
-          style={{
-            opacity: phase === "idle" ? 0 : 1,
-            transition: "opacity 0.3s ease",
-          }}
-        >
-          Invoice_Q3.pdf uploaded · 4 pages · mixed tables detected
+      <div
+        className="advisor-widget-root relative overflow-hidden rounded-3xl border border-border/60 bg-card/80 shadow-2xl backdrop-blur"
+        style={{ position: "relative" }}
+      >
+        {/* Particle shimmer background */}
+        <div className="advisor-bg-particles" aria-hidden>
+          {[...Array(6)].map((_, i) => (
+            <span key={i} className="particle" />
+          ))}
         </div>
 
-        {/* Advisor response — streams in */}
-        {(phase === "streaming" || phase === "done" || phase === "live") && (
-          <div
-            className={`ml-auto max-w-[85%] rounded-xl px-4 py-3 text-primary-foreground${
-              phase === "streaming" ? " typing-bubble" : ""
-            }`}
-            style={{
-              background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
-            }}
-          >
-            <span>{typedText}</span>
-            {showCursor && (
-              <span
-                className="cursor-blink ml-[1px] inline-block h-[1em] w-[2px] align-text-bottom"
-                style={{ background: "rgba(255,255,255,0.85)" }}
-              />
-            )}
+        {/* Title bar */}
+        <div className="flex items-center justify-between border-b border-border/60 bg-muted/40 px-5 py-3 backdrop-blur">
+          <div className="flex items-center gap-2">
+            <div className="size-2.5 rounded-full bg-rose-400" />
+            <div className="size-2.5 rounded-full bg-amber-400" />
+            <div className="size-2.5 rounded-full bg-emerald-400" />
           </div>
-        )}
+          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+            <Sparkles className="size-3.5 text-fuchsia-500" />
+            Live advisor session
+          </div>
+          <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+            <span className="relative flex size-1.5">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+              <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
+            </span>
+            Online
+          </div>
+        </div>
 
-        {/* Live demo running */}
-        {showLive && (
+        {/* Messages */}
+        <div className="space-y-3 p-5 text-sm">
+          {/* Upload status */}
           <div
-            className="rounded-xl border border-dashed border-border bg-background px-4 py-3 text-muted-foreground"
+            className="advisor-msg flex items-center gap-3 rounded-2xl border border-border/50 bg-muted/60 px-4 py-3 text-foreground/80 backdrop-blur"
             style={{
-              animation: "fadeInMsg 0.3s ease forwards",
+              opacity: phase === "idle" ? 0 : 1,
+              transition: "opacity 0.3s ease",
             }}
           >
-            <span className="live-spinner mr-1.5">{SPINNERS[spinnerIdx]}</span>
-            Live demo running… 94% confidence · 1.2s
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/30">
+              <FileText className="size-4" />
+            </div>
+            <div className="flex-1">
+              <div className="font-medium">Invoice_Q3.pdf</div>
+              <div className="text-xs text-muted-foreground">
+                4 pages · mixed tables detected
+              </div>
+            </div>
           </div>
-        )}
+
+          {/* Advisor response — streams in */}
+          {(phase === "streaming" || phase === "done" || phase === "live") && (
+            <div className="ml-auto flex max-w-[85%] items-start gap-2.5">
+              <div
+                className={`flex-1 rounded-2xl px-4 py-3 text-white shadow-lg shadow-fuchsia-500/30 ${
+                  phase === "streaming" ? "typing-bubble" : ""
+                }`}
+                style={{
+                  background:
+                    "linear-gradient(135deg, #6366f1, #a855f7 45%, #ec4899)",
+                }}
+              >
+                <span>{typedText}</span>
+                {showCursor && (
+                  <span
+                    className="cursor-blink ml-[1px] inline-block h-[1em] w-[2px] align-text-bottom"
+                    style={{ background: "rgba(255,255,255,0.85)" }}
+                  />
+                )}
+              </div>
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500 via-rose-500 to-amber-500 text-white shadow-md shadow-fuchsia-500/30">
+                <Sparkles className="size-4" />
+              </div>
+            </div>
+          )}
+
+          {/* Live demo running */}
+          {showLive && (
+            <div
+              className="flex items-center gap-3 rounded-2xl border border-dashed border-emerald-500/50 bg-emerald-500/5 px-4 py-3 text-emerald-700 dark:text-emerald-300"
+              style={{
+                animation: "fadeInMsg 0.3s ease forwards",
+              }}
+            >
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/30">
+                <Zap className="size-4" />
+              </div>
+              <div className="flex flex-1 items-center justify-between text-sm">
+                <span className="font-medium">
+                  <span className="live-spinner mr-1.5">{SPINNERS[spinnerIdx]}</span>
+                  Live demo running…
+                </span>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 font-bold">
+                    94% conf.
+                  </span>
+                  <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 font-bold">
+                    1.2s
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

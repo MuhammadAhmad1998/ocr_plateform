@@ -15,6 +15,11 @@ export function streamMessage(
   const token = getToken();
   const controller = new AbortController();
 
+  if (!token) {
+    onError(new Error("Not authenticated"));
+    return () => controller.abort();
+  }
+
   fetch(`${API_V1_URL}/advisor/message/`, {
     method: "POST",
     headers: {

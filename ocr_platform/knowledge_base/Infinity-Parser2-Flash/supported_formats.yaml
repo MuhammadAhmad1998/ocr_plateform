@@ -1,0 +1,133 @@
+# Infinity-Parser2-Flash Supported Formats
+# Confidence: documented + verified
+# Source: HuggingFace model card, ocr_platform/app/infinity_parser/service.py
+
+input_formats:
+
+  images:
+    supported:
+      - format: "PNG"
+        notes: "Preferred for lossless quality"
+      - format: "JPEG / JPG"
+        notes: "Widely supported"
+    specifications:
+      color_modes:
+        - "RGB (converted internally)"
+      pixel_budget:
+        min_pixels: 2048
+        max_pixels: 16777216
+
+  documents:
+    supported:
+      - format: "PDF"
+        processing: "Each page rasterized to image at 144 DPI"
+        max_pages: 50
+        concurrency: "Pages processed in parallel per request"
+    not_directly_supported:
+      - format: "DOCX / DOC"
+        workaround: "Convert to PDF first"
+      - format: "XLSX / XLS"
+        workaround: "Export as PDF or images"
+
+output_formats:
+
+  markdown:
+    task_type: "doc2md"
+    description: "Full-page Markdown conversion"
+    features:
+      - "Headings and body text"
+      - "Table structure (Markdown)"
+      - "Formula placeholders inline where detected"
+      - "Reading-order preserved content"
+    use_cases:
+      - "CMS migration"
+      - "RAG chunking input"
+      - "Human-readable archives"
+
+  layout_json:
+    task_type: "doc2json"
+    description: "Single JSON object with ordered layout elements"
+    element_schema:
+      bbox: "[x1, y1, x2, y2]"
+      category: "One of 13 layout categories"
+      text: "Formatted per category rules"
+    text_formatting_rules:
+      figure: "Empty string"
+      formula: "LaTeX"
+      table: "HTML"
+      other: "Markdown"
+    layout_categories:
+      - "header"
+      - "title"
+      - "text"
+      - "figure"
+      - "table"
+      - "formula"
+      - "figure_caption"
+      - "table_caption"
+      - "formula_caption"
+      - "figure_footnote"
+      - "table_footnote"
+      - "page_footnote"
+      - "footer"
+    use_cases:
+      - "Layout-aware search indexing"
+      - "Compliance audit trails with spatial provenance"
+      - "Custom downstream renderers"
+
+  custom:
+    task_type: "custom"
+    description: "Raw model output from user-supplied prompt"
+    requirement: "custom_prompt parameter required"
+    note: "Prefer doc2md/doc2json for reliable structured output"
+
+task_type_options:
+
+  doc2md:
+    prompt: "Please transform the document's contents into Markdown format."
+    default: true
+    best_for: "Markdown-first workflows"
+
+  doc2json:
+    prompt: "Extract layout elements with bbox, category, and formatted text"
+    best_for: "Structured layout pipelines"
+
+  custom:
+    prompt: "User-defined"
+    best_for: "Experimental or specialized prompts (less reliable)"
+
+platform_api:
+
+  recognize_endpoint:
+    path: "POST /api/v1/infinity-parser/recognize/"
+    input: "Single image file (multipart form)"
+    parameters:
+      - name: "task_type"
+        values: ["doc2md", "doc2json", "custom"]
+      - name: "custom_prompt"
+        required_when: "task_type == custom"
+      - name: "enable_thinking"
+        type: "boolean"
+        default: false
+    rejects: "PDF files (use pdf/analyze endpoint)"
+
+  pdf_analyze_endpoint:
+    path: "POST /api/v1/infinity-parser/pdf/analyze/"
+    input: "PDF file"
+    output: "Per-page results with page_number, text, timing_ms"
+    parameters: "Same task_type and thinking options as recognize"
+
+  health_endpoint:
+    path: "GET /api/v1/infinity-parser/health/"
+    returns: "enabled, loaded, model_id, load_error"
+
+platform_constraints:
+  max_file_size_mb: 10
+  max_pdf_pages: 50
+  pdf_dpi: 144
+  max_new_tokens_default: 8192
+  supported_mime_types:
+    - "application/pdf"
+    - "image/png"
+    - "image/jpeg"
+    - "image/jpg"

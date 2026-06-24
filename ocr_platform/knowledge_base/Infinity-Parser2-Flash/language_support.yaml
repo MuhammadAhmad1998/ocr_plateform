@@ -1,0 +1,93 @@
+# Infinity-Parser2-Flash Language Support
+# Confidence: documented
+# Source: HuggingFace model card limitations section
+
+documented_languages:
+
+  english:
+    support_level: "excellent"
+    evidence: "Primary training focus; strong olmOCR-bench and ParseBench scores"
+    confidence: "documented"
+
+  chinese:
+    support_level: "excellent"
+    evidence: "Primary training focus alongside English; A-Stock and domestic document examples"
+    confidence: "documented"
+
+  multilingual_beyond_en_zh:
+    support_level: "limited"
+    evidence: "Model card states performance degrades on multilingual content"
+    recommendation: "Use Qianfan-OCR (192) or PaddleOCR-VL (109) for broad multilingual needs"
+    confidence: "documented"
+
+inferred_capabilities:
+
+  latin_scripts_western_european:
+    support_level: "moderate"
+    note: "Not primary focus; may work on clean printed Latin text but not guaranteed"
+    confidence: "low inference"
+
+  cjk_extended:
+    support_level: "good for Chinese; Japanese/Korean uncertain"
+    note: "Chinese explicitly supported; JP/KR not documented"
+    confidence: "medium inference"
+
+  arabic_cyrillic_indic:
+    support_level: "poor to unknown"
+    recommendation: "Test samples or route to Qianfan-OCR"
+    confidence: "documented limitation"
+
+text_direction_support:
+
+  left_to_right:
+    support: "excellent"
+    languages: "English, Chinese (horizontal)"
+
+  right_to_left:
+    support: "unknown"
+    note: "Not documented; likely weaker"
+
+  vertical_text:
+    support: "unknown"
+    note: "Historical newspaper examples suggest some vertical layout recovery"
+
+special_content_handling:
+
+  mathematical_symbols:
+    support: "excellent"
+    evidence: "96.5% UniMERNet; LaTeX formula output"
+
+  tables_financial:
+    support: "excellent"
+    evidence: "92.41% PubTabNet; US-Stock and A-Stock examples"
+
+  chemical_notation:
+    support: "moderate"
+    evidence: "62.08% CoSyn_Chemical (Flash)"
+
+recommendations_by_use_case:
+
+  english_business_documents:
+    recommendation: "Excellent choice"
+    confidence: "high"
+
+  chinese_business_documents:
+    recommendation: "Excellent choice"
+    confidence: "high"
+
+  mixed_en_zh_documents:
+    recommendation: "Good choice"
+    confidence: "medium"
+
+  global_multilingual_deployment:
+    recommendation: "Avoid as primary engine; use Qianfan-OCR or PaddleOCR-VL"
+    confidence: "high"
+
+  scientific_english_papers:
+    recommendation: "Good choice for formulas and layout"
+    confidence: "high"
+
+testing_recommendations:
+  - "Validate non-EN/ZH languages on representative samples before production"
+  - "Monitor ParseBench text_content vs text_formatting sub-scores for your doc types"
+  - "Use external language detection if routing mixed-language corpora"
