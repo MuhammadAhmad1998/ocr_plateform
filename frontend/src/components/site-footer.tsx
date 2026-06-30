@@ -2,6 +2,9 @@ import Link from "next/link";
 import { Github, Twitter, Linkedin, Mail, ShieldCheck, Sparkles, ArrowRight } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Separator } from "@/components/ui/separator";
+import { buttonVariants } from "@/components/ui/button";
+import { iconBox, rh } from "@/lib/remote-hub";
+import { cn } from "@/lib/utils";
 
 const footerLinks = {
   product: [
@@ -34,23 +37,18 @@ const socialLinks = [
 
 export function SiteFooter() {
   return (
-    <footer className="relative overflow-hidden border-t border-border/60 bg-gradient-to-br from-background via-muted/30 to-background">
-      <div className="pointer-events-none absolute -left-32 top-0 size-96 rounded-full bg-indigo-500/8 blur-3xl" />
-      <div className="pointer-events-none absolute -right-32 bottom-0 size-96 rounded-full bg-fuchsia-500/8 blur-3xl" />
-
-      <div className="relative px-4 py-16 lg:px-8">
+    <footer className="border-t border-border bg-background">
+      <div className="px-4 py-16 lg:px-8">
         <div className="mx-auto max-w-7xl">
           {/* Top CTA strip */}
-          <div className="mb-12 overflow-hidden rounded-3xl border border-border/60 bg-card/60 p-6 shadow-sm backdrop-blur sm:p-8">
+          <div className={cn(rh.card, "mb-12 p-6 sm:p-8")}>
             <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-center">
               <div className="flex items-start gap-4 sm:items-center">
-                <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-amber-500 text-white shadow-lg shadow-fuchsia-500/30">
+                <div className={iconBox("lg")}>
                   <Sparkles className="size-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-foreground">
-                    Not sure which tier fits you?
-                  </h3>
+                  <h3 className={rh.h2}>Not sure which tier fits you?</h3>
                   <p className="text-sm text-muted-foreground">
                     Chat with the AI advisor and get a personalised recommendation in minutes.
                   </p>
@@ -58,7 +56,7 @@ export function SiteFooter() {
               </div>
               <Link
                 href="/advisor"
-                className="group inline-flex shrink-0 items-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-bold text-background shadow-md transition-all hover:scale-[1.02] hover:opacity-90"
+                className={cn(buttonVariants({ size: "default" }), "group shrink-0 gap-2")}
               >
                 Try Advisor
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
@@ -79,30 +77,18 @@ export function SiteFooter() {
                     key={social.label}
                     href={social.href}
                     aria-label={social.label}
-                    className="group flex size-10 items-center justify-center rounded-xl border border-border/70 bg-background/60 backdrop-blur transition-all hover:-translate-y-0.5 hover:border-fuchsia-500/50 hover:bg-fuchsia-500/5 hover:shadow-md"
+                    className="flex size-10 items-center justify-center rounded-xl border border-border bg-card transition-colors hover:border-foreground/20 hover:bg-muted"
                   >
-                    <social.icon className="size-4 text-muted-foreground transition-colors group-hover:text-fuchsia-500" />
+                    <social.icon className="size-4 text-muted-foreground" />
                   </a>
                 ))}
               </div>
             </div>
 
             <div className="grid gap-8 sm:grid-cols-3 lg:col-span-8">
-              <FooterColumn
-                title="Product"
-                accent="text-indigo-600 dark:text-indigo-400"
-                links={footerLinks.product}
-              />
-              <FooterColumn
-                title="Company"
-                accent="text-fuchsia-600 dark:text-fuchsia-400"
-                links={footerLinks.company}
-              />
-              <FooterColumn
-                title="Legal"
-                accent="text-amber-600 dark:text-amber-400"
-                links={footerLinks.legal}
-              />
+              <FooterColumn title="Product" links={footerLinks.product} />
+              <FooterColumn title="Company" links={footerLinks.company} />
+              <FooterColumn title="Legal" links={footerLinks.legal} />
             </div>
           </div>
 
@@ -111,15 +97,15 @@ export function SiteFooter() {
           <div className="flex flex-col items-center justify-between gap-4 text-sm text-muted-foreground sm:flex-row">
             <p>&copy; {new Date().getFullYear()} Planet OCR. All rights reserved.</p>
             <div className="flex flex-wrap items-center justify-center gap-3 text-xs">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 font-semibold text-emerald-700 dark:text-emerald-300">
+              <span className={rh.statusLive}>
                 <span className="relative flex size-1.5">
-                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                  <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-60" />
+                  <span className="relative inline-flex size-1.5 rounded-full bg-primary" />
                 </span>
                 All systems operational
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/60 px-3 py-1 font-semibold backdrop-blur">
-                <ShieldCheck className="size-3.5 text-cyan-500" />
+              <span className={rh.badge}>
+                <ShieldCheck className="size-3.5" />
                 SOC 2 Certified
               </span>
             </div>
@@ -132,18 +118,14 @@ export function SiteFooter() {
 
 function FooterColumn({
   title,
-  accent,
   links,
 }: {
   title: string;
-  accent: string;
   links: { label: string; href: string }[];
 }) {
   return (
     <div>
-      <h3 className={`mb-4 text-xs font-extrabold uppercase tracking-wider ${accent}`}>
-        {title}
-      </h3>
+      <h3 className={cn(rh.label, "mb-4")}>{title}</h3>
       <ul className="space-y-3">
         {links.map((link) => (
           <li key={link.label}>

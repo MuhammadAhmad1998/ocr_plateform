@@ -53,8 +53,8 @@ export function Navbar({ variant = "app" }: { variant?: "marketing" | "app" }) {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 border-b border-border/80 backdrop-blur-xl",
-        variant === "marketing" ? "bg-background/80" : "bg-card/90"
+        "sticky top-0 z-50 border-b border-border",
+        variant === "marketing" ? "bg-background" : "bg-card"
       )}
     >
       <div className="flex h-16 items-center justify-between px-4 lg:h-18 lg:px-8">
@@ -66,7 +66,7 @@ export function Navbar({ variant = "app" }: { variant?: "marketing" | "app" }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "relative rounded-lg px-4 py-2 text-sm font-semibold transition-all",
+                  "relative rounded-md px-4 py-2 text-sm font-semibold transition-colors",
                   isActive(pathname, item.href)
                     ? "text-foreground"
                     : "text-muted-foreground hover:text-foreground"
@@ -74,7 +74,7 @@ export function Navbar({ variant = "app" }: { variant?: "marketing" | "app" }) {
               >
                 {item.label}
                 {isActive(pathname, item.href) && (
-                  <span className="absolute inset-x-1 -bottom-[17px] h-0.5 rounded-t-full bg-primary" />
+                  <span className="absolute inset-x-1 -bottom-[17px] h-0.5 rounded-t-full bg-foreground" />
                 )}
               </Link>
             ))}
@@ -110,13 +110,7 @@ export function Navbar({ variant = "app" }: { variant?: "marketing" | "app" }) {
               <Link href="/login" className={buttonVariants({ variant: "ghost", size: "sm" })}>
                 Sign In
               </Link>
-              <Link
-                href="/register"
-                className={cn(
-                  buttonVariants({ size: "sm" }),
-                  "bg-primary shadow-sm transition-all hover:scale-105 hover:shadow-md"
-                )}
-              >
+              <Link href="/register" className={buttonVariants({ size: "sm" })}>
                 Get Started
               </Link>
             </div>
@@ -133,9 +127,9 @@ export function Navbar({ variant = "app" }: { variant?: "marketing" | "app" }) {
                 href={item.href}
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
-                  "block rounded-lg px-4 py-3 text-base font-semibold transition-colors",
+                  "block rounded-md px-4 py-3 text-base font-semibold transition-colors",
                   isActive(pathname, item.href)
-                    ? "bg-primary/10 text-primary"
+                    ? "bg-muted text-foreground"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >

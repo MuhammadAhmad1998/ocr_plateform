@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { FileText, Sparkles, Zap } from "lucide-react";
+import { iconBox, rh } from "@/lib/remote-hub";
+import { cn } from "@/lib/utils";
 
 const ADVISOR_RESPONSE =
   "Based on your tables and multi-column layout, Professional tier is the best fit.";
@@ -80,35 +82,25 @@ export function AdvisorDemoWidget() {
 
   return (
     <div suppressHydrationWarning className="relative w-full max-w-2xl">
-      {/* Outer gradient glow */}
-      <div className="pointer-events-none absolute -inset-1 rounded-3xl bg-gradient-to-br from-indigo-500/30 via-fuchsia-500/20 to-amber-500/30 opacity-70 blur-xl" />
-
       <div
-        className="advisor-widget-root relative overflow-hidden rounded-3xl border border-border/60 bg-card/80 shadow-2xl backdrop-blur"
+        className={cn(rh.card, "advisor-widget-root overflow-hidden")}
         style={{ position: "relative" }}
       >
-        {/* Particle shimmer background */}
-        <div className="advisor-bg-particles" aria-hidden>
-          {[...Array(6)].map((_, i) => (
-            <span key={i} className="particle" />
-          ))}
-        </div>
-
         {/* Title bar */}
-        <div className="flex items-center justify-between border-b border-border/60 bg-muted/40 px-5 py-3 backdrop-blur">
+        <div className="flex items-center justify-between border-b border-border bg-muted/40 px-5 py-3">
           <div className="flex items-center gap-2">
-            <div className="size-2.5 rounded-full bg-rose-400" />
-            <div className="size-2.5 rounded-full bg-amber-400" />
-            <div className="size-2.5 rounded-full bg-emerald-400" />
+            <div className="size-2.5 rounded-full bg-muted-foreground/40" />
+            <div className="size-2.5 rounded-full bg-muted-foreground/40" />
+            <div className="size-2.5 rounded-full bg-muted-foreground/40" />
           </div>
           <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            <Sparkles className="size-3.5 text-fuchsia-500" />
+            <Sparkles className="size-3.5" />
             Live advisor session
           </div>
-          <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+          <div className={rh.statusLive}>
             <span className="relative flex size-1.5">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-              <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-60" />
+              <span className="relative inline-flex size-1.5 rounded-full bg-primary" />
             </span>
             Online
           </div>
@@ -118,13 +110,13 @@ export function AdvisorDemoWidget() {
         <div className="space-y-3 p-5 text-sm">
           {/* Upload status */}
           <div
-            className="advisor-msg flex items-center gap-3 rounded-2xl border border-border/50 bg-muted/60 px-4 py-3 text-foreground/80 backdrop-blur"
+            className="advisor-msg flex items-center gap-3 rounded-xl border border-border bg-muted/60 px-4 py-3 text-foreground/80"
             style={{
               opacity: phase === "idle" ? 0 : 1,
               transition: "opacity 0.3s ease",
             }}
           >
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/30">
+            <div className={iconBox("sm")}>
               <FileText className="size-4" />
             </div>
             <div className="flex-1">
@@ -139,13 +131,10 @@ export function AdvisorDemoWidget() {
           {(phase === "streaming" || phase === "done" || phase === "live") && (
             <div className="ml-auto flex max-w-[85%] items-start gap-2.5">
               <div
-                className={`flex-1 rounded-2xl px-4 py-3 text-white shadow-lg shadow-fuchsia-500/30 ${
-                  phase === "streaming" ? "typing-bubble" : ""
-                }`}
-                style={{
-                  background:
-                    "linear-gradient(135deg, #6366f1, #a855f7 45%, #ec4899)",
-                }}
+                className={cn(
+                  "flex-1 rounded-xl bg-foreground px-4 py-3 text-primary-foreground shadow-sm",
+                  phase === "streaming" && "typing-bubble"
+                )}
               >
                 <span>{typedText}</span>
                 {showCursor && (
@@ -155,7 +144,7 @@ export function AdvisorDemoWidget() {
                   />
                 )}
               </div>
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500 via-rose-500 to-amber-500 text-white shadow-md shadow-fuchsia-500/30">
+              <div className={iconBox("sm")}>
                 <Sparkles className="size-4" />
               </div>
             </div>
@@ -164,12 +153,12 @@ export function AdvisorDemoWidget() {
           {/* Live demo running */}
           {showLive && (
             <div
-              className="flex items-center gap-3 rounded-2xl border border-dashed border-emerald-500/50 bg-emerald-500/5 px-4 py-3 text-emerald-700 dark:text-emerald-300"
+              className="flex items-center gap-3 rounded-xl border border-dashed border-border bg-muted/40 px-4 py-3 text-foreground"
               style={{
                 animation: "fadeInMsg 0.3s ease forwards",
               }}
             >
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/30">
+              <div className={iconBox("sm")}>
                 <Zap className="size-4" />
               </div>
               <div className="flex flex-1 items-center justify-between text-sm">
@@ -178,10 +167,10 @@ export function AdvisorDemoWidget() {
                   Live demo running…
                 </span>
                 <div className="flex items-center gap-2 text-xs">
-                  <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 font-bold">
+                  <span className={cn(rh.badge, "px-2 py-0.5 normal-case tracking-normal")}>
                     94% conf.
                   </span>
-                  <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 font-bold">
+                  <span className={cn(rh.badge, "px-2 py-0.5 normal-case tracking-normal")}>
                     1.2s
                   </span>
                 </div>

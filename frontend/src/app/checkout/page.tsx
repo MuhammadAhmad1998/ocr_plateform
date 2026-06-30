@@ -11,9 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { api, getToken } from "@/lib/api";
+import { rh, iconBox } from "@/lib/remote-hub";
 import { TIER_NAMES, TIER_PRICES } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 const tierFeatures: Record<string, string[]> = {
   free: ["50 pages / month", "PDF text extraction", "AI advisor access"],
@@ -69,42 +70,40 @@ function CheckoutContent() {
   return (
     <div className="mx-auto max-w-4xl">
       <FadeIn className="mb-8 text-center">
-        <Badge variant="secondary" className="mb-4 gap-2 px-4 py-2 shadow-sm">
-          <Sparkles className="size-4 text-primary" />
+        <span className={cn(rh.badge, "mb-4 gap-2 px-4 py-2")}>
+          <Sparkles className="size-4" />
           Secure Checkout
-        </Badge>
-        <h1 className="mb-3 text-4xl font-bold text-foreground">Confirm Your Plan</h1>
-        <p className="text-lg text-muted-foreground">
+        </span>
+        <h1 className={cn(rh.h1, "mb-3 text-foreground")}>Confirm Your Plan</h1>
+        <p className={cn(rh.body, "text-muted-foreground")}>
           Review your selection before proceeding to secure payment
         </p>
       </FadeIn>
 
       <div className="grid gap-8 lg:grid-cols-3">
         <FadeIn delay={0.1} className="lg:col-span-2">
-          <Card className="overflow-hidden border-2 border-primary/20 shadow-xl">
-            <CardHeader className="space-y-1 bg-gradient-to-br from-primary/5 to-accent/5">
+          <Card className={cn(rh.card, "overflow-hidden")}>
+            <CardHeader className="space-y-1 border-b border-border">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-2xl">Your Selection</CardTitle>
-                <Badge className="bg-primary text-lg px-4 py-1.5 shadow-sm">
-                  {TIER_NAMES[tier] || tier}
-                </Badge>
+                <CardTitle className={rh.h2}>Your Selection</CardTitle>
+                <span className={rh.badge}>{TIER_NAMES[tier] || tier}</span>
               </div>
               <div className="flex items-baseline gap-2 pt-2">
-                <span className="text-5xl font-bold text-foreground">{TIER_PRICES[tier]}</span>
+                <span className={rh.priceValue}>{TIER_PRICES[tier]}</span>
                 {tier !== "free" && tier !== "enterprise" && (
                   <span className="text-lg text-muted-foreground">/ month</span>
                 )}
               </div>
             </CardHeader>
             <CardContent className="pt-8 pb-8">
-              <h3 className="mb-4 text-base font-bold uppercase tracking-wider text-foreground">
+              <h3 className={cn(rh.label, "mb-4 text-foreground")}>
                 What's Included
               </h3>
               <ul className="space-y-4">
                 {(tierFeatures[tier] || []).map((f) => (
                   <li key={f} className="flex items-start gap-3">
-                    <div className="mt-0.5 rounded-full bg-primary/10 p-1">
-                      <CheckCircle2 className="size-5 shrink-0 text-primary" />
+                    <div className={rh.checkWrap}>
+                      <CheckCircle2 className={rh.checkIcon} />
                     </div>
                     <span className="text-base text-foreground">{f}</span>
                   </li>
@@ -115,7 +114,7 @@ function CheckoutContent() {
 
               <Button
                 onClick={handleCheckout}
-                className="h-14 w-full gap-2 bg-primary text-lg font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+                className="h-14 w-full gap-2 text-lg font-semibold"
                 disabled={loading}
               >
                 {loading ? (
@@ -143,50 +142,50 @@ function CheckoutContent() {
         </FadeIn>
 
         <FadeIn delay={0.2} className="space-y-6">
-          <Card className="border-border shadow-sm">
+          <Card className={rh.card}>
             <CardHeader className="space-y-2">
-              <div className="inline-flex rounded-lg bg-primary/10 p-2.5 w-fit">
-                <Shield className="size-6 text-primary" />
+              <div className={iconBox("md")}>
+                <Shield className="size-5" />
               </div>
               <CardTitle className="text-lg">Secure Payment</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
               <p className="flex items-center gap-2">
-                <CheckCircle2 className="size-4 text-primary" />
+                <CheckCircle2 className="size-4 text-foreground" />
                 256-bit SSL encryption
               </p>
               <p className="flex items-center gap-2">
-                <CheckCircle2 className="size-4 text-primary" />
+                <CheckCircle2 className="size-4 text-foreground" />
                 PCI DSS compliant
               </p>
               <p className="flex items-center gap-2">
-                <CheckCircle2 className="size-4 text-primary" />
+                <CheckCircle2 className="size-4 text-foreground" />
                 Powered by Stripe
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-border shadow-sm">
+          <Card className={rh.card}>
             <CardContent className="space-y-3 pt-6 text-sm text-muted-foreground">
               <p className="font-semibold text-foreground">Flexible billing</p>
               <ul className="space-y-2">
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
+                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-foreground" />
                   Cancel anytime, no questions asked
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
+                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-foreground" />
                   Upgrade or downgrade instantly
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
+                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-foreground" />
                   Prorated billing for changes
                 </li>
               </ul>
             </CardContent>
           </Card>
 
-          <Card className="border-border bg-muted/50 shadow-sm">
+          <Card className={cn(rh.card, "bg-muted/50")}>
             <CardContent className="pt-6 text-center text-xs text-muted-foreground">
               <p>
                 Questions about billing?
@@ -205,7 +204,7 @@ function CheckoutContent() {
 
 export default function CheckoutPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 lg:pl-72">
+    <div className="min-h-screen bg-background lg:pl-72">
       <AppSidebar />
       <main className="px-4 py-16 lg:px-8">
         <Suspense

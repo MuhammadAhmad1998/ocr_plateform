@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { iconBox, rh } from "@/lib/remote-hub";
 import { cn } from "@/lib/utils";
 
 interface DemoResultsProps {
@@ -60,16 +61,7 @@ export function DemoResults({ status, result, tierName, engineName }: DemoResult
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <div
-            className={cn(
-              "flex size-7 items-center justify-center rounded-lg text-white shadow-md",
-              status === "completed"
-                ? "bg-gradient-to-br from-emerald-500 to-cyan-500 shadow-emerald-500/30"
-                : status === "failed"
-                  ? "bg-gradient-to-br from-rose-500 to-orange-500 shadow-rose-500/30"
-                  : "bg-gradient-to-br from-fuchsia-500 to-rose-500 shadow-fuchsia-500/30"
-            )}
-          >
+          <div className={iconBox("sm")}>
             {status === "completed" ? (
               <CheckCircle2 className="size-4" />
             ) : status === "failed" ? (
@@ -79,7 +71,7 @@ export function DemoResults({ status, result, tierName, engineName }: DemoResult
             )}
           </div>
           <div>
-            <h3 className="text-base font-bold text-foreground">Live OCR demo</h3>
+            <h3 className={cn(rh.h2, "text-base")}>Live OCR demo</h3>
             {engineName ? (
               <p className="text-xs text-muted-foreground">
                 {tierName ? `${tierName} · ` : ""}
@@ -91,18 +83,15 @@ export function DemoResults({ status, result, tierName, engineName }: DemoResult
           </div>
         </div>
         {status === "running" && (
-          <Loader2 className="size-4 animate-spin text-fuchsia-500" />
+          <Loader2 className="size-4 animate-spin text-muted-foreground" />
         )}
       </div>
 
       {status === "running" && (
-        <div className="space-y-3 rounded-2xl border border-border/60 bg-gradient-to-br from-fuchsia-500/8 to-rose-500/5 p-5">
+        <div className={cn(rh.card, "space-y-3 p-5")}>
           <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="absolute inset-0 animate-ping rounded-full bg-fuchsia-500/40" />
-              <div className="relative flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500 to-rose-500 text-white shadow-md">
-                <Sparkles className="size-4" />
-              </div>
+            <div className={iconBox("sm")}>
+              <Sparkles className="size-4" />
             </div>
             <p className="text-sm font-medium text-foreground">Processing your document…</p>
           </div>
@@ -143,7 +132,7 @@ export function DemoResults({ status, result, tierName, engineName }: DemoResult
               variant="outline"
               size="sm"
               onClick={handleCopy}
-              className="h-8 gap-1.5 rounded-full text-xs"
+              className="h-8 gap-1.5 text-xs"
             >
               <Copy className="size-3.5" />
               {copied ? "Copied" : "Copy"}
@@ -152,7 +141,7 @@ export function DemoResults({ status, result, tierName, engineName }: DemoResult
               variant="outline"
               size="sm"
               onClick={handleDownload}
-              className="h-8 gap-1.5 rounded-full text-xs"
+              className="h-8 gap-1.5 text-xs"
             >
               <Download className="size-3.5" />
               .txt
@@ -160,18 +149,18 @@ export function DemoResults({ status, result, tierName, engineName }: DemoResult
           </div>
 
           {/* OUTPUT IDE-STYLE */}
-          <div className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-950 shadow-xl">
-            <div className="flex items-center justify-between gap-2 border-b border-slate-800 bg-slate-900 px-3 py-2">
+          <div className="overflow-hidden rounded-[20px] border border-border bg-muted">
+            <div className="flex items-center justify-between gap-2 border-b border-border bg-muted/80 px-3 py-2">
               <div className="flex items-center gap-1.5">
-                <span className="size-2.5 rounded-full bg-rose-400" />
-                <span className="size-2.5 rounded-full bg-amber-400" />
-                <span className="size-2.5 rounded-full bg-emerald-400" />
+                <span className="size-2.5 rounded-full bg-muted-foreground/40" />
+                <span className="size-2.5 rounded-full bg-muted-foreground/40" />
+                <span className="size-2.5 rounded-full bg-muted-foreground/40" />
               </div>
-              <span className="font-mono text-[10px] text-slate-400">output.txt</span>
+              <span className="font-mono text-[10px] text-muted-foreground">output.txt</span>
               <div className="size-4" />
             </div>
             <ScrollArea className="h-64 p-4">
-              <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-emerald-300">
+              <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-foreground">
                 {result.text}
               </pre>
             </ScrollArea>
@@ -180,14 +169,14 @@ export function DemoResults({ status, result, tierName, engineName }: DemoResult
       )}
 
       {status === "failed" && (
-        <div className="rounded-2xl border-2 border-rose-500/30 bg-gradient-to-br from-rose-500/10 to-orange-500/5 p-5 text-sm">
+        <div className={cn(rh.card, "border-2 border-destructive/30 p-5 text-sm")}>
           <div className="flex items-start gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-orange-500 text-white shadow-md">
+            <div className={iconBox("sm")}>
               <XCircle className="size-4" />
             </div>
             <div>
-              <p className="font-bold text-rose-700 dark:text-rose-300">Demo processing failed</p>
-              <p className="mt-1 text-rose-700/80 dark:text-rose-300/80">
+              <p className="font-bold text-foreground">Demo processing failed</p>
+              <p className="mt-1 text-muted-foreground">
                 Try again or upload a different document. If this persists, contact support.
               </p>
             </div>
@@ -201,28 +190,16 @@ export function DemoResults({ status, result, tierName, engineName }: DemoResult
 function StatTile({
   label,
   value,
-  accent,
+  accent: _accent,
 }: {
   label: string;
   value: string;
   accent: "emerald" | "cyan" | "indigo" | "fuchsia";
 }) {
-  const colors = {
-    emerald: "from-emerald-500/15 to-emerald-500/5 text-emerald-700 dark:text-emerald-300",
-    cyan: "from-cyan-500/15 to-cyan-500/5 text-cyan-700 dark:text-cyan-300",
-    indigo: "from-indigo-500/15 to-indigo-500/5 text-indigo-700 dark:text-indigo-300",
-    fuchsia: "from-fuchsia-500/15 to-fuchsia-500/5 text-fuchsia-700 dark:text-fuchsia-300",
-  } as const;
-
   return (
-    <div
-      className={cn(
-        "rounded-xl border border-border/60 bg-gradient-to-br px-3 py-2.5 shadow-sm",
-        colors[accent]
-      )}
-    >
-      <p className="text-[9px] font-bold uppercase tracking-wider opacity-80">{label}</p>
-      <p className="mt-0.5 text-lg font-extrabold tracking-tight">{value}</p>
+    <div className={cn(rh.card, "px-3 py-2.5")}>
+      <p className={rh.label}>{label}</p>
+      <p className="mt-0.5 text-lg font-extrabold tracking-tight text-foreground">{value}</p>
     </div>
   );
 }

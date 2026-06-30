@@ -26,16 +26,8 @@ import { fetchAdminTierOptions, adminErrorMessage, type TierOption } from "@/app
 import { api, getToken } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import type { AdminUser } from "@/lib/api/types";
+import { rh, iconBox } from "@/lib/remote-hub";
 import { cn } from "@/lib/utils";
-
-const ACCENTS = [
-  "from-indigo-500 to-violet-500 shadow-indigo-500/30",
-  "from-fuchsia-500 via-rose-500 to-amber-500 shadow-fuchsia-500/30",
-  "from-cyan-500 to-sky-500 shadow-cyan-500/30",
-  "from-emerald-500 to-teal-500 shadow-emerald-500/30",
-  "from-amber-500 to-orange-500 shadow-amber-500/30",
-  "from-rose-500 to-pink-500 shadow-rose-500/30",
-] as const;
 
 function getInitials(email: string, fullName: string | null) {
   if (fullName) {
@@ -43,12 +35,6 @@ function getInitials(email: string, fullName: string | null) {
     return (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "");
   }
   return email.slice(0, 2).toUpperCase();
-}
-
-function avatarAccent(id: string) {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
-  return ACCENTS[Math.abs(h) % ACCENTS.length];
 }
 
 function formatTimeAgo(iso: string | null) {
@@ -132,32 +118,27 @@ export default function AdminUsersPage() {
   return (
     <div className="space-y-6">
       {/* HERO */}
-      <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-indigo-500/10 via-fuchsia-500/10 to-amber-500/10 p-6 shadow-md sm:p-8">
-        <div className="pointer-events-none absolute -right-16 -top-16 size-64 rounded-full bg-fuchsia-500/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -left-12 size-72 rounded-full bg-indigo-500/20 blur-3xl" />
-
-        <div className="relative flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
+      <div className={cn(rh.card, "p-6 sm:p-8")}>
+        <div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-fuchsia-500/40 bg-background/60 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-fuchsia-700 backdrop-blur dark:text-fuchsia-300">
+            <span className={rh.badge}>
               <UsersIcon className="size-3" />
               User management
-            </div>
-            <h1 className="bg-gradient-to-br from-indigo-600 via-fuchsia-500 to-amber-500 bg-clip-text text-3xl font-extrabold tracking-tight text-transparent dark:from-indigo-300 dark:via-fuchsia-300 dark:to-amber-300 sm:text-4xl">
-              All Users
-            </h1>
-            <p className="text-sm text-muted-foreground sm:text-base">
+            </span>
+            <h1 className={cn(rh.h1, "text-foreground")}>All Users</h1>
+            <p className={cn(rh.body, "text-muted-foreground")}>
               Browse, search, and manage every account on the platform.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-500/15 px-3 py-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300">
+            <span className={rh.badge}>
               <UsersIcon className="size-3.5" />
               {total.toLocaleString()} total
-            </div>
+            </span>
             <Link
               href="/admin"
-              className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/70 px-3 py-1.5 text-xs font-bold text-muted-foreground backdrop-blur hover:text-foreground"
+              className={cn(rh.badge, "hover:text-foreground")}
             >
               <ArrowRight className="size-3 rotate-180" />
               Overview
@@ -172,7 +153,7 @@ export default function AdminUsersPage() {
             placeholder="Search by email or name…"
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
-            className="h-12 rounded-2xl border-2 border-border/60 bg-background/80 pl-11 pr-11 text-base shadow-sm backdrop-blur transition-all focus-visible:border-fuchsia-500/60 focus-visible:ring-2 focus-visible:ring-fuchsia-500/20"
+            className="h-12 rounded-xl border border-border bg-background pl-11 pr-11 text-base shadow-sm transition-all focus-visible:ring-2 focus-visible:ring-ring"
           />
           {search && (
             <button
@@ -232,7 +213,7 @@ export default function AdminUsersPage() {
                 handleActiveOnly(false);
                 handleTierFilter(null);
               }}
-              className="ml-1 inline-flex items-center gap-1 rounded-full border border-rose-500/40 bg-rose-500/10 px-2.5 py-1 text-[11px] font-bold text-rose-700 transition-colors hover:bg-rose-500/15 dark:text-rose-300"
+              className={cn(rh.badge, "ml-1 gap-1 px-2.5 py-1 normal-case tracking-normal hover:text-foreground")}
             >
               <X className="size-3" />
               Clear
@@ -256,7 +237,7 @@ export default function AdminUsersPage() {
 
       {/* PAGINATION */}
       {totalPages > 1 && (
-        <div className="flex flex-col items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/60 px-4 py-3 backdrop-blur sm:flex-row">
+        <div className={cn(rh.card, "flex flex-col items-center justify-between gap-3 px-4 py-3 sm:flex-row")}>
           <p className="text-sm text-muted-foreground">
             Page <span className="font-bold text-foreground">{page}</span> of{" "}
             <span className="font-bold text-foreground">{totalPages}</span>
@@ -277,7 +258,6 @@ export default function AdminUsersPage() {
             </Button>
             <Button
               size="sm"
-              className="rounded-full bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-amber-500 text-white shadow-md shadow-fuchsia-500/30 hover:scale-[1.02]"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages || loading}
             >
@@ -307,10 +287,10 @@ function FilterPill({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-full px-3 py-1 text-xs font-bold transition-all",
+        "rounded-xl px-3 py-1 text-xs font-semibold transition-colors",
         active
-          ? "bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-amber-500 text-white shadow-md shadow-fuchsia-500/30"
-          : "border border-border/60 bg-background/70 text-muted-foreground hover:border-fuchsia-500/40 hover:text-foreground"
+          ? "bg-foreground text-primary-foreground"
+          : "border border-border bg-background text-muted-foreground hover:text-foreground"
       )}
     >
       {children}
@@ -320,48 +300,25 @@ function FilterPill({
 
 function UserRow({ user }: { user: AdminUser }) {
   const isAdmin = user.role === "super_admin";
-  const avatarCls = avatarAccent(user.id);
   const initials = getInitials(user.email, user.full_name);
   const quotaPct = user.tier
     ? Math.min(100, (user.tier.quota_used / Math.max(1, user.tier.quota_limit)) * 100)
     : 0;
-  const quotaTone =
-    quotaPct >= 90
-      ? "from-rose-500 to-pink-500"
-      : quotaPct >= 70
-        ? "from-amber-500 to-orange-500"
-        : "from-emerald-500 to-teal-500";
 
   return (
     <Link
       href={`/admin/users/${user.id}`}
       className={cn(
-        "group relative block overflow-hidden rounded-3xl border-2 bg-card/70 p-5 shadow-md backdrop-blur transition-all hover:-translate-y-0.5 hover:shadow-xl",
-        isAdmin
-          ? "border-amber-500/40 bg-gradient-to-br from-amber-500/8 via-fuchsia-500/5 to-background"
-          : !user.is_active
-            ? "border-border/60 opacity-80"
-            : "border-border/60 hover:border-fuchsia-500/40"
+        rh.cardHover,
+        "group relative block p-5",
+        !user.is_active && "opacity-80"
       )}
     >
-      {/* Left accent bar */}
-      <div
-        className={cn(
-          "absolute left-0 top-4 bottom-4 w-1 rounded-r-full bg-gradient-to-b",
-          isAdmin
-            ? "from-amber-500 via-fuchsia-500 to-indigo-500"
-            : !user.is_active
-              ? "from-rose-500 to-pink-500"
-              : "from-emerald-500 to-teal-500"
-        )}
-      />
-
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-        {/* Avatar */}
         <div
           className={cn(
-            "flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-base font-extrabold text-white shadow-lg transition-transform group-hover:scale-105",
-            avatarCls
+            iconBox("lg"),
+            "text-base font-extrabold transition-transform group-hover:scale-105"
           )}
         >
           {initials}
@@ -374,19 +331,19 @@ function UserRow({ user }: { user: AdminUser }) {
               {user.email}
             </p>
             {isAdmin && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 via-fuchsia-500 to-indigo-500 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white shadow-sm">
+              <span className={cn(rh.badge, "gap-1 px-2.5 py-0.5")}>
                 <ShieldCheck className="size-3" />
                 Super Admin
               </span>
             )}
             {user.is_platform_user && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-cyan-500/40 bg-cyan-500/10 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-cyan-700 dark:text-cyan-300">
+              <span className={cn(rh.badge, "gap-1 px-2.5 py-0.5")}>
                 <Globe className="size-3" />
                 Platform
               </span>
             )}
             {!user.is_active && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-rose-500/40 bg-rose-500/10 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-rose-700 dark:text-rose-300">
+              <span className={cn(rh.badge, "gap-1 px-2.5 py-0.5")}>
                 <UserX className="size-3" />
                 Inactive
               </span>
@@ -398,10 +355,10 @@ function UserRow({ user }: { user: AdminUser }) {
           )}
 
           {user.tier && (
-            <div className="space-y-1.5 rounded-2xl border border-border/60 bg-background/50 px-3.5 py-2.5 backdrop-blur">
+            <div className={cn(rh.card, "space-y-1.5 px-3.5 py-2.5")}>
               <div className="flex items-center justify-between text-xs">
                 <span className="flex items-center gap-1.5 font-bold text-foreground/80">
-                  <Sparkles className="size-3 text-fuchsia-500" />
+                  <Sparkles className="size-3" />
                   {user.tier.name}
                 </span>
                 <span className="font-bold tabular-nums text-muted-foreground">
@@ -411,10 +368,7 @@ function UserRow({ user }: { user: AdminUser }) {
               </div>
               <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                 <div
-                  className={cn(
-                    "h-full rounded-full bg-gradient-to-r shadow-sm transition-all",
-                    quotaTone
-                  )}
+                  className="h-full rounded-full bg-foreground transition-all"
                   style={{ width: `${Math.max(2, quotaPct)}%` }}
                 />
               </div>
@@ -423,14 +377,14 @@ function UserRow({ user }: { user: AdminUser }) {
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
-              <Activity className="size-3.5 text-indigo-500" />
+              <Activity className="size-3.5" />
               <span className="font-bold tabular-nums text-foreground/80">
                 {user.jobs_this_month}
               </span>{" "}
               jobs this month
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <Key className="size-3.5 text-fuchsia-500" />
+              <Key className="size-3.5" />
               <span className="font-bold tabular-nums text-foreground/80">
                 {user.api_key_count}
               </span>{" "}
@@ -447,11 +401,11 @@ function UserRow({ user }: { user: AdminUser }) {
           </div>
           {user.last_active && (
             <div className="inline-flex items-center gap-1.5">
-              <Clock className="size-3 text-emerald-500" />
+              <Clock className="size-3" />
               Active {formatTimeAgo(user.last_active)}
             </div>
           )}
-          <ArrowRight className="mt-1 size-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-fuchsia-500" />
+          <ArrowRight className="mt-1 size-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-foreground" />
         </div>
       </div>
     </Link>
@@ -460,8 +414,8 @@ function UserRow({ user }: { user: AdminUser }) {
 
 function EmptyUsers({ search }: { search: string }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-border/60 bg-card/40 px-6 py-16 text-center">
-      <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-amber-500 text-white shadow-lg shadow-fuchsia-500/30">
+    <div className="flex flex-col items-center justify-center rounded-[20px] border-2 border-dashed border-border bg-muted/20 px-6 py-16 text-center">
+      <div className={cn(iconBox("lg"), "mb-4")}>
         <UsersIcon className="size-6" />
       </div>
       <h3 className="text-lg font-bold text-foreground">

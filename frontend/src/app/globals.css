@@ -11,72 +11,78 @@
   }
 
   :root {
-    --background: 255 255 255;
-    --foreground: 22 66 91;
-    --card: 255 255 255;
-    --card-foreground: 22 66 91;
+    /* OCR Intelligence Platform — light theme
+       Warm off-white base, teal brand accent, supporting amber/green/coral. */
+    --background: 250 250 248;          /* #FAFAF8  base */
+    --foreground: 22 32 43;             /* #16202B  text-1 */
+    --card: 255 255 255;                /* #FFFFFF  surface-1 */
+    --card-foreground: 22 32 43;
     --popover: 255 255 255;
-    --popover-foreground: 22 66 91;
-    --primary: 58 124 165;
+    --popover-foreground: 22 32 43;
+    --primary: 14 124 123;              /* #0E7C7B  teal */
     --primary-foreground: 255 255 255;
-    --secondary: 217 220 214;
-    --secondary-foreground: 22 66 91;
-    --muted: 249 250 251;
-    --muted-foreground: 107 114 128;
-    --accent: 129 195 215;
-    --accent-foreground: 22 66 91;
-    --destructive: 239 68 68;
+    --secondary: 242 243 240;           /* #F2F3F0  surface-2 */
+    --secondary-foreground: 22 32 43;
+    --muted: 242 243 240;
+    --muted-foreground: 90 101 115;     /* #5A6573  text-2 */
+    --accent: 225 245 238;              /* #E1F5EE  teal-bg */
+    --accent-foreground: 14 124 123;
+    --destructive: 216 90 48;           /* #D85A30  coral */
     --destructive-foreground: 255 255 255;
-    --success: 34 197 94;
+    --success: 59 109 17;               /* #3B6D11  green */
     --success-foreground: 255 255 255;
-    --warning: 251 146 60;
+    --warning: 186 117 23;              /* #BA7517  amber */
     --warning-foreground: 255 255 255;
-    --border: 229 231 235;
-    --input: 229 231 235;
-    --ring: 58 124 165;
-    --radius: 0.75rem;
-    --sidebar: 249 250 251;
-    --sidebar-foreground: 22 66 91;
-    --sidebar-primary: 58 124 165;
+    --border: 228 230 225;              /* #E4E6E1 */
+    --input: 210 213 207;               /* #D2D5CF  border-strong */
+    --ring: 14 124 123;
+    --radius: 20px;
+    --sidebar: 255 255 255;
+    --sidebar-foreground: 22 32 43;
+    --sidebar-primary: 14 124 123;
     --sidebar-primary-foreground: 255 255 255;
-    --sidebar-accent: 217 220 214;
-    --sidebar-accent-foreground: 22 66 91;
-    --sidebar-border: 229 231 235;
-    --sidebar-ring: 58 124 165;
+    --sidebar-accent: 242 243 240;
+    --sidebar-accent-foreground: 22 32 43;
+    --sidebar-border: 228 230 225;
+    --sidebar-ring: 14 124 123;
+    --surface: 255 255 255;
   }
 
   .dark {
-    --background: 15 23 42;
-    --foreground: 248 250 252;
-    --card: 30 41 59;
-    --card-foreground: 248 250 252;
-    --popover: 30 41 59;
-    --popover-foreground: 248 250 252;
-    --primary: 129 195 215;
-    --primary-foreground: 15 23 42;
-    --secondary: 47 102 144;
-    --secondary-foreground: 248 250 252;
-    --muted: 51 65 85;
-    --muted-foreground: 148 163 184;
-    --accent: 58 124 165;
-    --accent-foreground: 255 255 255;
-    --destructive: 248 113 113;
-    --destructive-foreground: 15 23 42;
-    --success: 74 222 128;
-    --success-foreground: 15 23 42;
-    --warning: 253 186 116;
-    --warning-foreground: 15 23 42;
-    --border: 51 65 85;
-    --input: 51 65 85;
-    --ring: 129 195 215;
-    --sidebar: 30 41 59;
-    --sidebar-foreground: 248 250 252;
-    --sidebar-primary: 129 195 215;
-    --sidebar-primary-foreground: 15 23 42;
-    --sidebar-accent: 47 102 144;
-    --sidebar-accent-foreground: 248 250 252;
-    --sidebar-border: 51 65 85;
-    --sidebar-ring: 129 195 215;
+    /* OCR Intelligence Platform — dark theme
+       Zinc-tinted near-black base, bright teal accent, soft semantic colors. */
+    --background: 14 17 22;             /* #0E1116  base */
+    --foreground: 230 234 240;          /* #E6EAF0  text-1 */
+    --card: 23 27 34;                   /* #171B22  surface-1 */
+    --card-foreground: 230 234 240;
+    --popover: 23 27 34;
+    --popover-foreground: 230 234 240;
+    --primary: 31 184 181;              /* #1FB8B5  teal */
+    --primary-foreground: 4 32 31;      /* #04201F  deep teal ink */
+    --secondary: 31 37 48;              /* #1F2530  surface-2 */
+    --secondary-foreground: 230 234 240;
+    --muted: 31 37 48;
+    --muted-foreground: 138 151 168;    /* #8A97A8  text-2 */
+    --accent: 16 36 31;                 /* #10241F  teal-bg */
+    --accent-foreground: 31 184 181;
+    --destructive: 240 153 123;         /* #F0997B  coral */
+    --destructive-foreground: 42 20 16; /* #2A1410 */
+    --success: 93 202 165;              /* #5DCAA5  green */
+    --success-foreground: 16 36 31;
+    --warning: 232 163 61;              /* #E8A33D  amber */
+    --warning-foreground: 65 36 2;      /* #412402  amber-ink */
+    --border: 42 49 60;                 /* #2A313C */
+    --input: 58 66 78;                  /* #3A424E  border-strong */
+    --ring: 31 184 181;
+    --sidebar: 23 27 34;
+    --sidebar-foreground: 230 234 240;
+    --sidebar-primary: 31 184 181;
+    --sidebar-primary-foreground: 4 32 31;
+    --sidebar-accent: 31 37 48;
+    --sidebar-accent-foreground: 230 234 240;
+    --sidebar-border: 42 49 60;
+    --sidebar-ring: 31 184 181;
+    --surface: 23 27 34;
   }
 
   * {
@@ -85,26 +91,33 @@
 
   body {
     @apply bg-background text-foreground antialiased;
+    font-size: 0.95rem;
+    line-height: 1.55;
   }
 
   html {
     @apply font-sans scroll-smooth;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-bold tracking-tight text-foreground;
   }
 
   h1 {
-    @apply text-4xl md:text-5xl lg:text-6xl;
+    font-size: 2rem;
   }
 
   h2 {
-    @apply text-3xl md:text-4xl;
+    font-size: 1.5rem;
   }
 
   h3 {
-    @apply text-2xl md:text-3xl;
+    font-size: 1.25rem;
   }
 }
 
@@ -113,33 +126,170 @@
     text-wrap: balance;
   }
 
-  .gradient-mesh {
-    background-image:
-      radial-gradient(at 20% 20%, rgb(129 195 215 / 0.15) 0, transparent 50%),
-      radial-gradient(at 80% 0%, rgb(58 124 165 / 0.1) 0, transparent 45%),
-      radial-gradient(at 50% 100%, rgb(217 220 214 / 0.12) 0, transparent 40%);
+  .text-display {
+    font-size: 3.75rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
   }
 
-  .dark .gradient-mesh {
-    background-image:
-      radial-gradient(at 20% 20%, rgb(129 195 215 / 0.08) 0, transparent 50%),
-      radial-gradient(at 80% 0%, rgb(58 124 165 / 0.15) 0, transparent 45%),
-      radial-gradient(at 50% 100%, rgb(47 102 144 / 0.1) 0, transparent 40%);
+  .text-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
 
-  .glass-effect {
-    @apply bg-white/80 backdrop-blur-xl border border-white/20;
-  }
-
-  .dark .glass-effect {
-    @apply bg-slate-900/80 backdrop-blur-xl border-slate-700/50;
+  .bg-surface {
+    background-color: rgb(var(--surface));
   }
 
   .hover-lift {
-    @apply transition-transform duration-300 hover:-translate-y-1 hover:shadow-lg;
+    @apply transition-colors duration-200 hover:border-foreground/20;
   }
 
   .hover-scale {
-    @apply transition-transform duration-200 hover:scale-[1.02];
+    @apply transition-colors duration-200;
+  }
+
+  /* ============================================================
+     OCR Intelligence Platform — color utilities from mockup
+     ============================================================ */
+
+  /* Mono font for numbers, IDs, code, mono labels */
+  .font-mono {
+    font-family: var(--font-mono), "JetBrains Mono", "SF Mono", ui-monospace,
+      Menlo, Consolas, monospace;
+  }
+
+  .text-mono-label {
+    font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: rgb(var(--muted-foreground));
+    text-transform: uppercase;
+  }
+
+  /* Dot-grid background — signature mockup texture */
+  .dot-grid {
+    background-image: radial-gradient(
+      rgb(var(--border)) 1px,
+      transparent 1px
+    );
+    background-size: 22px 22px;
+    background-position: center;
+  }
+
+  /* Eyebrow pill — teal-tinted brand chip used above headlines */
+  .eyebrow-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
+    font-size: 12px;
+    color: rgb(var(--primary));
+    background: rgb(var(--accent));
+    border: 0.5px solid rgb(var(--primary) / 0.4);
+    padding: 6px 14px;
+    border-radius: 30px;
+  }
+
+  /* RECOMMENDED — solid amber pill with dark amber ink text */
+  .badge-rec {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
+    font-size: 11px;
+    background: rgb(var(--warning));
+    color: rgb(var(--warning-foreground));
+    padding: 3px 10px;
+    border-radius: 5px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* REFUSED — coral-tinted tag */
+  .badge-refuse {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
+    font-size: 11px;
+    background: rgb(var(--destructive) / 0.12);
+    color: rgb(var(--destructive));
+    border: 0.5px solid rgb(var(--destructive) / 0.45);
+    padding: 2px 9px;
+    border-radius: 5px;
+  }
+
+  /* Tier badges — A=green, B=teal, C=neutral */
+  .tier-badge {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    padding: 3px 8px;
+    border-radius: 5px;
+    text-transform: uppercase;
+  }
+  .tier-badge.tier-a {
+    background: rgb(var(--success) / 0.12);
+    color: rgb(var(--success));
+    border: 0.5px solid rgb(var(--success) / 0.45);
+  }
+  .tier-badge.tier-b {
+    background: rgb(var(--accent));
+    color: rgb(var(--primary));
+    border: 0.5px solid rgb(var(--primary) / 0.4);
+  }
+  .tier-badge.tier-c {
+    background: rgb(var(--secondary));
+    color: rgb(var(--muted-foreground));
+    border: 0.5px solid rgb(var(--input));
+  }
+
+  /* Score numbers — winner in teal, others muted */
+  .score-win {
+    font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
+    color: rgb(var(--primary));
+  }
+  .score-dim {
+    font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
+    color: rgb(var(--muted-foreground));
+  }
+
+  /* Color helpers tied to the semantic tokens (for icons, dots, accents) */
+  .text-teal {
+    color: rgb(var(--primary));
+  }
+  .text-amber {
+    color: rgb(var(--warning));
+  }
+  .text-coral {
+    color: rgb(var(--destructive));
+  }
+  .text-green {
+    color: rgb(var(--success));
+  }
+  .bg-teal-tint {
+    background-color: rgb(var(--accent));
+  }
+  .bg-amber-tint {
+    background-color: rgb(var(--warning) / 0.15);
+  }
+  .bg-coral-tint {
+    background-color: rgb(var(--destructive) / 0.12);
+  }
+  .bg-green-tint {
+    background-color: rgb(var(--success) / 0.12);
+  }
+  .border-teal {
+    border-color: rgb(var(--primary) / 0.4);
+  }
+  .border-strong {
+    border-color: rgb(var(--input));
   }
 }

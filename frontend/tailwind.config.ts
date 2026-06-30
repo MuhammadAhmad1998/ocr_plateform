@@ -11,6 +11,7 @@ const config: Config = {
         ring: "rgb(var(--ring) / <alpha-value>)",
         background: "rgb(var(--background) / <alpha-value>)",
         foreground: "rgb(var(--foreground) / <alpha-value>)",
+        surface: "rgb(var(--surface) / <alpha-value>)",
         primary: {
           DEFAULT: "rgb(var(--primary) / <alpha-value>)",
           foreground: "rgb(var(--primary-foreground) / <alpha-value>)",
@@ -50,11 +51,20 @@ const config: Config = {
       },
       borderRadius: {
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        md: "12px",
+        sm: "6px",
       },
       fontFamily: {
-        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        sans: ["var(--font-sans)", "Manrope", "system-ui", "sans-serif"],
+        mono: [
+          "var(--font-mono)",
+          "JetBrains Mono",
+          "SF Mono",
+          "ui-monospace",
+          "Menlo",
+          "Consolas",
+          "monospace",
+        ],
       },
       spacing: {
         '18': '4.5rem',

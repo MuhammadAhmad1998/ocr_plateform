@@ -27,6 +27,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, ApiError, getToken } from "@/lib/api";
+import { rh, iconBox } from "@/lib/remote-hub";
 import { cn } from "@/lib/utils";
 
 type Job = {
@@ -88,31 +89,27 @@ function formatAbsolute(iso: string): string {
 
 const STATUS_META: Record<
   string,
-  { icon: typeof CheckCircle2; bar: string; pill: string; ring: string }
+  { icon: typeof CheckCircle2; bar: string; pill: string }
 > = {
   completed: {
     icon: CheckCircle2,
-    bar: "bg-emerald-500",
-    pill: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-emerald-500/30",
-    ring: "ring-emerald-500/40",
+    bar: "bg-foreground/30",
+    pill: rh.badge,
   },
   failed: {
     icon: XCircle,
-    bar: "bg-rose-500",
-    pill: "bg-rose-500/15 text-rose-700 dark:text-rose-300 ring-rose-500/30",
-    ring: "ring-rose-500/40",
+    bar: "bg-foreground/30",
+    pill: rh.badge,
   },
   running: {
     icon: Loader2,
-    bar: "bg-indigo-500",
-    pill: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 ring-indigo-500/30",
-    ring: "ring-indigo-500/40",
+    bar: "bg-foreground/30",
+    pill: rh.badge,
   },
   queued: {
     icon: Clock,
-    bar: "bg-amber-500",
-    pill: "bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-amber-500/30",
-    ring: "ring-amber-500/40",
+    bar: "bg-foreground/30",
+    pill: rh.badge,
   },
 };
 
@@ -252,49 +249,44 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="relative min-h-screen overflow-hidden bg-background lg:pl-72">
-        <BgOrbs />
+      <div className="min-h-screen bg-background lg:pl-72">
         <AppSidebar />
-        <main className="relative z-10 space-y-8 px-4 py-8 lg:px-8">
-          <Skeleton className="h-40 rounded-3xl" />
+        <main className="space-y-8 px-4 py-8 lg:px-8">
+          <Skeleton className="h-40 rounded-[20px]" />
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            <Skeleton className="h-32 rounded-2xl" />
-            <Skeleton className="h-32 rounded-2xl" />
-            <Skeleton className="h-32 rounded-2xl" />
-            <Skeleton className="h-32 rounded-2xl" />
+            <Skeleton className="h-32 rounded-[20px]" />
+            <Skeleton className="h-32 rounded-[20px]" />
+            <Skeleton className="h-32 rounded-[20px]" />
+            <Skeleton className="h-32 rounded-[20px]" />
           </div>
           <div className="grid gap-6 lg:grid-cols-3">
-            <Skeleton className="h-72 rounded-3xl" />
-            <Skeleton className="h-72 rounded-3xl lg:col-span-2" />
+            <Skeleton className="h-72 rounded-[20px]" />
+            <Skeleton className="h-72 rounded-[20px] lg:col-span-2" />
           </div>
-          <Skeleton className="h-96 rounded-3xl" />
+          <Skeleton className="h-96 rounded-[20px]" />
         </main>
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background lg:pl-72">
-      <BgOrbs />
+    <div className="min-h-screen bg-background lg:pl-72">
       <AppSidebar />
 
-      <main className="relative z-10 space-y-8 px-4 py-8 lg:px-8">
+      <main className="space-y-8 px-4 py-8 lg:px-8">
         {/* ============ HERO ============ */}
         <FadeIn>
-          <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-indigo-500/10 via-cyan-500/5 to-emerald-500/10 p-6 shadow-xl sm:p-8 lg:p-10">
-            <div className="pointer-events-none absolute -right-16 -top-16 size-72 rounded-full bg-emerald-500/15 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-24 -left-12 size-72 rounded-full bg-indigo-500/15 blur-3xl" />
-
-            <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <section className={cn(rh.card, "p-6 sm:p-8 lg:p-10")}>
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div className="space-y-3">
-                <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/60 px-3 py-1 text-xs font-semibold text-foreground/70 backdrop-blur">
-                  <Activity className="size-3 text-emerald-500" />
+                <span className={rh.badge}>
+                  <Activity className="size-3" />
                   Live dashboard
-                </div>
-                <h1 className="bg-gradient-to-br from-indigo-600 via-cyan-600 to-emerald-600 bg-clip-text text-4xl font-extrabold leading-tight tracking-tight text-transparent dark:from-indigo-300 dark:via-cyan-300 dark:to-emerald-300 sm:text-5xl">
+                </span>
+                <h1 className={cn(rh.h1, "text-foreground sm:text-[2.5rem]")}>
                   Welcome back
                 </h1>
-                <p className="max-w-xl text-base text-muted-foreground">
+                <p className={cn(rh.body, "max-w-xl text-muted-foreground")}>
                   Monitor your usage, manage API keys, and track every OCR job in one place.
                 </p>
               </div>
@@ -302,7 +294,7 @@ export default function DashboardPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-2 rounded-full border-2 bg-background/60 backdrop-blur"
+                  className="gap-2"
                   onClick={() => loadData(true)}
                   disabled={refreshing}
                 >
@@ -312,7 +304,7 @@ export default function DashboardPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-2 rounded-full border-2 bg-background/60 backdrop-blur"
+                  className="gap-2"
                   onClick={openBillingPortal}
                 >
                   <ExternalLink className="size-4" />
@@ -320,10 +312,7 @@ export default function DashboardPage() {
                 </Button>
                 <Link
                   href="/docs"
-                  className={cn(
-                    buttonVariants({ variant: "outline", size: "sm" }),
-                    "gap-2 rounded-full border-2 bg-background/60 backdrop-blur"
-                  )}
+                  className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-2")}
                 >
                   API Docs
                 </Link>
@@ -331,8 +320,8 @@ export default function DashboardPage() {
             </div>
 
             {error && (
-              <div className="relative mt-6 flex items-start gap-2 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 dark:text-rose-300">
-                <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+              <div className="mt-6 flex items-start gap-2 rounded-xl border border-border bg-muted px-4 py-3 text-sm text-foreground">
+                <AlertTriangle className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                 <p>{error}</p>
               </div>
             )}
@@ -347,7 +336,6 @@ export default function DashboardPage() {
               value={usage?.quota_used.toLocaleString() ?? "0"}
               hint={`of ${usage?.quota_limit.toLocaleString() ?? 0}`}
               icon={<TrendingUp className="size-5" />}
-              accent={isAtLimit ? "rose" : isNearLimit ? "amber" : "indigo"}
             />
             <KpiCard
               label="Jobs this month"
@@ -356,21 +344,18 @@ export default function DashboardPage() {
                 jobs.length > 0 ? `${successRate}% success rate` : "Run your first job"
               }
               icon={<Zap className="size-5" />}
-              accent="cyan"
             />
             <KpiCard
               label="Active API keys"
               value={`${activeKeyCount}`}
               hint={`${apiKeys.length} total`}
               icon={<Key className="size-5" />}
-              accent="emerald"
             />
             <KpiCard
               label="Current plan"
               value={usage?.tier_name || "Starter"}
               hint="Manage in billing"
               icon={<Sparkles className="size-5" />}
-              accent="fuchsia"
             />
           </div>
         </FadeIn>
@@ -378,25 +363,10 @@ export default function DashboardPage() {
         {/* ============ NEAR-LIMIT BANNER ============ */}
         {isNearLimit && (
           <FadeIn delay={0.08}>
-            <div
-              className={cn(
-                "relative overflow-hidden rounded-3xl border-2 p-5 shadow-xl",
-                isAtLimit
-                  ? "border-rose-500/40 bg-gradient-to-r from-rose-500/15 via-orange-500/10 to-rose-500/15"
-                  : "border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-yellow-500/10 to-amber-500/15"
-              )}
-            >
-              <div className="pointer-events-none absolute -right-12 -top-12 size-40 rounded-full bg-amber-400/30 blur-3xl" />
-              <div className="relative flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+            <div className={cn(rh.card, "p-5")}>
+              <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
                 <div className="flex items-start gap-3">
-                  <div
-                    className={cn(
-                      "flex size-12 items-center justify-center rounded-2xl text-white shadow-lg",
-                      isAtLimit
-                        ? "bg-gradient-to-br from-rose-500 to-orange-500 shadow-rose-500/40"
-                        : "bg-gradient-to-br from-amber-500 to-orange-500 shadow-amber-500/40"
-                    )}
-                  >
+                  <div className={iconBox("lg")}>
                     <AlertTriangle className="size-6" />
                   </div>
                   <div>
@@ -405,7 +375,7 @@ export default function DashboardPage() {
                         ? "You've reached your monthly quota"
                         : `You've used ${Math.round(usagePct)}% of your quota`}
                     </p>
-                    <p className="text-sm text-foreground/70">
+                    <p className="text-sm text-muted-foreground">
                       {isAtLimit
                         ? "New jobs will fail until you upgrade or your quota resets."
                         : `Only ${remainingPages.toLocaleString()} pages left this cycle.`}
@@ -414,10 +384,7 @@ export default function DashboardPage() {
                 </div>
                 <Link
                   href="/pricing"
-                  className={cn(
-                    buttonVariants({ size: "sm" }),
-                    "shrink-0 gap-1.5 rounded-full bg-foreground text-background shadow-lg hover:opacity-90"
-                  )}
+                  className={cn(buttonVariants({ size: "sm" }), "shrink-0 gap-1.5")}
                 >
                   Upgrade plan <ArrowUpRight className="size-4" />
                 </Link>
@@ -430,15 +397,12 @@ export default function DashboardPage() {
         <div className="grid gap-6 lg:grid-cols-3">
           {/* USAGE RING */}
           <FadeIn delay={0.1}>
-            <div className="relative h-full overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-card to-muted/30 p-6 shadow-md">
-              <div className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full bg-indigo-500/15 blur-2xl" />
-              <div className="relative space-y-5">
+            <div className={cn(rh.card, "h-full p-6")}>
+              <div className="space-y-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      Monthly usage
-                    </p>
-                    <h3 className="mt-1 text-lg font-bold text-foreground">
+                    <p className={rh.label}>Monthly usage</p>
+                    <h3 className={cn(rh.h2, "mt-1")}>
                       {usage?.tier_name || "Starter"} plan
                     </h3>
                   </div>
@@ -473,24 +437,20 @@ export default function DashboardPage() {
 
           {/* API KEYS */}
           <FadeIn delay={0.15} className="lg:col-span-2">
-            <div className="h-full overflow-hidden rounded-3xl border border-border/60 bg-card shadow-md">
-              <div className="flex flex-col gap-4 border-b border-border/60 bg-gradient-to-r from-emerald-500/8 to-cyan-500/8 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className={cn(rh.card, "h-full overflow-hidden")}>
+              <div className="flex flex-col gap-4 border-b border-border px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 text-white shadow-md shadow-emerald-500/30">
+                  <div className={iconBox("md")}>
                     <Key className="size-5" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-foreground">API Keys</h3>
+                    <h3 className={rh.h2}>API Keys</h3>
                     <p className="text-xs text-muted-foreground">
                       Authenticate integrations and services
                     </p>
                   </div>
                 </div>
-                <Button
-                  onClick={createKey}
-                  size="sm"
-                  className="gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-md shadow-emerald-500/30 hover:scale-[1.02] hover:shadow-lg"
-                >
+                <Button onClick={createKey} size="sm" className="gap-2">
                   <Key className="size-4" />
                   Generate Key
                 </Button>
@@ -498,11 +458,10 @@ export default function DashboardPage() {
 
               <div className="space-y-3 p-6">
                 {newKey && (
-                  <div className="relative overflow-hidden rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-500/10 to-cyan-500/5 p-4 shadow-sm">
-                    <div className="pointer-events-none absolute -right-6 -top-6 size-24 rounded-full bg-emerald-400/30 blur-2xl" />
-                    <div className="relative">
+                  <div className={cn(rh.card, "border-2 p-4")}>
+                    <div>
                       <div className="mb-3 flex items-center justify-between gap-2">
-                        <p className="flex items-center gap-1.5 text-sm font-bold text-emerald-700 dark:text-emerald-300">
+                        <p className="flex items-center gap-1.5 text-sm font-bold text-foreground">
                           <Sparkles className="size-4" />
                           Save this key — it won&apos;t be shown again
                         </p>
@@ -534,8 +493,8 @@ export default function DashboardPage() {
                   </div>
                 )}
                 {apiKeys.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-border bg-muted/20 p-10 text-center">
-                    <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-500 text-white shadow-lg shadow-emerald-500/30">
+                  <div className="rounded-xl border border-dashed border-border bg-muted/20 p-10 text-center">
+                    <div className={cn(iconBox("md"), "mx-auto mb-3")}>
                       <Key className="size-5" />
                     </div>
                     <p className="text-sm font-bold text-foreground">No API keys yet</p>
@@ -547,17 +506,10 @@ export default function DashboardPage() {
                   apiKeys.map((k) => (
                     <div
                       key={k.id}
-                      className="group flex items-center justify-between gap-3 rounded-2xl border border-border bg-gradient-to-r from-muted/30 to-transparent px-4 py-3.5 transition-all hover:border-emerald-500/40 hover:bg-emerald-500/5 hover:shadow-sm"
+                      className="group flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3.5 transition-colors hover:border-foreground/20"
                     >
                       <div className="flex items-center gap-3">
-                        <div
-                          className={cn(
-                            "flex size-10 items-center justify-center rounded-xl text-white shadow-md transition-transform group-hover:scale-110",
-                            k.is_active
-                              ? "bg-gradient-to-br from-emerald-500 to-cyan-500 shadow-emerald-500/30"
-                              : "bg-gradient-to-br from-slate-400 to-slate-500"
-                          )}
-                        >
+                        <div className={iconBox("md")}>
                           <Key className="size-4" />
                         </div>
                         <div className="min-w-0">
@@ -568,21 +520,14 @@ export default function DashboardPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span
-                          className={cn(
-                            "rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider",
-                            k.is_active
-                              ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                              : "bg-muted text-muted-foreground"
-                          )}
-                        >
+                        <span className={cn(rh.badge, "px-2.5 py-0.5 normal-case tracking-normal")}>
                           {k.is_active ? "Active" : "Inactive"}
                         </span>
                         {k.is_active && (
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="size-8 rounded-full text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500"
+                            className="size-8 text-muted-foreground hover:bg-muted hover:text-foreground"
                             onClick={() => revokeKey(k.id)}
                             title="Revoke key"
                           >
@@ -600,18 +545,18 @@ export default function DashboardPage() {
 
         {/* ============ JOB HISTORY ============ */}
         <FadeIn delay={0.2}>
-          <div className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-md">
-            <div className="flex flex-col gap-4 border-b border-border/60 bg-gradient-to-r from-indigo-500/8 to-fuchsia-500/8 px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
+          <div className={cn(rh.card, "overflow-hidden")}>
+            <div className="flex flex-col gap-4 border-b border-border px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-white shadow-md shadow-indigo-500/30">
+                <div className={iconBox("md")}>
                   <Activity className="size-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-foreground">Job History</h3>
+                  <h3 className={rh.h2}>Job History</h3>
                   <p className="text-xs text-muted-foreground">
                     Recent OCR processing jobs
                     {failedJobs > 0 && (
-                      <span className="ml-2 font-semibold text-rose-500">
+                      <span className="ml-2 font-semibold text-foreground">
                         · {failedJobs} failed
                       </span>
                     )}
@@ -631,19 +576,17 @@ export default function DashboardPage() {
                       type="button"
                       onClick={() => setStatusFilter(f.id)}
                       className={cn(
-                        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all",
+                        "inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-colors",
                         isActive
-                          ? "border-transparent bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white shadow-md shadow-indigo-500/30"
-                          : "border-border bg-background text-muted-foreground hover:border-indigo-500/40 hover:text-foreground"
+                          ? "border-transparent bg-foreground text-primary-foreground"
+                          : "border-border bg-background text-muted-foreground hover:text-foreground"
                       )}
                     >
                       {f.label}
                       <span
                         className={cn(
                           "rounded-full px-1.5 text-[10px]",
-                          isActive
-                            ? "bg-white/20 text-white"
-                            : "bg-muted text-muted-foreground"
+                          isActive ? "bg-primary-foreground/20" : "bg-muted"
                         )}
                       >
                         {count}
@@ -656,8 +599,8 @@ export default function DashboardPage() {
 
             <div className="p-4 sm:p-6">
               {filteredJobs.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-border bg-muted/20 p-12 text-center">
-                  <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-white shadow-lg shadow-indigo-500/30">
+                <div className="rounded-xl border border-dashed border-border bg-muted/20 p-12 text-center">
+                  <div className={cn(iconBox("lg"), "mx-auto mb-4")}>
                     <Activity className="size-6" />
                   </div>
                   <p className="text-base font-bold text-foreground">
@@ -670,22 +613,13 @@ export default function DashboardPage() {
                   </p>
                   {statusFilter === "all" && (
                     <div className="mt-5 flex justify-center gap-2">
-                      <Link
-                        href="/advisor"
-                        className={cn(
-                          buttonVariants({ size: "sm" }),
-                          "gap-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/30 hover:scale-[1.02]"
-                        )}
-                      >
+                      <Link href="/advisor" className={cn(buttonVariants({ size: "sm" }), "gap-1.5")}>
                         <Sparkles className="size-3.5" />
                         Open advisor
                       </Link>
                       <Link
                         href="/testing"
-                        className={cn(
-                          buttonVariants({ variant: "outline", size: "sm" }),
-                          "gap-1.5 rounded-full border-2"
-                        )}
+                        className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1.5")}
                       >
                         <FileSearch className="size-3.5" />
                         Open testing
@@ -701,7 +635,7 @@ export default function DashboardPage() {
                     return (
                       <div
                         key={j.id}
-                        className="group relative overflow-hidden rounded-2xl border border-border bg-card transition-all hover:-translate-y-px hover:shadow-md"
+                        className="group relative overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-foreground/20"
                       >
                         <span
                           className={cn(
@@ -713,7 +647,7 @@ export default function DashboardPage() {
                           {/* Status badge */}
                           <div
                             className={cn(
-                              "inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ring-1",
+                              "inline-flex w-fit items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider",
                               meta.pill
                             )}
                           >
@@ -774,86 +708,25 @@ export default function DashboardPage() {
 
 /* ============= COMPONENTS ============= */
 
-function BgOrbs() {
-  return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="absolute -left-32 top-10 size-96 rounded-full bg-indigo-500/8 blur-3xl dark:bg-indigo-500/12" />
-      <div className="absolute right-0 top-1/3 size-96 rounded-full bg-cyan-500/8 blur-3xl dark:bg-cyan-500/12" />
-      <div className="absolute -bottom-20 left-1/3 size-96 rounded-full bg-fuchsia-500/8 blur-3xl dark:bg-fuchsia-500/12" />
-    </div>
-  );
-}
-
 function KpiCard({
   label,
   value,
   hint,
   icon,
-  accent,
 }: {
   label: string;
   value: string;
   hint?: string;
   icon: React.ReactNode;
-  accent: "indigo" | "cyan" | "emerald" | "fuchsia" | "amber" | "rose";
 }) {
-  const palette = {
-    indigo: {
-      gradient: "from-indigo-500/15 via-violet-500/10 to-indigo-500/5",
-      iconBg: "bg-gradient-to-br from-indigo-500 to-violet-500 shadow-indigo-500/30",
-      ring: "border-indigo-500/30",
-    },
-    cyan: {
-      gradient: "from-cyan-500/15 via-sky-500/10 to-cyan-500/5",
-      iconBg: "bg-gradient-to-br from-cyan-500 to-sky-500 shadow-cyan-500/30",
-      ring: "border-cyan-500/30",
-    },
-    emerald: {
-      gradient: "from-emerald-500/15 via-teal-500/10 to-emerald-500/5",
-      iconBg: "bg-gradient-to-br from-emerald-500 to-teal-500 shadow-emerald-500/30",
-      ring: "border-emerald-500/30",
-    },
-    fuchsia: {
-      gradient: "from-fuchsia-500/15 via-pink-500/10 to-fuchsia-500/5",
-      iconBg: "bg-gradient-to-br from-fuchsia-500 to-pink-500 shadow-fuchsia-500/30",
-      ring: "border-fuchsia-500/30",
-    },
-    amber: {
-      gradient: "from-amber-500/15 via-yellow-500/10 to-amber-500/5",
-      iconBg: "bg-gradient-to-br from-amber-500 to-orange-500 shadow-amber-500/30",
-      ring: "border-amber-500/30",
-    },
-    rose: {
-      gradient: "from-rose-500/15 via-orange-500/10 to-rose-500/5",
-      iconBg: "bg-gradient-to-br from-rose-500 to-orange-500 shadow-rose-500/30",
-      ring: "border-rose-500/30",
-    },
-  } as const;
-  const c = palette[accent];
   return (
-    <div
-      className={cn(
-        "group relative overflow-hidden rounded-3xl border-2 bg-gradient-to-br p-5 shadow-md transition-all hover:-translate-y-1 hover:shadow-xl",
-        c.gradient,
-        c.ring
-      )}
-    >
-      <div className="pointer-events-none absolute -right-6 -top-6 size-24 rounded-full bg-white/20 blur-2xl dark:bg-white/5" />
-      <div className="relative space-y-3">
+    <div className={cn(rh.cardHover, "p-5")}>
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-            {label}
-          </p>
-          <div
-            className={cn(
-              "flex size-10 items-center justify-center rounded-xl text-white shadow-lg transition-transform group-hover:scale-110",
-              c.iconBg
-            )}
-          >
-            {icon}
-          </div>
+          <p className={rh.label}>{label}</p>
+          <div className={iconBox("md")}>{icon}</div>
         </div>
-        <p className="text-3xl font-extrabold tracking-tight text-foreground">{value}</p>
+        <p className={rh.statValue}>{value}</p>
         {hint && <p className="text-xs font-medium text-muted-foreground">{hint}</p>}
       </div>
     </div>
@@ -864,7 +737,6 @@ function UsageRing({
   percent,
   used,
   limit,
-  state,
 }: {
   percent: number;
   used: number;
@@ -875,26 +747,9 @@ function UsageRing({
   const circ = 2 * Math.PI * radius;
   const offset = circ - (percent / 100) * circ;
 
-  const gradientId =
-    state === "danger" ? "ringRose" : state === "warning" ? "ringAmber" : "ringIndigo";
-
   return (
     <div className="relative">
       <svg width="200" height="200" viewBox="0 0 200 200" className="-rotate-90">
-        <defs>
-          <linearGradient id="ringIndigo" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="rgb(99 102 241)" />
-            <stop offset="100%" stopColor="rgb(6 182 212)" />
-          </linearGradient>
-          <linearGradient id="ringAmber" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="rgb(245 158 11)" />
-            <stop offset="100%" stopColor="rgb(249 115 22)" />
-          </linearGradient>
-          <linearGradient id="ringRose" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="rgb(244 63 94)" />
-            <stop offset="100%" stopColor="rgb(249 115 22)" />
-          </linearGradient>
-        </defs>
         <circle
           cx="100"
           cy="100"
@@ -908,27 +763,19 @@ function UsageRing({
           cx="100"
           cy="100"
           r={radius}
-          stroke={`url(#${gradientId})`}
+          stroke="currentColor"
           strokeWidth="14"
           fill="none"
           strokeLinecap="round"
           strokeDasharray={circ}
           strokeDashoffset={offset}
+          className="text-foreground"
           style={{ transition: "stroke-dashoffset 0.8s cubic-bezier(0.22, 1, 0.36, 1)" }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <p
-          className={cn(
-            "bg-gradient-to-br bg-clip-text text-4xl font-extrabold tracking-tight text-transparent",
-            state === "danger" && "from-rose-500 to-orange-500",
-            state === "warning" && "from-amber-500 to-orange-500",
-            state === "ok" && "from-indigo-500 to-cyan-500"
-          )}
-        >
-          {Math.round(percent)}%
-        </p>
-        <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        <p className={cn(rh.statValue, "text-4xl")}>{Math.round(percent)}%</p>
+        <p className={cn(rh.label, "mt-0.5")}>
           {used.toLocaleString()} / {limit.toLocaleString()}
         </p>
       </div>

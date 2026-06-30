@@ -12,7 +12,7 @@ function Card({
       data-slot="card"
       data-size={size}
       className={cn(
-        "rounded-xl border bg-card text-card-foreground shadow-sm",
+        "rounded-[20px] border bg-card text-card-foreground shadow-sm",
         size === "sm" && "text-sm",
         className
       )}

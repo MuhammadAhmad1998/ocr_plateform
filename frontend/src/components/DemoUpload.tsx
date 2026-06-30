@@ -4,6 +4,7 @@ import { FileText, Loader2, Play, RotateCcw, Upload, Zap } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { iconBox, rh } from "@/lib/remote-hub";
 import { cn } from "@/lib/utils";
 
 const ACCEPTED_TYPES = ["application/pdf", "image/png", "image/jpeg"];
@@ -73,26 +74,23 @@ export function DemoUpload({
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-2">
-        <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-fuchsia-500 to-rose-500 text-white shadow-md shadow-fuchsia-500/30">
+        <div className={iconBox("sm")}>
           <Upload className="size-4" />
         </div>
-        <h3 className="text-base font-bold text-foreground">Upload a sample document</h3>
+        <h3 className={cn(rh.h2, "text-base")}>Upload a sample document</h3>
       </div>
 
       {documentName ? (
-        <div className="relative overflow-hidden rounded-2xl border-2 border-fuchsia-500/30 bg-gradient-to-br from-fuchsia-500/10 to-rose-500/5 p-4 shadow-md">
-          <div className="pointer-events-none absolute -right-6 -top-6 size-24 rounded-full bg-fuchsia-400/30 blur-2xl" />
-          <div className="relative flex items-center gap-4">
-            <div className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500 to-rose-500 text-white shadow-lg shadow-fuchsia-500/30">
+        <div className={cn(rh.card, "border-2 border-border p-4")}>
+          <div className="flex items-center gap-4">
+            <div className={iconBox("md")}>
               <FileText className="size-6" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-bold text-foreground">{documentName}</p>
               <p className="text-xs text-muted-foreground">
                 {lastFileMeta ? `${formatBytes(lastFileMeta.size)} · ` : ""}
-                <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                  Ready to process
-                </span>
+                <span className="font-medium text-foreground">Ready to process</span>
               </p>
             </div>
             <Button
@@ -100,7 +98,7 @@ export function DemoUpload({
               size="sm"
               onClick={replaceFile}
               disabled={uploading}
-              className="shrink-0 gap-1.5 rounded-full text-muted-foreground hover:bg-background hover:text-foreground"
+              className="shrink-0 gap-1.5 text-muted-foreground hover:text-foreground"
             >
               <RotateCcw className="size-3.5" />
               Replace
@@ -122,22 +120,17 @@ export function DemoUpload({
           onDragLeave={() => setDragOver(false)}
           onDrop={onDrop}
           className={cn(
-            "group relative cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed transition-all",
+            "cursor-pointer rounded-[20px] border-2 border-dashed transition-colors",
             dragOver
-              ? "scale-[1.01] border-fuchsia-400 bg-gradient-to-br from-fuchsia-500/15 to-rose-500/10 shadow-lg"
-              : "border-border bg-gradient-to-br from-muted/40 to-muted/10 hover:border-fuchsia-400/50 hover:from-fuchsia-500/8 hover:to-rose-500/5"
+              ? "border-foreground/30 bg-muted"
+              : "border-border bg-muted/40 hover:border-foreground/20 hover:bg-muted/60"
           )}
         >
-          <div className="pointer-events-none absolute -right-8 -top-8 size-32 rounded-full bg-fuchsia-400/15 blur-3xl opacity-0 transition-opacity group-hover:opacity-100" />
-          <div className="pointer-events-none absolute -bottom-12 -left-8 size-32 rounded-full bg-rose-400/15 blur-3xl opacity-0 transition-opacity group-hover:opacity-100" />
-
-          <div className="relative flex flex-col items-center justify-center gap-4 px-6 py-14">
+          <div className="flex flex-col items-center justify-center gap-4 px-6 py-14">
             <div
               className={cn(
-                "flex size-16 items-center justify-center rounded-2xl shadow-lg transition-all group-hover:scale-110",
-                dragOver
-                  ? "bg-gradient-to-br from-fuchsia-500 to-rose-500 text-white shadow-fuchsia-500/40"
-                  : "bg-background text-muted-foreground group-hover:bg-gradient-to-br group-hover:from-fuchsia-500 group-hover:to-rose-500 group-hover:text-white"
+                iconBox("lg"),
+                dragOver && "bg-foreground"
               )}
             >
               {uploading ? (
@@ -178,7 +171,7 @@ export function DemoUpload({
           onClick={onProcess}
           size="lg"
           disabled={uploading}
-          className="h-12 w-full gap-2 rounded-full bg-gradient-to-r from-fuchsia-500 to-rose-500 text-white shadow-lg shadow-fuchsia-500/30 transition-all hover:scale-[1.01] hover:shadow-xl"
+          className="w-full gap-2"
         >
           <Zap className="size-4" />
           Run live OCR
