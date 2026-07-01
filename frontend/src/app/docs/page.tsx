@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
-import { Navbar } from "@/components/Navbar";
+import { AppSidebar } from "@/components/AppSidebar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { rh, iconBox } from "@/lib/remote-hub";
 import { cn } from "@/lib/utils";
@@ -150,7 +150,7 @@ function EndpointCard({ endpoint }: { endpoint: ApiEndpoint }) {
       id={endpoint.id}
       className="group scroll-mt-32 overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all hover:-translate-y-px hover:shadow-md"
     >
-      <div className="border-b border-border/60 bg-card">
+      <div className="border-b border-border/60 bg-card px-6 py-5">
         <div className="flex flex-wrap items-center gap-3">
           <span
             className={cn(
@@ -272,11 +272,11 @@ export default function ApiDocsPage() {
   }, []);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
-      <Navbar variant="marketing" />
+    <div className="relative min-h-screen overflow-hidden bg-background lg:pl-72">
+      <AppSidebar />
 
       {/* ============= SUB-HEADER ============= */}
-      <div className="sticky top-16 z-30 border-b border-border/60 bg-background/80  lg:top-18">
+      <div className="sticky top-16 z-30 border-b border-border/60 bg-background/80 lg:top-0">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2.5 lg:px-8">
           <div className="flex items-center gap-3 text-sm">
             <span className="flex size-6 items-center justify-center rounded-lg bg-card">
@@ -322,7 +322,7 @@ export default function ApiDocsPage() {
         <div className="flex gap-10 py-10">
           {/* ============= SIDEBAR ============= */}
           <aside className="hidden w-60 shrink-0 lg:block">
-            <nav className="sticky top-32 space-y-6">
+            <nav className="sticky top-32 space-y-6 lg:top-14">
               <div className="rounded-2xl border border-border/70 bg-card/80 p-3 shadow-sm ">
                 <p className="mb-2 px-2 text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
                   Guides
@@ -580,31 +580,35 @@ export default function ApiDocsPage() {
             </section>
 
             {/* ============= FOOTER ============= */}
-            <footer className="rounded-3xl border border-border/60 bg-card">
-              <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl bg-card">
-                <Sparkles className="size-5" />
+            <footer className="overflow-hidden rounded-3xl border border-border/60 bg-card px-6 py-5">
+              <div className="flex items-start gap-4">
+                <div className={iconBox("md")}>
+                  <Sparkles className="size-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-base font-bold text-foreground">Need help?</p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    <Link
+                      href="/dashboard"
+                      className="font-semibold text-foreground hover:underline"
+                    >
+                      Manage keys &amp; usage
+                    </Link>
+                    {"  ·  "}
+                    <a
+                      href={`${API_ROOT}/redoc`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-primary hover:underline"
+                    >
+                      Full OpenAPI reference
+                    </a>
+                  </p>
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    Internal, sandbox, and engine-specific routes are not part of the public API.
+                  </p>
+                </div>
               </div>
-              <p className="text-base font-bold text-foreground">Need help?</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                <Link
-                  href="/dashboard"
-                  className="font-semibold text-foreground hover:underline"
-                >
-                  Manage keys &amp; usage
-                </Link>
-                {"  ·  "}
-                <a
-                  href={`${API_ROOT}/redoc`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold text-primary hover:underline"
-                >
-                  Full OpenAPI reference
-                </a>
-              </p>
-              <p className="mt-3 text-xs text-muted-foreground">
-                Internal, sandbox, and engine-specific routes are not part of the public API.
-              </p>
             </footer>
           </main>
         </div>

@@ -1,26 +1,158 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   Award,
+  BarChart3,
+  BookOpen,
+  Building2,
+  Check,
   CheckCircle2,
+  ChevronDown,
+  Code2,
+  Copy,
   FileSearch,
+  FileText,
   Globe,
+  Layers,
   Lock,
   MessageSquare,
+  RefreshCw,
   Shield,
   Sparkles,
   Star,
+  Terminal,
   TrendingUp,
+  Upload,
+  Users,
   Zap,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { toast } from "sonner";
 import { AdvisorDemoWidget } from "@/components/AdvisorDemoWidget";
 import { FadeIn } from "@/components/fade-in";
 import { Navbar } from "@/components/Navbar";
 import { SiteFooter } from "@/components/site-footer";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { iconBox, rh } from "@/lib/remote-hub";
+import { isLoggedIn } from "@/lib/api";
 import { cn } from "@/lib/utils";
+
+const CODE_EXAMPLE = `from planetocr import Client
+
+client = Client(api_key="ocr_...")
+
+# One call — we pick the best engine
+result = client.recognize(
+    file="invoice.pdf",
+    strategy="auto"
+)
+
+print(result.text)       # extracted text
+print(result.confidence) # → 0.96`;
+
+const stats = [
+  { icon: TrendingUp, value: "99.8%", label: "Accuracy rate" },
+  { icon: Zap, value: "<2s", label: "Avg. processing" },
+  { icon: Globe, value: "50+", label: "Languages" },
+  { icon: Award, value: "SOC 2", label: "Certified" },
+];
+
+const steps: { icon: LucideIcon; title: string; description: string }[] = [
+  {
+    icon: MessageSquare,
+    title: "Chat with the advisor",
+    description:
+      "Tell us about your document types, volume, and accuracy needs — our AI agent guides the conversation.",
+  },
+  {
+    icon: Sparkles,
+    title: "Get your recommendation",
+    description:
+      "Receive a personalised tier match based on your requirements — no guesswork, just smart suggestions.",
+  },
+  {
+    icon: FileSearch,
+    title: "See it in action",
+    description:
+      "Upload a sample document and run a live OCR demo to validate your recommendation before subscribing.",
+  },
+];
+
+const features = [
+  {
+    icon: Layers,
+    title: "Multi-engine routing",
+    description:
+      "40+ OCR engines unified behind one API. We route each document to the best engine automatically.",
+  },
+  {
+    icon: BarChart3,
+    title: "Accuracy benchmarks",
+    description:
+      "Run candidate engines on your actual documents, not generic leaderboards. See real performance data.",
+  },
+  {
+    icon: RefreshCw,
+    title: "Automatic fallbacks",
+    description:
+      "Some engines refuse certain document types mid-pipeline. We detect it and reroute automatically.",
+  },
+  {
+    icon: Code2,
+    title: "Simple API",
+    description:
+      "One SDK, one key, one bill. Commercial and open-source engines behind a single integration.",
+  },
+  {
+    icon: Lock,
+    title: "Data privacy",
+    description:
+      "Region-pinned processing and zero-retention options for documents that can't leave your region.",
+  },
+  {
+    icon: Shield,
+    title: "Enterprise ready",
+    description:
+      "SOC 2 certified, encrypted at rest and in transit, with dedicated SLAs for enterprise customers.",
+  },
+];
+
+const useCases = [
+  {
+    icon: FileText,
+    title: "Invoices & Receipts",
+    description: "Extract line items, totals, and vendor details from financial documents.",
+  },
+  {
+    icon: BookOpen,
+    title: "Contracts & Legal",
+    description: "Parse agreements, identify clauses, and extract key terms automatically.",
+  },
+  {
+    icon: Users,
+    title: "ID Verification",
+    description: "Process passports, driver's licenses, and national IDs with high accuracy.",
+  },
+  {
+    icon: Building2,
+    title: "Forms & Applications",
+    description: "Digitize handwritten forms, applications, and survey responses.",
+  },
+];
+
+const logos = [
+  "PaddleOCR",
+  "Tesseract",
+  "Surya",
+  "docTR",
+  "TrOCR",
+  "GOT-OCR",
+  "AWS Textract",
+  "Azure AI",
+];
 
 const tiers = [
   {
@@ -56,122 +188,184 @@ const tiers = [
   },
 ];
 
-const steps: { icon: LucideIcon; title: string; description: string }[] = [
+const faqs = [
   {
-    icon: MessageSquare,
-    title: "Chat with the advisor",
-    description:
-      "Tell us about your document types, volume, and accuracy needs — our AI agent guides the conversation.",
+    q: "What document types do you support?",
+    a: "We support PDFs, images (PNG, JPG, WEBP, TIFF), and scanned documents. Our engines handle printed text, handwriting, tables, forms, invoices, IDs, and mathematical equations.",
   },
   {
-    icon: Sparkles,
-    title: "Get your recommendation",
-    description:
-      "Receive a personalised tier match based on your requirements — no guesswork, just smart suggestions.",
+    q: "How does the AI advisor work?",
+    a: "The advisor is a chat-based AI that learns about your document types, volume, and accuracy requirements. It then recommends the optimal tier and lets you test with a live OCR demo before you subscribe.",
   },
   {
-    icon: FileSearch,
-    title: "See it in action",
-    description:
-      "Upload a sample document and run a live OCR demo to validate your recommendation before subscribing.",
+    q: "Can I try before I commit?",
+    a: "Yes! Every plan includes a live demo feature. Upload a sample document, pick an engine, and see the actual OCR output before you subscribe. No credit card required for the free tier.",
+  },
+  {
+    q: "What happens if an engine fails or refuses my document?",
+    a: "Our platform automatically detects refusals and failures (like some VLMs refusing ID documents) and reroutes to an alternative engine that can handle it. Your pipeline never breaks silently.",
+  },
+  {
+    q: "Is my data secure?",
+    a: "All uploads are encrypted in transit and at rest. We're SOC 2 certified and offer zero-retention processing options. Region-pinned processing is available for data residency requirements.",
+  },
+  {
+    q: "Do you offer annual billing?",
+    a: "Yes. Contact sales for annual discounts of up to 20% on Essential and Professional plans, or for custom Enterprise terms.",
   },
 ];
 
 const trust = [
-  { icon: Shield, label: "SOC-ready architecture" },
+  { icon: Shield, label: "SOC 2 Type II" },
   { icon: Lock, label: "Encrypted at rest & in transit" },
-  { icon: CheckCircle2, label: "Stripe-secured billing" },
-];
-
-const stats = [
-  { icon: TrendingUp, value: "99.8%", label: "Accuracy rate" },
-  { icon: Zap, value: "<2s", label: "Average processing" },
-  { icon: Globe, value: "50+", label: "Languages supported" },
-  { icon: Award, value: "SOC 2", label: "Certified platform" },
+  { icon: CheckCircle2, label: "99.9% uptime SLA" },
 ];
 
 export default function HomePage() {
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [tryHref, setTryHref] = useState("/register");
+
+  useEffect(() => {
+    setTryHref(isLoggedIn() ? "/advisor" : "/register");
+  }, []);
+
+  const copyCode = async () => {
+    await navigator.clipboard.writeText(CODE_EXAMPLE);
+    setCopiedCode(true);
+    toast.success("Code copied!");
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
   return (
     <div className="relative min-h-screen bg-background">
       <Navbar variant="marketing" />
 
       <main>
         {/* ============ HERO ============ */}
-        <section className="relative px-4 pt-12 pb-20 sm:pt-20 sm:pb-28 lg:px-8 lg:pt-24 lg:pb-32">
-          <FadeIn className="mx-auto max-w-4xl text-center">
-            <div className={cn(rh.badge, "mx-auto mb-6")}>
-              <span className="relative flex size-2">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-60" />
-                <span className="relative inline-flex size-2 rounded-full bg-primary" />
-              </span>
-              <span>AI-powered tier recommendations</span>
-              <span className="h-3 w-px bg-border" />
-              <span className="text-foreground">New</span>
-            </div>
+        <section className="relative overflow-hidden px-4 pt-16 pb-20 sm:pt-24 sm:pb-32 lg:px-8 lg:pt-28 lg:pb-36">
+          {/* Dot grid background */}
+          <div className="dot-grid pointer-events-none absolute inset-0 opacity-40" />
+          
+          <div className="relative">
+            <FadeIn className="mx-auto max-w-4xl text-center">
+              <div className={cn(rh.eyebrowPill, "mx-auto mb-6")}>
+                <span className="relative flex size-2">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-60" />
+                  <span className="relative inline-flex size-2 rounded-full bg-primary" />
+                </span>
+                <span>The OCR intelligence layer</span>
+              </div>
 
-            <h1 className={cn(rh.display, "text-balance text-foreground sm:text-6xl lg:text-7xl")}>
-              The right OCR tier for every document.
-            </h1>
+              <h1 className={cn(rh.display, "text-balance text-foreground")}>
+                Every OCR engine.{" "}
+                <span className="text-primary">One intelligent answer.</span>
+              </h1>
 
-            <p className="mx-auto mt-7 max-w-2xl text-balance text-lg leading-relaxed text-muted-foreground sm:text-xl">
-              Planet OCR&apos;s AI advisor understands your needs, recommends the ideal processing
-              tier, and lets you validate with a live demo — buy with confidence, not guesswork.
+              <p className="mx-auto mt-8 max-w-2xl text-balance text-lg leading-relaxed text-muted-foreground sm:text-xl">
+                Upload a document and our agent benchmarks every engine — open-source and commercial
+                — on your actual data, then routes to the winner. Stop guessing which OCR to use.
+              </p>
+
+              <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+                <Link
+                  href={tryHref}
+                  className={cn(buttonVariants({ size: "lg" }), "group gap-2")}
+                >
+                  Try it on your document
+                  <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
+                </Link>
+                <Link
+                  href="/docs"
+                  className={cn(buttonVariants({ variant: "outline", size: "lg" }), "gap-2")}
+                >
+                  Read the docs
+                </Link>
+              </div>
+
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="size-4 text-primary" />
+                  No credit card required
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="size-4 text-primary" />
+                  50 free pages
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="size-4 text-primary" />
+                  Cancel anytime
+                </span>
+              </div>
+            </FadeIn>
+
+            {/* Code preview */}
+            <FadeIn delay={0.15} className="mx-auto mt-16 max-w-2xl">
+              <div className="overflow-hidden rounded-xl border border-border bg-foreground shadow-2xl">
+                <div className="flex items-center justify-between gap-2 border-b border-border/80 bg-foreground px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="size-3 rounded-full bg-muted-foreground/30" />
+                    <span className="size-3 rounded-full bg-muted-foreground/40" />
+                    <span className="size-3 rounded-full bg-primary" />
+                  </div>
+                  <span className="flex items-center gap-2 font-mono text-xs text-muted-foreground">
+                    <Terminal className="size-3.5" />
+                    quickstart.py
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={copyCode}
+                    className="h-7 gap-1.5 rounded-md text-xs text-muted-foreground hover:bg-muted/20 hover:text-primary-foreground"
+                  >
+                    {copiedCode ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                    {copiedCode ? "Copied" : "Copy"}
+                  </Button>
+                </div>
+                <pre className="overflow-x-auto p-5 font-mono text-sm leading-relaxed text-primary-foreground">
+                  <code>{CODE_EXAMPLE}</code>
+                </pre>
+              </div>
+            </FadeIn>
+          </div>
+        </section>
+
+        {/* ============ LOGOS ============ */}
+        <section className="border-y border-border bg-card/50 px-4 py-10 lg:px-8">
+          <FadeIn className="mx-auto max-w-6xl">
+            <p className={cn(rh.monoLabel, "mb-6 text-center")}>
+              One API in front of 40+ engines
             </p>
-
-            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-              <Link
-                href="/register"
-                className={cn(buttonVariants({ size: "lg" }), "group gap-2")}
-              >
-                Get Started Free
-                <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
-              </Link>
-              <Link
-                href="/advisor"
-                className={cn(buttonVariants({ variant: "outline", size: "lg" }), "gap-2")}
-              >
-                <Sparkles className="size-4" />
-                Try the Advisor
-              </Link>
-            </div>
-
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="size-4 text-foreground" />
-                No credit card required
-              </span>
-              <span className="hidden text-border sm:inline">·</span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="size-4 text-foreground" />
-                50 free pages
-              </span>
-              <span className="hidden text-border sm:inline">·</span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="size-4 text-foreground" />
-                Cancel anytime
-              </span>
+            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
+              {logos.map((logo) => (
+                <span
+                  key={logo}
+                  className="font-mono text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {logo}
+                </span>
+              ))}
             </div>
           </FadeIn>
+        </section>
 
-          {/* Stats */}
-          <FadeIn delay={0.15} className="mx-auto mt-20 max-w-6xl">
-            <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+        {/* ============ STATS ============ */}
+        <section className="px-4 py-16 lg:px-8 lg:py-20">
+          <FadeIn className="mx-auto max-w-6xl">
+            <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
               {stats.map((stat, i) => {
                 const Icon = stat.icon;
                 return (
                   <div
                     key={stat.label}
-                    className={cn(rh.cardHover, "p-5 text-center")}
-                    style={{ animationDelay: `${i * 0.1}s` }}
+                    className={cn(rh.card, "p-6 text-center")}
                   >
-                    <div className="space-y-3">
-                      <div className={cn(iconBox("md"), "mx-auto")}>
-                        <Icon className="size-5" />
-                      </div>
-                      <div className={rh.statValue}>{stat.value}</div>
-                      <div className={cn(rh.label, "normal-case tracking-normal")}>
-                        {stat.label}
-                      </div>
+                    <div className={cn(iconBox("md"), "mx-auto mb-4")}>
+                      <Icon className="size-5" />
+                    </div>
+                    <div className={cn(rh.statValue, "text-3xl sm:text-4xl")}>{stat.value}</div>
+                    <div className="mt-1 text-sm font-medium text-muted-foreground">
+                      {stat.label}
                     </div>
                   </div>
                 );
@@ -180,8 +374,41 @@ export default function HomePage() {
           </FadeIn>
         </section>
 
+        {/* ============ FEATURES ============ */}
+        <section className="px-4 py-16 lg:px-8 lg:py-24">
+          <FadeIn className="mx-auto mb-14 max-w-2xl text-center">
+            <p className={rh.eyebrow}>Why Planet OCR</p>
+            <h2 className={cn(rh.h1, "text-4xl sm:text-5xl")}>
+              The brain, not just the pipe
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg">
+              Aggregators hand you a catalogue and leave you to guess. We tell you which engine
+              wins — on your documents.
+            </p>
+          </FadeIn>
+
+          <div className="mx-auto grid max-w-6xl gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {features.map((feature, i) => {
+              const Icon = feature.icon;
+              return (
+                <FadeIn key={feature.title} delay={0.05 + i * 0.05}>
+                  <div className={cn(rh.cardHover, "h-full p-6")}>
+                    <div className={iconBox("md", "mb-4")}>
+                      <Icon className="size-5" />
+                    </div>
+                    <h3 className={cn(rh.h2, "mb-2")}>{feature.title}</h3>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      {feature.description}
+                    </p>
+                  </div>
+                </FadeIn>
+              );
+            })}
+          </div>
+        </section>
+
         {/* ============ HOW IT WORKS ============ */}
-        <section className={rh.section}>
+        <section className="bg-card/50 px-4 py-16 lg:px-8 lg:py-24">
           <FadeIn className="mx-auto mb-14 max-w-2xl text-center">
             <p className={rh.eyebrow}>How it works</p>
             <h2 className={cn(rh.h1, "text-4xl sm:text-5xl")}>
@@ -192,22 +419,22 @@ export default function HomePage() {
             </p>
           </FadeIn>
 
-          <div className="mx-auto grid max-w-6xl gap-5 md:grid-cols-3">
+          <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
             {steps.map((step, i) => {
               const Icon = step.icon;
               return (
                 <FadeIn key={step.title} delay={0.1 + i * 0.08}>
-                  <div className={cn(rh.cardHover, "h-full p-7")}>
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className={iconBox("lg")}>
-                          <Icon className="size-6" />
-                        </div>
-                        <span className={cn(rh.badge, "px-2.5 py-0.5 normal-case tracking-normal")}>
-                          Step {i + 1}
-                        </span>
+                  <div className={cn(rh.card, "relative h-full p-7")}>
+                    <div className="absolute -top-4 left-6">
+                      <span className="flex size-8 items-center justify-center rounded-full border border-primary/40 bg-accent font-mono text-sm font-bold text-primary">
+                        {i + 1}
+                      </span>
+                    </div>
+                    <div className="pt-4">
+                      <div className={iconBox("lg", "mb-4")}>
+                        <Icon className="size-6" />
                       </div>
-                      <h3 className={rh.h2}>{step.title}</h3>
+                      <h3 className={cn(rh.h2, "mb-2")}>{step.title}</h3>
                       <p className="text-sm leading-relaxed text-muted-foreground">
                         {step.description}
                       </p>
@@ -223,16 +450,48 @@ export default function HomePage() {
           </FadeIn>
         </section>
 
+        {/* ============ USE CASES ============ */}
+        <section className="px-4 py-16 lg:px-8 lg:py-24">
+          <FadeIn className="mx-auto mb-14 max-w-2xl text-center">
+            <p className={rh.eyebrow}>Use cases</p>
+            <h2 className={cn(rh.h1, "text-4xl sm:text-5xl")}>
+              Built for every document type
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg">
+              From invoices to IDs, our engines handle diverse document formats with industry-leading accuracy.
+            </p>
+          </FadeIn>
+
+          <div className="mx-auto grid max-w-5xl gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {useCases.map((useCase, i) => {
+              const Icon = useCase.icon;
+              return (
+                <FadeIn key={useCase.title} delay={0.05 + i * 0.05}>
+                  <div className={cn(rh.cardHover, "h-full p-5 text-center")}>
+                    <div className={cn(iconBox("lg"), "mx-auto mb-4")}>
+                      <Icon className="size-6" />
+                    </div>
+                    <h3 className="mb-2 font-bold text-foreground">{useCase.title}</h3>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      {useCase.description}
+                    </p>
+                  </div>
+                </FadeIn>
+              );
+            })}
+          </div>
+        </section>
+
         {/* ============ TRUST STRIP ============ */}
-        <FadeIn className="px-4 py-12 lg:px-8">
-          <div className="mx-auto max-w-5xl">
-            <div className={cn(rh.card, "grid grid-cols-1 gap-3 p-4 sm:grid-cols-3 sm:gap-2")}>
+        <FadeIn className="px-4 py-8 lg:px-8">
+          <div className="mx-auto max-w-4xl">
+            <div className={cn(rh.card, "grid grid-cols-1 gap-3 p-4 sm:grid-cols-3")}>
               {trust.map((item) => {
                 const Icon = item.icon;
                 return (
                   <div
                     key={item.label}
-                    className="group flex items-center justify-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-foreground/80 transition-colors hover:bg-muted/50"
+                    className="flex items-center justify-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-foreground/80"
                   >
                     <div className={iconBox("sm")}>
                       <Icon className="size-4" />
@@ -246,12 +505,12 @@ export default function HomePage() {
         </FadeIn>
 
         {/* ============ PRICING TEASER ============ */}
-        <section className={rh.section}>
+        <section className="px-4 py-16 lg:px-8 lg:py-24">
           <FadeIn className="mx-auto mb-14 max-w-2xl text-center">
             <p className={rh.eyebrow}>Transparent pricing</p>
             <h2 className={cn(rh.h1, "text-4xl sm:text-5xl")}>Capability-based tiers</h2>
             <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg">
-              No opaque model names — just what you actually need.
+              No opaque model names — just what you actually need. Start free, scale as you grow.
             </p>
           </FadeIn>
 
@@ -259,18 +518,18 @@ export default function HomePage() {
             {tiers.map((tier, i) => {
               const isHighlight = !!tier.highlight;
               return (
-                <FadeIn key={tier.slug} delay={0.1 + i * 0.06} className="h-full">
+                <FadeIn key={tier.slug} delay={0.05 + i * 0.05} className="h-full">
                   <div className={cn("relative h-full", isHighlight && "lg:-my-2")}>
                     <div
                       className={cn(
                         rh.card,
                         "relative flex h-full flex-col p-6",
-                        isHighlight && "border-foreground/20 shadow-md"
+                        isHighlight && "border-primary/50 shadow-lg"
                       )}
                     >
                       {isHighlight && (
                         <div className="absolute -top-3.5 left-1/2 z-10 -translate-x-1/2">
-                          <div className={cn(rh.badge, "gap-1.5 text-foreground")}>
+                          <div className={cn(rh.recBadge)}>
                             <Star className="size-3 fill-current" />
                             Popular
                           </div>
@@ -304,7 +563,7 @@ export default function HomePage() {
             })}
           </div>
 
-          <FadeIn delay={0.4} className="mt-10 text-center">
+          <FadeIn delay={0.3} className="mt-10 text-center">
             <Link
               href="/pricing"
               className={cn(buttonVariants({ variant: "outline", size: "lg" }), "gap-2")}
@@ -315,34 +574,76 @@ export default function HomePage() {
           </FadeIn>
         </section>
 
+        {/* ============ FAQ ============ */}
+        <section className="bg-card/50 px-4 py-16 lg:px-8 lg:py-24">
+          <FadeIn className="mx-auto mb-14 max-w-2xl text-center">
+            <p className={rh.eyebrow}>FAQ</p>
+            <h2 className={cn(rh.h1, "text-4xl sm:text-5xl")}>
+              Common questions
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg">
+              Everything you need to know about Planet OCR.
+            </p>
+          </FadeIn>
+
+          <div className="mx-auto max-w-3xl space-y-3">
+            {faqs.map((faq, i) => (
+              <FadeIn key={i} delay={0.03 * i}>
+                <div className={cn(rh.card, "overflow-hidden")}>
+                  <button
+                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                    className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left transition-colors hover:bg-muted/30"
+                  >
+                    <span className="font-semibold text-foreground">{faq.q}</span>
+                    <ChevronDown
+                      className={cn(
+                        "size-5 shrink-0 text-muted-foreground transition-transform",
+                        openFaq === i && "rotate-180"
+                      )}
+                    />
+                  </button>
+                  {openFaq === i && (
+                    <div className="border-t border-border px-6 py-5 text-sm leading-relaxed text-muted-foreground">
+                      {faq.a}
+                    </div>
+                  )}
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+        </section>
+
         {/* ============ FINAL CTA ============ */}
-        <section className="px-4 py-16 lg:px-8 lg:py-20">
+        <section className="px-4 py-16 lg:px-8 lg:py-24">
           <FadeIn className="mx-auto max-w-5xl">
-            <div className={cn(rh.card, "p-8 text-center sm:p-14")}>
-              <div className={cn(iconBox("lg"), "mx-auto mb-5")}>
-                <Sparkles className="size-6" />
-              </div>
-              <h2 className={cn(rh.h1, "text-4xl sm:text-5xl")}>
-                Ready to find your perfect tier?
-              </h2>
-              <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-                Start a conversation with our AI advisor, get a personalised tier recommendation,
-                then validate with a live OCR demo before you commit.
-              </p>
-              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Link
-                  href="/register"
-                  className={cn(buttonVariants({ size: "lg" }), "group gap-2")}
-                >
-                  Create Free Account
-                  <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
-                </Link>
-                <Link
-                  href="/advisor"
-                  className={cn(buttonVariants({ variant: "outline", size: "lg" }), "gap-2")}
-                >
-                  Try the Advisor
-                </Link>
+            <div className={cn(rh.card, "overflow-hidden p-8 text-center sm:p-14")}>
+              <div className="dot-grid pointer-events-none absolute inset-0 opacity-30" />
+              <div className="relative">
+                <div className={cn(iconBox("lg"), "mx-auto mb-5")}>
+                  <Upload className="size-6" />
+                </div>
+                <h2 className={cn(rh.h1, "text-4xl sm:text-5xl")}>
+                  Find your best OCR in 30 seconds
+                </h2>
+                <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+                  Free for your first document. No card required. Upload, benchmark, and see
+                  which engine wins — on your actual data.
+                </p>
+                <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                  <Link
+                    href={tryHref}
+                    className={cn(buttonVariants({ size: "lg" }), "group gap-2")}
+                  >
+                    Upload a document
+                    <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                  <Link
+                    href="/register"
+                    className={cn(buttonVariants({ variant: "outline", size: "lg" }), "gap-2")}
+                  >
+                    Create free account
+                  </Link>
+                </div>
               </div>
             </div>
           </FadeIn>

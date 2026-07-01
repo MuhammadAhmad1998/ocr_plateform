@@ -13,7 +13,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { FadeIn } from "@/components/fade-in";
-import { Navbar } from "@/components/Navbar";
+import { AppSidebar } from "@/components/AppSidebar";
 import { buttonVariants } from "@/components/ui/button";
 import { iconBox, rh } from "@/lib/remote-hub";
 import { cn } from "@/lib/utils";
@@ -125,8 +125,8 @@ const FAQS = [
 
 export default function PricingPage() {
   return (
-    <div className="relative min-h-screen bg-background">
-      <Navbar variant="marketing" />
+    <div className="relative min-h-screen bg-background lg:pl-72">
+      <AppSidebar />
 
       <main className="mx-auto max-w-7xl px-4 py-12 lg:px-8 lg:py-16">
         {/* ============ HERO ============ */}

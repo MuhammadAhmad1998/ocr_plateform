@@ -32,7 +32,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { api, formatEngineName, getToken, streamMessage } from "@/lib/api";
-import { rh } from "@/lib/remote-hub";
+import { rh, iconBox } from "@/lib/remote-hub";
 import { useAdvisorStore } from "@/lib/store";
 import { TIER_NAMES, cn } from "@/lib/utils";
 
@@ -50,6 +50,7 @@ export default function AdvisorPage() {
  const inputRef = useRef<HTMLInputElement>(null);
  const [input, setInput] = useState("");
  const [initLoading, setInitLoading] = useState(true);
+ const [authenticated, setAuthenticated] = useState<boolean | null>(null);
  const [wizardStep, setWizardStep] = useState(0);
  const [uploading, setUploading] = useState(false);
  const pollRef = useRef<NodeJS.Timeout | null>(null);
@@ -81,9 +82,10 @@ export default function AdvisorPage() {
 
  useEffect(() => {
  if (!getToken()) {
- router.push("/login");
+ router.replace("/login?next=/advisor");
  return;
  }
+ setAuthenticated(true);
  async function init() {
  try {
  const [session, capabilities] = await Promise.all([
@@ -95,7 +97,7 @@ export default function AdvisorPage() {
  if (session.recommendation) setRecommendation(session.recommendation);
  if (session.document_id) setDocument(session.document_id, "Uploaded document");
  } catch {
- router.push("/login");
+ router.replace("/login?next=/advisor");
  } finally {
  setInitLoading(false);
  }
@@ -260,6 +262,10 @@ export default function AdvisorPage() {
  [messages]
  );
 
+ if (authenticated !== true) {
+ return null;
+ }
+
  if (initLoading) {
  return (
  <div className="relative flex min-h-screen flex-col overflow-hidden bg-background lg:pl-72">
@@ -268,8 +274,8 @@ export default function AdvisorPage() {
  <div className="space-y-6 text-center">
  <div className="relative mx-auto size-20">
  <div className="absolute inset-0 animate-pulse rounded-full bg-card" />
- <div className="relative flex size-20 items-center justify-center rounded-full bg-card">
- <Sparkles className="size-9 animate-pulse text-white" />
+ <div className="relative flex size-20 items-center justify-center rounded-full border border-primary/40 bg-accent">
+ <Sparkles className="size-9 animate-pulse text-primary" />
  </div>
  </div>
  <div className="space-y-2">
@@ -371,7 +377,7 @@ export default function AdvisorPage() {
  {isComplete ? <CheckCircle2 className="size-5" /> : <Icon className="size-4" />}
  </div>
  <div className="min-w-0 hidden sm:block">
- <p className={cn("text-[10px] font-semibold uppercase tracking-wider", isCurrent ? "text-white/70" : "opacity-70")}>
+ <p className={cn("text-[10px] font-semibold uppercase tracking-wider", isCurrent ? "text-primary" : "opacity-70")}>
  Step {idx + 1}
  </p>
  <p className="truncate text-sm font-semibold">{step.label}</p>
@@ -399,19 +405,9 @@ export default function AdvisorPage() {
  <div className="absolute -inset-px rounded-3xl bg-card" />
  <div className="relative flex min-h-[640px] flex-col overflow-hidden rounded-3xl border border-border/70 bg-card/95 shadow-2xl ">
  {/* HEADER */}
- <div className="flex items-center justify-between gap-3 border-b border-border/60 bg-card">
+ <div className="flex items-center justify-between gap-3 border-b border-border/60 bg-card px-5 py-4">
  <div className="flex items-center gap-3">
- <div
- className={cn(
- "flex size-10 items-center justify-center rounded-xl text-white shadow-md",
- wizardStep === 0 &&
- "bg-card",
- wizardStep === 1 &&
- "bg-card",
- wizardStep === 2 &&
- "bg-card"
- )}
- >
+ <div className={iconBox("md")}>
  {wizardStep === 0 && <MessageSquare className="size-5" />}
  {wizardStep === 1 && <Sparkles className="size-5" />}
  {wizardStep === 2 && <Zap className="size-5" />}
@@ -671,7 +667,7 @@ export default function AdvisorPage() {
 
  <div className="overflow-hidden rounded-3xl border border-border/70 bg-card/90 shadow-md ">
  <div className="flex items-center gap-2 border-b border-border/60 px-5 py-3.5">
- <div className="flex size-7 items-center justify-center rounded-lg bg-card">
+ <div className={iconBox("sm", "size-7 rounded-lg")}>
  <Bot className="size-3.5" />
  </div>
  <h3 className="text-sm font-semibold text-foreground">Advisor Mode</h3>
@@ -692,12 +688,7 @@ export default function AdvisorPage() {
  ].map((text, i) => (
  <li key={i} className="flex gap-3">
  <span
- className={cn(
- "flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white",
- i === 0 && "bg-card",
- i === 1 && "bg-card",
- i === 2 && "bg-card"
- )}
+ className="flex size-5 shrink-0 items-center justify-center rounded-full border border-primary/40 bg-accent text-[10px] font-bold text-primary"
  >
  {i + 1}
  </span>
@@ -737,10 +728,10 @@ function ChatBubble({
  >
  <div
  className={cn(
- "flex size-9 shrink-0 items-center justify-center rounded-2xl text-white shadow-md",
+ "flex size-9 shrink-0 items-center justify-center rounded-xl",
  isUser
- ? "bg-card"
- : "bg-card"
+ ? "bg-muted text-foreground"
+ : "border border-primary/40 bg-accent text-primary"
  )}
  >
  {isUser ? <User className="size-4" /> : <Sparkles className="size-4" />}
@@ -775,7 +766,7 @@ function StreamingBubble({
  animate={{ opacity: 1, y: 0 }}
  className="flex min-w-0 items-end gap-3"
  >
- <div className="relative flex size-9 shrink-0 items-center justify-center rounded-2xl bg-card">
+ <div className={cn(iconBox("sm"), "relative rounded-xl")}>
  <Sparkles className="size-4 animate-pulse" />
  <span className="absolute inset-0 animate-ping rounded-xl bg-primary/30" />
  </div>

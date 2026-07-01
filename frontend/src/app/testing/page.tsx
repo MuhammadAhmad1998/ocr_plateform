@@ -334,10 +334,10 @@ export default function TestingPage() {
  <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
  {/* ========== LEFT: CONFIG ========== */}
  <FadeIn delay={0.05}>
- <div className="space-y-6 rounded-3xl border border-border/60 bg-card shadow-md">
+ <div className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-md">
  {/* Step header */}
- <div className="flex items-center gap-3 border-b border-border/60 bg-card">
- <div className="flex size-10 items-center justify-center rounded-xl bg-card">
+ <div className="flex items-center gap-3 border-b border-border/60 bg-card px-6 py-5">
+ <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary/40 bg-accent text-primary">
  <span className="text-base font-extrabold">1</span>
  </div>
  <div>
@@ -348,7 +348,7 @@ export default function TestingPage() {
  </div>
  </div>
 
- <div className="space-y-6 px-6 pb-6">
+ <div className="space-y-6 p-6">
  {/* ========= DROP ZONE ========= */}
  {!file ? (
  <div
@@ -671,10 +671,10 @@ export default function TestingPage() {
 
  {/* ========== RIGHT: RESULTS ========== */}
  <FadeIn delay={0.1}>
- <div className="rounded-3xl border border-border/60 bg-card shadow-md">
- <div className="flex items-center justify-between gap-3 border-b border-border/60 bg-card">
+ <div className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-md">
+ <div className="flex items-center justify-between gap-3 border-b border-border/60 bg-card px-6 py-5">
  <div className="flex items-center gap-3">
- <div className="flex size-10 items-center justify-center rounded-xl bg-card">
+ <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary/40 bg-accent text-primary">
  <span className="text-base font-extrabold">2</span>
  </div>
  <div>
