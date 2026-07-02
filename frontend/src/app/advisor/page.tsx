@@ -28,7 +28,7 @@ import { DemoUpload } from "@/components/DemoUpload";
 import { AppSidebar } from "@/components/AppSidebar";
 import { RecommendationCard } from "@/components/RecommendationCard";
 import { ResponseModeBadge } from "@/components/ResponseModeBadge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { api, formatEngineName, getToken, streamMessage } from "@/lib/api";
@@ -36,12 +36,28 @@ import { useAdvisorStore } from "@/lib/store";
 import { TIER_NAMES, cn } from "@/lib/utils";
 
 const WIZARD_STEPS = [
-  { id: "discuss", label: "Discuss", description: "Tell us about your needs", icon: MessageSquare },
-  { id: "recommend", label: "Match", description: "Review your tier", icon: Sparkles },
-  { id: "demo", label: "Demo", description: "See live OCR output", icon: Zap },
+  { id: "discuss",   label: "Upload",  description: "Tell us about your needs",    icon: MessageSquare },
+  { id: "recommend", label: "Analyze", description: "Running benchmarks",           icon: Sparkles },
+  { id: "demo",      label: "Verdict", description: "Review your recommendation",  icon: Zap },
 ] as const;
 
 const MAX_INPUT_LENGTH = 1000;
+
+/* =====================================================================
+   Styles using CSS variables (no Tailwind color classes)
+   ===================================================================== */
+const S = {
+  card: {
+    background: "rgb(var(--surface-1))",
+    border: "0.5px solid rgb(var(--border))",
+    borderRadius: "12px",
+  } as React.CSSProperties,
+  panelHeader: {
+    borderBottom: "0.5px solid rgb(var(--border))",
+    background: "rgb(var(--surface-1))",
+    padding: "15px 20px",
+  } as React.CSSProperties,
+};
 
 export default function AdvisorPage() {
   const router = useRouter();
@@ -54,35 +70,16 @@ export default function AdvisorPage() {
   const pollRef = useRef<NodeJS.Timeout | null>(null);
 
   const {
-    sessionId,
-    messages,
-    streamingContent,
-    isStreaming,
-    recommendation,
-    demoResult,
-    demoStatus,
-    documentId,
-    documentName,
-    setSession,
-    setDocument,
-    addMessage,
-    setStreaming,
-    appendStream,
-    finalizeStream,
-    setRecommendation,
-    setDemoJob,
-    setDemoResult,
-    systemCapabilities,
-    pendingResponseMeta,
-    setSystemCapabilities,
+    sessionId, messages, streamingContent, isStreaming,
+    recommendation, demoResult, demoStatus, documentId, documentName,
+    setSession, setDocument, addMessage, setStreaming, appendStream,
+    finalizeStream, setRecommendation, setDemoJob, setDemoResult,
+    systemCapabilities, pendingResponseMeta, setSystemCapabilities,
     setPendingResponseMeta,
   } = useAdvisorStore();
 
   useEffect(() => {
-    if (!getToken()) {
-      router.push("/login");
-      return;
-    }
+    if (!getToken()) { router.push("/login"); return; }
     async function init() {
       try {
         const [session, capabilities] = await Promise.all([
@@ -93,11 +90,8 @@ export default function AdvisorPage() {
         setSystemCapabilities(capabilities);
         if (session.recommendation) setRecommendation(session.recommendation);
         if (session.document_id) setDocument(session.document_id, "Uploaded document");
-      } catch {
-        router.push("/login");
-      } finally {
-        setInitLoading(false);
-      }
+      } catch { router.push("/login"); }
+      finally { setInitLoading(false); }
     }
     init();
   }, [router, setSession, setRecommendation, setSystemCapabilities, setDocument]);
@@ -126,77 +120,50 @@ export default function AdvisorPage() {
 
   useEffect(() => {
     if (!isStreaming && wizardStep === 0 && !recommendation) {
-      const timer = window.setTimeout(focusChatInput, 0);
-      return () => window.clearTimeout(timer);
+      const t = window.setTimeout(focusChatInput, 0);
+      return () => window.clearTimeout(t);
     }
   }, [isStreaming, wizardStep, recommendation, messages.length, focusChatInput]);
 
-  const handleSelectPrompt = useCallback(
-    (prompt: string) => {
-      setInput(prompt);
-      focusChatInput();
-    },
-    [focusChatInput]
-  );
+  const handleSelectPrompt = useCallback((prompt: string) => {
+    setInput(prompt); focusChatInput();
+  }, [focusChatInput]);
 
-  const startDemo = useCallback(
-    async (sid: string) => {
-      try {
-        const { job_id } = await api.runDemo(sid);
-        setDemoJob(job_id);
-        pollRef.current = setInterval(async () => {
-          const result = await api.getDemoResult(job_id);
-          if (result.status === "completed") {
-            setDemoResult(
-              {
-                text: result.text ?? undefined,
-                confidence: result.confidence ?? undefined,
-                timing_ms: result.timing_ms ?? undefined,
-              },
-              "completed"
-            );
-            if (pollRef.current) clearInterval(pollRef.current);
-          } else if (result.status === "failed") {
-            setDemoResult(null, "failed");
-            if (pollRef.current) clearInterval(pollRef.current);
-          }
-        }, 2000);
-      } catch (err) {
-        console.error("Demo failed:", err);
-        const message = err instanceof Error ? err.message : "Could not start live demo";
-        toast.error(message);
-      }
-    },
-    [setDemoJob, setDemoResult]
-  );
+  const startDemo = useCallback(async (sid: string) => {
+    try {
+      const { job_id } = await api.runDemo(sid);
+      setDemoJob(job_id);
+      pollRef.current = setInterval(async () => {
+        const result = await api.getDemoResult(job_id);
+        if (result.status === "completed") {
+          setDemoResult({ text: result.text ?? undefined, confidence: result.confidence ?? undefined, timing_ms: result.timing_ms ?? undefined }, "completed");
+          if (pollRef.current) clearInterval(pollRef.current);
+        } else if (result.status === "failed") {
+          setDemoResult(null, "failed");
+          if (pollRef.current) clearInterval(pollRef.current);
+        }
+      }, 2000);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not start live demo");
+    }
+  }, [setDemoJob, setDemoResult]);
 
   const handleGoToDemo = useCallback(() => setWizardStep(2), []);
 
-  const handleStepClick = useCallback(
-    (index: number) => {
-      if (index === 0 && recommendation) {
-        toast.info("Recommendation already generated — start a new session to revise.");
-        return;
-      }
-      if (index > wizardStep && !recommendation) return;
-      setWizardStep(index);
-    },
-    [recommendation, wizardStep]
-  );
+  const handleStepClick = useCallback((index: number) => {
+    if (index === 0 && recommendation) { toast.info("Recommendation already generated."); return; }
+    if (index > wizardStep && !recommendation) return;
+    setWizardStep(index);
+  }, [recommendation, wizardStep]);
 
-  const handleUploadDocument = useCallback(
-    async (file: File) => {
-      if (!sessionId) return;
-      setUploading(true);
-      try {
-        const doc = await api.uploadDocument(file, sessionId);
-        setDocument(doc.id, doc.filename);
-      } finally {
-        setUploading(false);
-      }
-    },
-    [sessionId, setDocument]
-  );
+  const handleUploadDocument = useCallback(async (file: File) => {
+    if (!sessionId) return;
+    setUploading(true);
+    try {
+      const doc = await api.uploadDocument(file, sessionId);
+      setDocument(doc.id, doc.filename);
+    } finally { setUploading(false); }
+  }, [sessionId, setDocument]);
 
   const handleProcessDocument = useCallback(() => {
     if (!sessionId || !documentId) return;
@@ -206,512 +173,362 @@ export default function AdvisorPage() {
   async function handleSend(e?: React.FormEvent) {
     e?.preventDefault();
     if (!input.trim() || !sessionId || isStreaming) return;
-
     const content = input.trim();
     setInput("");
     addMessage({ role: "user", content });
     setStreaming("", true);
-
-    streamMessage(
-      sessionId,
-      content,
+    streamMessage(sessionId, content,
       (chunk) => appendStream(chunk),
       (rec) => setRecommendation(rec),
-      () => {
-        finalizeStream();
-        focusChatInput();
-      },
-      (err) => {
-        console.error(err);
-        finalizeStream();
-        focusChatInput();
-        toast.error("Message failed — please try again");
-      },
+      () => { finalizeStream(); focusChatInput(); },
+      (err) => { console.error(err); finalizeStream(); focusChatInput(); toast.error("Message failed — please try again"); },
       (meta) => setPendingResponseMeta(meta)
     );
   }
 
   function handleInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-      e.preventDefault();
-      handleSend();
-    }
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); handleSend(); }
   }
 
-  useEffect(
-    () => () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    },
-    []
-  );
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
   const inputDisabled = isStreaming || !!recommendation;
   const charCount = input.length;
-  const charCountColor =
-    charCount > MAX_INPUT_LENGTH * 0.9
-      ? "text-rose-500"
-      : charCount > MAX_INPUT_LENGTH * 0.7
-        ? "text-amber-500"
-        : "text-muted-foreground";
+  const charCountColor = charCount > MAX_INPUT_LENGTH * 0.9 ? "rgb(var(--coral))" : charCount > MAX_INPUT_LENGTH * 0.7 ? "rgb(var(--amber))" : "rgb(var(--text-3))";
 
-  const turnCount = useMemo(
-    () => messages.filter((m) => m.role === "user").length,
-    [messages]
-  );
+  const turnCount = useMemo(() => messages.filter((m) => m.role === "user").length, [messages]);
 
   if (initLoading) {
     return (
-      <div className="relative flex min-h-screen flex-col overflow-hidden bg-background lg:pl-72">
-        <BackgroundOrbs />
+      <div className="flex min-h-screen lg:pl-[200px]" style={{ background: "rgb(var(--base))" }}>
         <AppSidebar />
-        <div className="flex flex-1 items-center justify-center">
-          <div className="space-y-6 text-center">
-            <div className="relative mx-auto size-20">
-              <div className="absolute inset-0 animate-pulse rounded-full bg-gradient-to-br from-indigo-500/30 to-cyan-500/30 blur-2xl" />
-              <div className="relative flex size-20 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-cyan-500 shadow-2xl shadow-indigo-500/30">
-                <Sparkles className="size-9 animate-pulse text-white" />
-              </div>
+        <main className="flex flex-1 items-center justify-center px-4 py-6">
+          <div className="space-y-4 text-center">
+            <div
+              className="mx-auto flex size-16 items-center justify-center rounded-full"
+              style={{ background: "rgb(var(--teal-bg))", border: "0.5px solid rgb(var(--teal-border))" }}
+            >
+              <Sparkles className="size-7 animate-pulse" style={{ color: "rgb(var(--teal))" }} />
             </div>
-            <div className="space-y-2">
-              <p className="text-2xl font-bold tracking-tight text-foreground">
-                Booting the Advisor
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Preparing your AI-powered OCR concierge…
-              </p>
-            </div>
+            <p className="text-lg font-semibold" style={{ color: "rgb(var(--text-1))" }}>Booting the Advisor…</p>
           </div>
-        </div>
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-background lg:pl-72">
-      <BackgroundOrbs />
+    <div className="flex min-h-screen lg:pl-[200px]" style={{ background: "rgb(var(--base))" }}>
       <AppSidebar />
 
-      <main className="relative z-10 flex w-full flex-1 flex-col gap-8 px-4 py-8 lg:gap-10 lg:px-8">
-        {/* ============= HERO ============= */}
-        <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-indigo-500/10 via-cyan-500/5 to-fuchsia-500/10 p-6 shadow-xl sm:p-8 lg:p-10">
-          <div className="pointer-events-none absolute -right-20 -top-20 size-72 rounded-full bg-fuchsia-500/15 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 -left-12 size-72 rounded-full bg-cyan-500/15 blur-3xl" />
+      {/* Full-height content area */}
+      <main className="flex flex-1 min-h-screen flex-col overflow-hidden px-4 py-6 lg:px-8">
+        {/* Two-column layout: main wizard + info sidebar */}
+        <div className="flex flex-1 gap-6 min-h-0">
 
-          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-4">
-              <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/60 px-3 py-1 text-xs font-semibold text-foreground/70 backdrop-blur">
-                <span className="relative flex size-2">
-                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                  <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
-                </span>
-                AI Advisor · Live
-              </div>
-              <h1 className="bg-gradient-to-br from-indigo-600 via-cyan-600 to-fuchsia-600 bg-clip-text text-4xl font-extrabold leading-tight tracking-tight text-transparent dark:from-indigo-300 dark:via-cyan-300 dark:to-fuchsia-300 sm:text-5xl lg:text-6xl">
-                Find your perfect
-                <br />
-                OCR setup in 3 steps.
-              </h1>
-              <p className="max-w-xl text-base text-muted-foreground sm:text-lg">
-                Chat about your documents, get a tier match, and watch a live demo on a real file —
-                all powered by your indexed knowledge base.
-              </p>
+          {/* ============ LEFT: Wizard Column ============ */}
+          <div className="flex flex-1 min-w-0 flex-col">
+
+            {/* ============ STEP BAR ============ */}
+            <div className="mb-4 flex items-center lg:mb-5">
+              {WIZARD_STEPS.map((step, idx) => {
+                const isDone = idx < wizardStep;
+                const isCurrent = idx === wizardStep;
+                return (
+                  <div key={step.id} className="flex items-center" style={{ flex: idx < WIZARD_STEPS.length - 1 ? 1 : "none" }}>
+                    <button
+                      type="button"
+                      onClick={() => handleStepClick(idx)}
+                      className="flex items-center gap-2.5 text-sm transition-colors"
+                      style={{
+                        color: isDone || isCurrent ? (isCurrent ? "rgb(var(--text-1))" : "rgb(var(--text-2))") : "rgb(var(--text-3))",
+                      }}
+                    >
+                      <span
+                        className="flex size-6 items-center justify-center rounded-full font-mono text-xs"
+                        style={{
+                          background: isDone ? "rgb(var(--teal))" : "none",
+                          border: isDone ? "0.5px solid rgb(var(--teal))" : isCurrent ? "0.5px solid rgb(var(--teal))" : "0.5px solid rgb(var(--border-strong))",
+                          color: isDone ? "rgb(var(--primary-foreground))" : isCurrent ? "rgb(var(--teal))" : "rgb(var(--text-3))",
+                        }}
+                      >
+                        {isDone ? "✓" : idx + 1}
+                      </span>
+                      {step.label}
+                    </button>
+                    {idx < WIZARD_STEPS.length - 1 && (
+                      <div
+                        className="mx-3 h-px flex-1"
+                        style={{ background: isDone ? "rgb(var(--teal))" : "rgb(var(--border))" }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
-            {turnCount > 0 && (
-              <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-background/70 px-5 py-3 text-sm shadow-sm backdrop-blur">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <MessageSquare className="size-4 text-indigo-500" />
-                  <span>
-                    <span className="font-bold text-foreground">{turnCount}</span>{" "}
-                    {turnCount === 1 ? "msg" : "msgs"}
-                  </span>
-                </div>
-                <span className="h-4 w-px bg-border" />
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Cpu className="size-4 text-cyan-500" />
-                  <span>
-                    Step <span className="font-bold text-foreground">{wizardStep + 1}</span>/3
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* PILL STEPPER */}
-          <div className="relative mt-8 flex items-center gap-3 sm:mt-10">
-            {WIZARD_STEPS.map((step, idx) => {
-              const Icon = step.icon;
-              const isCurrent = idx === wizardStep;
-              const isComplete = idx < wizardStep;
-              const reachable = idx <= wizardStep || !!recommendation;
-              return (
-                <div key={step.id} className="flex flex-1 items-center gap-3">
-                  <button
-                    type="button"
-                    disabled={!reachable}
-                    onClick={() => handleStepClick(idx)}
-                    className={cn(
-                      "group flex flex-1 items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all",
-                      isCurrent &&
-                        "border-transparent bg-gradient-to-r from-indigo-500 to-cyan-500 text-white shadow-lg shadow-indigo-500/30",
-                      isComplete &&
-                        "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 hover:border-emerald-500/60 dark:text-emerald-300",
-                      !isCurrent &&
-                        !isComplete &&
-                        "border-border/70 bg-background/60 text-muted-foreground",
-                      reachable && !isCurrent && "hover:border-primary/40 cursor-pointer",
-                      !reachable && "opacity-50 cursor-not-allowed"
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "flex size-9 shrink-0 items-center justify-center rounded-xl transition-all",
-                        isCurrent && "bg-white/20",
-                        isComplete && "bg-emerald-500 text-white",
-                        !isCurrent && !isComplete && "bg-muted"
-                      )}
-                    >
-                      {isComplete ? <CheckCircle2 className="size-5" /> : <Icon className="size-4" />}
-                    </div>
-                    <div className="min-w-0 hidden sm:block">
-                      <p className={cn("text-[10px] font-semibold uppercase tracking-wider", isCurrent ? "text-white/70" : "opacity-70")}>
-                        Step {idx + 1}
-                      </p>
-                      <p className="truncate text-sm font-semibold">{step.label}</p>
-                    </div>
-                  </button>
-                  {idx < WIZARD_STEPS.length - 1 && (
-                    <div
-                      aria-hidden
-                      className={cn(
-                        "h-0.5 w-4 shrink-0 rounded-full transition-colors sm:w-8",
-                        isComplete ? "bg-emerald-500" : "bg-border"
-                      )}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* ============= MAIN GRID ============= */}
-        <div className="grid flex-1 gap-6 lg:grid-cols-[1fr_360px] lg:gap-8">
-          {/* ============= CHAT / WIZARD CARD ============= */}
-          <div className="group relative">
-            <div className="absolute -inset-px rounded-3xl bg-gradient-to-br from-indigo-500/30 via-transparent to-cyan-500/30 opacity-60 blur-sm transition-opacity group-hover:opacity-100" />
-            <div className="relative flex min-h-[640px] flex-col overflow-hidden rounded-3xl border border-border/70 bg-card/95 shadow-2xl backdrop-blur-xl">
-              {/* HEADER */}
-              <div className="flex items-center justify-between gap-3 border-b border-border/60 bg-gradient-to-r from-background/80 to-muted/30 px-5 py-4 backdrop-blur sm:px-6">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={cn(
-                      "flex size-10 items-center justify-center rounded-xl text-white shadow-md",
-                      wizardStep === 0 &&
-                        "bg-gradient-to-br from-indigo-500 to-violet-500 shadow-indigo-500/30",
-                      wizardStep === 1 &&
-                        "bg-gradient-to-br from-emerald-500 to-cyan-500 shadow-emerald-500/30",
-                      wizardStep === 2 &&
-                        "bg-gradient-to-br from-fuchsia-500 to-rose-500 shadow-fuchsia-500/30"
-                    )}
-                  >
-                    {wizardStep === 0 && <MessageSquare className="size-5" />}
-                    {wizardStep === 1 && <Sparkles className="size-5" />}
-                    {wizardStep === 2 && <Zap className="size-5" />}
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-bold text-foreground">
-                      {WIZARD_STEPS[wizardStep].label}
-                    </h2>
-                    <p className="text-xs text-muted-foreground">
-                      {WIZARD_STEPS[wizardStep].description}
-                    </p>
-                  </div>
-                </div>
-                {wizardStep > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleStepClick(wizardStep - 1)}
-                    className="gap-1.5 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
-                  >
-                    <ArrowLeft className="size-4" />
-                    <span className="hidden sm:inline">Back</span>
-                  </Button>
-                )}
-              </div>
-
-              {/* BODY */}
-              <div className="flex flex-1 flex-col">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={wizardStep}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -12 }}
-                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                    className="flex min-h-0 flex-1 flex-col"
-                  >
-                    {wizardStep === 0 && (
-                      <>
-                        <ScrollArea className="flex-1 px-4 py-6 sm:px-6">
-                          {messages.length === 0 && !isStreaming ? (
-                            <AdvisorChatEmptyState
-                              onSelectPrompt={handleSelectPrompt}
-                              onFocusInput={focusChatInput}
-                            />
-                          ) : (
-                            <div className="space-y-5">
-                              {messages.map((msg, i) => (
-                                <ChatBubble
-                                  key={i}
-                                  role={msg.role}
-                                  content={msg.content}
-                                  responseMeta={msg.responseMeta}
-                                  index={i}
-                                />
-                              ))}
-                              {isStreaming && (
-                                <StreamingBubble
-                                  pendingResponseMeta={pendingResponseMeta}
-                                  streamingContent={streamingContent}
-                                />
-                              )}
-                              <div ref={chatEndRef} />
-                            </div>
-                          )}
-                        </ScrollArea>
-
-                        {recommendation && !isStreaming && (
-                          <div className="border-t border-border/60 bg-gradient-to-r from-emerald-500/5 to-cyan-500/5 px-4 py-4 sm:px-6">
-                            <Button
-                              onClick={() => setWizardStep(1)}
-                              size="lg"
-                              className="w-full gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg shadow-emerald-500/30 transition-all hover:scale-[1.01] hover:shadow-xl"
-                            >
-                              <CheckCircle className="size-5" />
-                              View Your Recommendation
-                              <ArrowRight className="size-5" />
-                            </Button>
-                          </div>
-                        )}
-
-                        <form
-                          onSubmit={handleSend}
-                          className="border-t border-border/60 bg-background/70 p-3 backdrop-blur sm:p-4"
-                        >
-                          <div
-                            className={cn(
-                              "flex items-end gap-2 rounded-2xl border bg-background p-2 transition-all sm:gap-3",
-                              inputDisabled
-                                ? "border-border/60 opacity-60"
-                                : "border-border focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-500/15"
-                            )}
-                          >
-                            <Input
-                              ref={inputRef}
-                              placeholder="Describe your documents, volume, accuracy needs…"
-                              value={input}
-                              onChange={(e) =>
-                                setInput(e.target.value.slice(0, MAX_INPUT_LENGTH))
-                              }
-                              onKeyDown={handleInputKeyDown}
-                              disabled={inputDisabled}
-                              className="flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0"
-                            />
-                            <Button
-                              type="submit"
-                              disabled={inputDisabled || !input.trim()}
-                              size="icon"
-                              className="size-10 shrink-0 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/30 transition-all hover:scale-105 hover:shadow-lg disabled:from-muted disabled:to-muted disabled:text-muted-foreground disabled:shadow-none"
-                              title="Send (⌘ + Enter)"
-                            >
-                              <Send className="size-4" />
-                            </Button>
-                          </div>
-                          <div className="mt-2 flex items-center justify-between px-2 text-[11px]">
-                            <span className="text-muted-foreground">
-                              <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px]">⌘</kbd>{" "}
-                              +{" "}
-                              <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px]">Enter</kbd>{" "}
-                              to send
-                            </span>
-                            <span className={cn("tabular-nums font-medium", charCountColor)}>
-                              {charCount}/{MAX_INPUT_LENGTH}
-                            </span>
-                          </div>
-                        </form>
-                      </>
-                    )}
-
-                    {wizardStep === 1 && recommendation && (
-                      <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6">
-                        <RecommendationCard recommendation={recommendation} />
-                        <div className="mt-auto flex flex-wrap gap-3">
-                          <Button
-                            onClick={handleGoToDemo}
-                            size="lg"
-                            className="flex-1 gap-2 rounded-full bg-gradient-to-r from-fuchsia-500 to-rose-500 text-white shadow-lg shadow-fuchsia-500/30 transition-all hover:scale-[1.01] hover:shadow-xl"
-                          >
-                            <Zap className="size-5" />
-                            Run Live Demo
-                            <ArrowRight className="size-5" />
-                          </Button>
-                          <Link
-                            href={`/checkout?tier=${recommendation.primary_tier}`}
-                            className={cn(
-                              buttonVariants({ variant: "outline", size: "lg" }),
-                              "flex-1 rounded-full border-2 hover-scale"
-                            )}
-                          >
-                            Skip Demo · Subscribe
-                          </Link>
-                        </div>
-                      </div>
-                    )}
-
-                    {wizardStep === 2 && (
-                      <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6">
-                        {demoStatus === "idle" ? (
-                          <DemoUpload
-                            documentName={documentName}
-                            onUpload={handleUploadDocument}
-                            onProcess={handleProcessDocument}
-                            uploading={uploading}
+            {/* ============ MAIN CARD — fills remaining height ============ */}
+            <div
+              className="flex flex-1 flex-col overflow-hidden rounded-xl min-h-0"
+              style={S.card}
+            >
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={wizardStep}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.25 }}
+                  className="flex flex-1 flex-col min-h-0"
+                >
+                  {/* ---- STEP 0: Chat / Upload ---- */}
+                  {wizardStep === 0 && (
+                    <div className="flex flex-1 flex-col min-h-0">
+                      <ScrollArea className="flex-1 min-h-0 px-5 py-5">
+                        {messages.length === 0 && !isStreaming ? (
+                          <AdvisorChatEmptyState
+                            onSelectPrompt={handleSelectPrompt}
+                            onFocusInput={focusChatInput}
                           />
                         ) : (
-                          <DemoResults
-                            status={demoStatus}
-                            result={demoResult}
-                            tierName={
-                              recommendation ? TIER_NAMES[recommendation.demo_tier] : undefined
-                            }
-                            engineName={
-                              recommendation ? formatEngineName(recommendation) : undefined
-                            }
-                          />
-                        )}
-                        {recommendation && demoStatus === "failed" && (
-                          <Button
-                            onClick={handleProcessDocument}
-                            variant="outline"
-                            size="lg"
-                            className="w-full rounded-full"
-                          >
-                            Retry Live Demo
-                          </Button>
-                        )}
-                        {recommendation && demoStatus === "completed" && (
-                          <Link
-                            href={`/checkout?tier=${recommendation.primary_tier}`}
-                            className={cn(
-                              buttonVariants({ size: "lg" }),
-                              "w-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg shadow-emerald-500/30 transition-all hover:scale-[1.01] hover:shadow-xl"
+                          <div className="space-y-4">
+                            {messages.map((msg, i) => (
+                              <ChatBubble key={i} role={msg.role} content={msg.content} responseMeta={msg.responseMeta} index={i} />
+                            ))}
+                            {isStreaming && (
+                              <StreamingBubble pendingResponseMeta={pendingResponseMeta} streamingContent={streamingContent} />
                             )}
-                          >
-                            Continue with {TIER_NAMES[recommendation.primary_tier]}
-                            <ChevronRight className="ml-1 size-5" />
-                          </Link>
+                            <div ref={chatEndRef} />
+                          </div>
                         )}
+                      </ScrollArea>
+
+                      {recommendation && !isStreaming && (
+                        <div
+                          className="shrink-0 border-t px-5 py-4"
+                          style={{ borderColor: "rgb(var(--border))", background: "rgb(var(--teal-bg)/0.4)" }}
+                        >
+                          <Button
+                            onClick={() => setWizardStep(1)}
+                            className="w-full gap-2 rounded-lg font-medium"
+                            style={{ background: "rgb(var(--teal))", color: "rgb(var(--primary-foreground))", border: "none" }}
+                          >
+                            <CheckCircle className="size-4" />
+                            View Your Recommendation
+                            <ArrowRight className="size-4" />
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* Input form */}
+                      <form
+                        onSubmit={handleSend}
+                        className="shrink-0 border-t px-4 py-3"
+                        style={{ borderColor: "rgb(var(--border))", background: "rgb(var(--surface-1))" }}
+                      >
+                        <div
+                          className="flex items-end gap-2 rounded-lg p-2 transition-all"
+                          style={{
+                            border: `0.5px solid ${inputDisabled ? "rgb(var(--border))" : "rgb(var(--border-strong))"}`,
+                            background: "rgb(var(--surface-1))",
+                            opacity: inputDisabled ? 0.6 : 1,
+                          }}
+                        >
+                          <Input
+                            ref={inputRef}
+                            placeholder="Describe your documents, volume, accuracy needs…"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value.slice(0, MAX_INPUT_LENGTH))}
+                            onKeyDown={handleInputKeyDown}
+                            disabled={inputDisabled}
+                            className="flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0 text-sm"
+                            style={{ color: "rgb(var(--text-1))" }}
+                          />
+                          <button
+                            type="submit"
+                            disabled={inputDisabled || !input.trim()}
+                            className="flex size-9 shrink-0 items-center justify-center rounded-lg transition-all hover:brightness-110 disabled:opacity-40"
+                            title="Send (⌘ + Enter)"
+                            style={{ background: "rgb(var(--teal))", color: "rgb(var(--primary-foreground))" }}
+                          >
+                            <Send className="size-4" />
+                          </button>
+                        </div>
+                        <div className="mt-1.5 flex items-center justify-between px-1 text-[11px]">
+                          <span style={{ color: "rgb(var(--text-3))" }}>
+                            <kbd className="rounded border px-1 font-mono text-[10px]" style={{ borderColor: "rgb(var(--border-strong))" }}>⌘</kbd>{" "}+{" "}
+                            <kbd className="rounded border px-1 font-mono text-[10px]" style={{ borderColor: "rgb(var(--border-strong))" }}>Enter</kbd>{" "}
+                            to send
+                          </span>
+                          <span style={{ color: charCountColor }}>{charCount}/{MAX_INPUT_LENGTH}</span>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+
+                  {/* ---- STEP 1: Recommendation ---- */}
+                  {wizardStep === 1 && recommendation && (
+                    <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6">
+                      <RecommendationCard recommendation={recommendation} />
+                      <div className="flex flex-wrap gap-3 mt-auto">
+                        <Button
+                          onClick={handleGoToDemo}
+                          className="flex-1 gap-2 rounded-lg font-medium"
+                          style={{ background: "rgb(var(--teal))", color: "rgb(var(--primary-foreground))", border: "none" }}
+                        >
+                          <Zap className="size-4" />
+                          Run Live Demo
+                          <ArrowRight className="size-4" />
+                        </Button>
+                        <Link
+                          href={`/checkout?tier=${recommendation.primary_tier}`}
+                          className="flex-1 flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors hover:bg-[rgb(var(--surface-2))]"
+                          style={{
+                            border: "0.5px solid rgb(var(--border-strong))",
+                            background: "rgb(var(--surface-1))",
+                            color: "rgb(var(--text-1))",
+                          }}
+                        >
+                          Skip Demo · Subscribe
+                        </Link>
                       </div>
-                    )}
-                  </motion.div>
-                </AnimatePresence>
-              </div>
+                    </div>
+                  )}
+
+                  {/* ---- STEP 2: Demo / Verdict ---- */}
+                  {wizardStep === 2 && (
+                    <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6">
+                      {demoStatus === "idle" ? (
+                        <DemoUpload
+                          documentName={documentName}
+                          onUpload={handleUploadDocument}
+                          onProcess={handleProcessDocument}
+                          uploading={uploading}
+                        />
+                      ) : (
+                        <DemoResults
+                          status={demoStatus}
+                          result={demoResult}
+                          tierName={recommendation ? TIER_NAMES[recommendation.demo_tier] : undefined}
+                          engineName={recommendation ? formatEngineName(recommendation) : undefined}
+                        />
+                      )}
+                      {recommendation && demoStatus === "failed" && (
+                        <Button onClick={handleProcessDocument} variant="outline" className="w-full rounded-lg">
+                          Retry Live Demo
+                        </Button>
+                      )}
+                      {recommendation && demoStatus === "completed" && (
+                        <Link
+                          href={`/checkout?tier=${recommendation.primary_tier}`}
+                          className="flex w-full items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-medium transition-colors hover:brightness-110"
+                          style={{ background: "rgb(var(--teal))", color: "rgb(var(--primary-foreground))" }}
+                        >
+                          Continue with {TIER_NAMES[recommendation.primary_tier]}
+                          <ChevronRight className="size-4" />
+                        </Link>
+                      )}
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
             </div>
+
+            {/* ---- Back button ---- */}
+            {wizardStep > 0 && (
+              <button
+                type="button"
+                onClick={() => handleStepClick(wizardStep - 1)}
+                className="mt-3 flex items-center gap-1.5 text-sm transition-colors hover:text-[rgb(var(--text-1))]"
+                style={{ color: "rgb(var(--text-2))" }}
+              >
+                <ArrowLeft className="size-3.5" /> Back
+              </button>
+            )}
           </div>
 
-          {/* ============= SIDEBAR ============= */}
-          <aside className="flex flex-col gap-5">
+          {/* ============ RIGHT: Info Sidebar ============ */}
+          <aside className="hidden w-[272px] shrink-0 flex-col gap-4 xl:flex">
+
             {recommendation && (
-              <div className="relative overflow-hidden rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/15 via-cyan-500/10 to-indigo-500/10 p-6 shadow-xl">
-                <div className="pointer-events-none absolute -right-6 -top-6 size-32 rounded-full bg-emerald-400/30 blur-2xl" />
-                <div className="relative space-y-4">
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
-                    <CheckCircle2 className="size-3" />
+              <div
+                className="rounded-xl p-5"
+                style={{
+                  background: "rgb(var(--teal-bg))",
+                  border: "0.5px solid rgb(var(--teal-border))",
+                }}
+              >
+                <div className="mb-3 flex items-center gap-1.5">
+                  <span className="size-2 rounded-full" style={{ background: "rgb(var(--teal))" }} />
+                  <span className="font-mono text-[11px] uppercase tracking-wider" style={{ color: "rgb(var(--teal))" }}>
                     Your match
-                  </div>
-                  <div>
-                    <p className="bg-gradient-to-br from-emerald-600 to-cyan-600 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent dark:from-emerald-300 dark:to-cyan-300">
-                      {TIER_NAMES[recommendation.primary_tier]}
-                    </p>
-                    <div className="mt-1.5 flex items-center gap-1.5 text-sm font-medium text-foreground/80">
-                      <Cpu className="size-3.5" />
-                      {formatEngineName(recommendation)}
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    {wizardStep === 0 && (
-                      <Button
-                        size="sm"
-                        onClick={() => setWizardStep(1)}
-                        className="w-full gap-1.5 rounded-full bg-foreground text-background hover:opacity-90"
-                      >
-                        View details <ArrowRight className="size-3.5" />
-                      </Button>
-                    )}
-                    {wizardStep === 1 && demoStatus === "idle" && (
-                      <Button
-                        size="sm"
-                        onClick={handleGoToDemo}
-                        className="w-full gap-1.5 rounded-full bg-foreground text-background hover:opacity-90"
-                      >
-                        Run live demo <ArrowRight className="size-3.5" />
-                      </Button>
-                    )}
-                    <Link
-                      href={`/checkout?tier=${recommendation.primary_tier}`}
-                      className={cn(
-                        buttonVariants({ variant: "outline", size: "sm" }),
-                        "w-full rounded-full border-2 backdrop-blur-sm"
-                      )}
-                    >
-                      Subscribe to {TIER_NAMES[recommendation.primary_tier]}
-                    </Link>
-                  </div>
+                  </span>
+                </div>
+                <p className="text-2xl font-bold tracking-tight" style={{ color: "rgb(var(--teal))" }}>
+                  {TIER_NAMES[recommendation.primary_tier]}
+                </p>
+                <div className="mt-1.5 flex items-center gap-1.5 text-sm" style={{ color: "rgb(var(--text-2))" }}>
+                  <Cpu className="size-3.5" />
+                  {formatEngineName(recommendation)}
+                </div>
+                <div className="mt-4 flex flex-col gap-2">
+                  <Link
+                    href={`/checkout?tier=${recommendation.primary_tier}`}
+                    className="flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors hover:brightness-110"
+                    style={{ background: "rgb(var(--teal))", color: "rgb(var(--primary-foreground))" }}
+                  >
+                    Subscribe <ArrowRight className="size-3.5" />
+                  </Link>
                 </div>
               </div>
             )}
 
-            <div className="overflow-hidden rounded-3xl border border-border/70 bg-card/90 shadow-md backdrop-blur">
-              <div className="flex items-center gap-2 border-b border-border/60 px-5 py-3.5">
-                <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 text-white">
-                  <Bot className="size-3.5" />
-                </div>
-                <h3 className="text-sm font-semibold text-foreground">Advisor Mode</h3>
+            <div className="rounded-xl overflow-hidden" style={{ background: "rgb(var(--surface-1))", border: "0.5px solid rgb(var(--border))" }}>
+              <div className="flex items-center gap-2 border-b px-4 py-3" style={{ borderColor: "rgb(var(--border))" }}>
+                <Bot className="size-4" style={{ color: "rgb(var(--teal))" }} />
+                <h3 className="text-sm font-semibold" style={{ color: "rgb(var(--text-1))" }}>Advisor Mode</h3>
               </div>
-              <div className="p-5">
+              <div className="p-4">
                 <AdvisorSystemStatus capabilities={systemCapabilities} />
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-br from-background to-muted/30 shadow-md">
-              <div className="p-5">
-                <p className="mb-3 text-sm font-semibold text-foreground">How it works</p>
-                <ol className="space-y-3 text-xs leading-relaxed text-muted-foreground">
-                  {[
-                    "Tell the advisor about your documents, volume and special needs.",
-                    "Get a recommended tier matched to your profile.",
-                    "Upload a sample and see live OCR output before you commit.",
-                  ].map((text, i) => (
-                    <li key={i} className="flex gap-3">
-                      <span
-                        className={cn(
-                          "flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white",
-                          i === 0 && "bg-gradient-to-br from-indigo-500 to-violet-500",
-                          i === 1 && "bg-gradient-to-br from-emerald-500 to-cyan-500",
-                          i === 2 && "bg-gradient-to-br from-fuchsia-500 to-rose-500"
-                        )}
-                      >
-                        {i + 1}
-                      </span>
-                      <span>{text}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
+            <div className="rounded-xl p-4" style={{ background: "rgb(var(--surface-1))", border: "0.5px solid rgb(var(--border))" }}>
+              <p className="mb-3 text-sm font-semibold" style={{ color: "rgb(var(--text-1))" }}>How it works</p>
+              <ol className="space-y-2.5 text-[13px] leading-relaxed" style={{ color: "rgb(var(--text-2))" }}>
+                {[
+                  "Tell the advisor about your documents, volume and special needs.",
+                  "Get a recommended tier matched to your profile.",
+                  "Upload a sample and see live OCR output before you commit.",
+                ].map((text, i) => (
+                  <li key={i} className="flex gap-3">
+                    <span
+                      className="flex size-5 shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-bold"
+                      style={{ background: "rgb(var(--teal-bg))", color: "rgb(var(--teal))", border: "0.5px solid rgb(var(--teal-border))" }}
+                    >
+                      {i + 1}
+                    </span>
+                    <span>{text}</span>
+                  </li>
+                ))}
+              </ol>
             </div>
+
+            {turnCount > 0 && (
+              <div className="flex items-center gap-4 rounded-xl px-4 py-3 text-sm" style={{ background: "rgb(var(--surface-1))", border: "0.5px solid rgb(var(--border))", color: "rgb(var(--text-2))" }}>
+                <span className="flex items-center gap-1.5">
+                  <MessageSquare className="size-3.5" style={{ color: "rgb(var(--teal))" }} />
+                  <span className="font-bold" style={{ color: "rgb(var(--text-1))" }}>{turnCount}</span> msgs
+                </span>
+                <span style={{ color: "rgb(var(--border-strong))" }}>·</span>
+                <span className="flex items-center gap-1.5">
+                  <Cpu className="size-3.5" style={{ color: "rgb(var(--teal))" }} />
+                  Step <span className="font-bold" style={{ color: "rgb(var(--text-1))" }}>{wizardStep + 1}</span>/3
+                </span>
+              </div>
+            )}
           </aside>
+
         </div>
       </main>
     </div>
@@ -719,22 +536,8 @@ export default function AdvisorPage() {
 }
 
 /* ============= COMPONENTS ============= */
-
-function BackgroundOrbs() {
-  return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="absolute -left-32 top-10 size-96 rounded-full bg-indigo-500/10 blur-3xl dark:bg-indigo-500/15" />
-      <div className="absolute right-0 top-1/3 size-96 rounded-full bg-cyan-500/10 blur-3xl dark:bg-cyan-500/15" />
-      <div className="absolute -bottom-20 left-1/3 size-96 rounded-full bg-fuchsia-500/10 blur-3xl dark:bg-fuchsia-500/15" />
-    </div>
-  );
-}
-
 function ChatBubble({
-  role,
-  content,
-  responseMeta,
-  index,
+  role, content, responseMeta, index,
 }: {
   role: "user" | "assistant";
   content: string;
@@ -744,32 +547,39 @@ function ChatBubble({
   const isUser = role === "user";
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.04 }}
-      className={cn("flex min-w-0 items-end gap-3", isUser ? "flex-row-reverse" : "flex-row")}
+      transition={{ delay: index * 0.03 }}
+      className={cn("flex min-w-0 items-end gap-2.5", isUser ? "flex-row-reverse" : "flex-row")}
     >
       <div
-        className={cn(
-          "flex size-9 shrink-0 items-center justify-center rounded-2xl text-white shadow-md",
-          isUser
-            ? "bg-gradient-to-br from-slate-700 to-slate-900 shadow-slate-900/30"
-            : "bg-gradient-to-br from-indigo-500 to-violet-500 shadow-indigo-500/30"
-        )}
+        className="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+        style={{
+          background: isUser ? "rgb(var(--surface-2))" : "rgb(var(--teal-bg))",
+          border: `0.5px solid ${isUser ? "rgb(var(--border-strong))" : "rgb(var(--teal-border))"}`,
+          color: isUser ? "rgb(var(--text-2))" : "rgb(var(--teal))",
+        }}
       >
-        {isUser ? <User className="size-4" /> : <Sparkles className="size-4" />}
+        {isUser ? <User className="size-3.5" /> : <Sparkles className="size-3.5" />}
       </div>
       <div
-        className={cn(
-          "group relative min-w-0 max-w-[80%] overflow-hidden rounded-2xl px-4 py-3 text-sm shadow-md",
+        className="min-w-0 max-w-[80%] rounded-xl px-4 py-3 text-sm leading-relaxed"
+        style={
           isUser
-            ? "rounded-br-md bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-indigo-500/20"
-            : "rounded-bl-md border border-border/60 bg-card/90 text-foreground backdrop-blur"
-        )}
+            ? {
+                background: "rgb(var(--teal))",
+                color: "rgb(var(--primary-foreground))",
+                borderRadius: "12px 12px 4px 12px",
+              }
+            : {
+                background: "rgb(var(--surface-1))",
+                border: "0.5px solid rgb(var(--border))",
+                color: "rgb(var(--text-1))",
+                borderRadius: "12px 12px 12px 4px",
+              }
+        }
       >
-        {!isUser && responseMeta && (
-          <ResponseModeBadge meta={responseMeta} className="mb-2" />
-        )}
+        {!isUser && responseMeta && <ResponseModeBadge meta={responseMeta} className="mb-2" />}
         <ChatMessageContent content={content} />
       </div>
     </motion.div>
@@ -777,36 +587,38 @@ function ChatBubble({
 }
 
 function StreamingBubble({
-  pendingResponseMeta,
-  streamingContent,
+  pendingResponseMeta, streamingContent,
 }: {
   pendingResponseMeta: import("@/lib/api").ResponseMeta | null;
   streamingContent: string;
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex min-w-0 items-end gap-3"
-    >
-      <div className="relative flex size-9 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/30">
-        <Sparkles className="size-4 animate-pulse" />
-        <span className="absolute inset-0 animate-ping rounded-2xl bg-indigo-500/40" />
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex min-w-0 items-end gap-2.5">
+      <div
+        className="flex size-8 shrink-0 items-center justify-center rounded-full"
+        style={{ background: "rgb(var(--teal-bg))", border: "0.5px solid rgb(var(--teal-border))", color: "rgb(var(--teal))" }}
+      >
+        <Sparkles className="size-3.5 animate-pulse" />
       </div>
-      <div className="min-w-0 max-w-[80%] overflow-hidden rounded-2xl rounded-bl-md border border-border/60 bg-card/90 px-4 py-3 text-sm shadow-md backdrop-blur">
-        {pendingResponseMeta && (
-          <ResponseModeBadge meta={pendingResponseMeta} className="mb-2" />
-        )}
+      <div
+        className="min-w-0 max-w-[80%] rounded-xl px-4 py-3 text-sm leading-relaxed"
+        style={{ background: "rgb(var(--surface-1))", border: "0.5px solid rgb(var(--border))", color: "rgb(var(--text-1))", borderRadius: "12px 12px 12px 4px" }}
+      >
+        {pendingResponseMeta && <ResponseModeBadge meta={pendingResponseMeta} className="mb-2" />}
         {streamingContent ? (
           <ChatMessageContent content={streamingContent} />
         ) : (
           <div className="flex items-center gap-1.5 py-1">
-            <span className="size-1.5 animate-bounce rounded-full bg-indigo-500 [animation-delay:-0.3s]" />
-            <span className="size-1.5 animate-bounce rounded-full bg-indigo-500 [animation-delay:-0.15s]" />
-            <span className="size-1.5 animate-bounce rounded-full bg-indigo-500" />
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                className="size-1.5 rounded-full animate-bounce-dot"
+                style={{ background: "rgb(var(--teal))", animationDelay: `${i * 0.15}s` }}
+              />
+            ))}
           </div>
         )}
-        <span className="ml-1 inline-block h-4 w-0.5 animate-pulse bg-indigo-500 align-middle" />
+        <span className="ml-1 inline-block h-4 w-0.5 animate-pulse align-middle" style={{ background: "rgb(var(--teal))" }} />
       </div>
     </motion.div>
   );

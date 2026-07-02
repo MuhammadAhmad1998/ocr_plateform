@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OCR Intelligence Platform — Screen Mockups</title>
+<style>
+/* =====================================================================
+   DESIGN TOKENS  — single source of truth.
+   Dark-first: dark values are the default :root, light overrides below.
+   Hand these tokens to the real build as CSS variables.
+   ===================================================================== */
+:root{
+  --base:#0E1116;          /* page background (zinc-tinted near-black) */
+  --surface-1:#171B22;     /* cards / panels */
+  --surface-2:#1F2530;     /* raised / hover */
+  --border:#2A313C;        /* hairline border */
+  --border-strong:#3A424E; /* emphasized border */
+
+  --text-1:#E6EAF0;        /* primary text (off-white, never pure) */
+  --text-2:#8A97A8;        /* secondary / muted */
+  --text-3:#5C6776;        /* hints / disabled */
+
+  --teal:#1FB8B5;          /* BRAND accent — structure, links, active */
+  --teal-deep:#0E7C7B;
+  --teal-bg:#10241F;       /* teal tint surface */
+  --teal-border:#1d6e56;
+
+  --amber:#E8A33D;         /* VERDICT accent — recommendation ONLY */
+  --amber-ink:#412402;
+
+  --green:#5DCAA5; --green-bg:#10241F; --green-border:#1d6e56;
+  --coral:#F0997B; --coral-bg:#2A1410; --coral-border:#993C1D;
+
+  --radius:8px; --radius-lg:12px;
+  --font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --font-mono:'JetBrains Mono','SF Mono',ui-monospace,Menlo,Consolas,monospace;
+
+  --shadow:none; /* dark mode uses borders, not shadows */
+}
+html[data-theme="light"]{
+  --base:#FAFAF8;          /* warm off-white, never pure #fff */
+  --surface-1:#FFFFFF;
+  --surface-2:#F2F3F0;
+  --border:#E4E6E1;
+  --border-strong:#D2D5CF;
+
+  --text-1:#16202B;
+  --text-2:#5A6573;
+  --text-3:#929BA6;
+
+  --teal:#0E7C7B;
+  --teal-deep:#0A5C5B;
+  --teal-bg:#E1F5EE;
+  --teal-border:#9FE1CB;
+
+  --amber:#BA7517;
+  --amber-ink:#FAEEDA;
+
+  --green:#3B6D11; --green-bg:#EAF3DE; --green-border:#C0DD97;
+  --coral:#D85A30; --coral-bg:#FAECE7; --coral-border:#F5C4B3;
+
+  --shadow:0 1px 2px rgba(16,24,32,.04),0 4px 16px rgba(16,24,32,.06);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--base);color:var(--text-1);font-family:var(--font-sans);
+  font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;
+  transition:background .25s,color .25s}
+a{color:inherit;text-decoration:none}
+.mono{font-family:var(--font-mono)}
+
+/* dot-grid texture — signature "intelligence platform" backdrop */
+.dotgrid{background-image:radial-gradient(var(--border) 1px,transparent 1px);
+  background-size:22px 22px;background-position:center}
+
+/* ---------- top control bar (mockup chrome, not part of product) ---------- */
+.chrome{position:sticky;top:0;z-index:50;display:flex;align-items:center;
+  gap:6px;padding:10px 18px;background:var(--surface-1);
+  border-bottom:.5px solid var(--border);flex-wrap:wrap}
+.chrome .brandmark{display:flex;align-items:center;gap:9px;margin-right:14px}
+.chrome .logo{width:24px;height:24px}
+.chrome .bname{font-weight:600;font-size:15px;letter-spacing:-.2px}
+.chrome .spacer{flex:1}
+.navbtn{font-size:13px;color:var(--text-2);padding:6px 12px;border-radius:6px;
+  cursor:pointer;border:.5px solid transparent;background:none;font-family:inherit;
+  transition:.15s}
+.navbtn:hover{color:var(--text-1);background:var(--surface-2)}
+.navbtn.active{color:var(--teal);border-color:var(--border-strong);
+  background:var(--surface-2)}
+.toggle{font-size:13px;color:var(--text-2);padding:6px 12px;border-radius:6px;
+  cursor:pointer;border:.5px solid var(--border-strong);background:none;
+  font-family:inherit;display:flex;align-items:center;gap:6px}
+.toggle:hover{color:var(--text-1)}
+
+.screen{display:none;animation:fade .3s ease}
+.screen.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+.label{font-family:var(--font-mono);font-size:11px;letter-spacing:1px;
+  color:var(--text-2);text-transform:uppercase}
+
+/* generic product nav (inside the product screens) */
+.pnav{display:flex;align-items:center;gap:8px;padding:14px 24px;
+  border-bottom:.5px solid var(--border);background:var(--surface-1)}
+.pnav .brandmark{display:flex;align-items:center;gap:9px;margin-right:auto}
+.pnav .plink{font-size:13px;color:var(--text-2);padding:6px 10px;border-radius:6px}
+.pnav .plink.on{color:var(--text-1);background:var(--surface-2)}
+.pnav .pill{font-family:var(--font-mono);font-size:12px;padding:6px 12px;
+  border-radius:6px;border:.5px solid var(--border-strong);color:var(--text-2)}
+
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:inherit;
+  font-size:14px;font-weight:500;padding:10px 18px;border-radius:var(--radius);
+  cursor:pointer;border:.5px solid var(--border-strong);background:var(--surface-1);
+  color:var(--text-1);transition:.15s}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:#04201F}
+html[data-theme="light"] .btn.primary{color:#fff}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.lg{padding:13px 26px;font-size:15px}
+
+.card{background:var(--surface-1);border:.5px solid var(--border);
+  border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+
+/* =====================================================================
+   SCREEN 1 — LANDING
+   ===================================================================== */
+.hero{padding:90px 0 70px;text-align:center;position:relative}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);
+  font-size:12px;color:var(--teal);border:.5px solid var(--teal-border);
+  background:var(--teal-bg);padding:6px 14px;border-radius:30px;margin-bottom:26px}
+.hero h1{font-size:54px;line-height:1.05;letter-spacing:-1.5px;font-weight:700;
+  max-width:760px;margin:0 auto 22px}
+.hero h1 .accent{color:var(--teal)}
+.hero p.sub{font-size:19px;color:var(--text-2);max-width:560px;margin:0 auto 36px;
+  line-height:1.55}
+.hero .cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.codepeek{max-width:680px;margin:54px auto 0;text-align:left;
+  background:var(--surface-1);border:.5px solid var(--border);
+  border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow)}
+.codepeek .bar{display:flex;align-items:center;gap:7px;padding:11px 16px;
+  border-bottom:.5px solid var(--border);background:var(--surface-2)}
+.codepeek .dot{width:11px;height:11px;border-radius:50%;background:var(--border-strong)}
+.codepeek .fn{font-family:var(--font-mono);font-size:12px;color:var(--text-2);
+  margin-left:8px}
+.codepeek pre{padding:18px 20px;font-family:var(--font-mono);font-size:13px;
+  line-height:1.7;overflow-x:auto;color:var(--text-1)}
+.codepeek .k{color:var(--teal)}.codepeek .s{color:var(--amber)}
+.codepeek .c{color:var(--text-3)}.codepeek .v{color:var(--green)}
+
+.logos{padding:34px 0;border-top:.5px solid var(--border);
+  border-bottom:.5px solid var(--border);text-align:center}
+.logos .label{margin-bottom:18px}
+.logos .row{display:flex;gap:40px;justify-content:center;flex-wrap:wrap;
+  font-family:var(--font-mono);font-size:14px;color:var(--text-3)}
+
+.features{padding:70px 0}
+.features h2{font-size:34px;letter-spacing:-.6px;text-align:center;margin-bottom:8px}
+.features .lead{text-align:center;color:var(--text-2);max-width:520px;
+  margin:0 auto 50px}
+.fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.feat{padding:26px;border-radius:var(--radius-lg);border:.5px solid var(--border);
+  background:var(--surface-1)}
+.feat .ic{width:42px;height:42px;border-radius:10px;background:var(--teal-bg);
+  color:var(--teal);display:flex;align-items:center;justify-content:center;
+  font-size:20px;margin-bottom:16px;border:.5px solid var(--teal-border)}
+.feat h3{font-size:18px;margin-bottom:8px;letter-spacing:-.2px}
+.feat p{font-size:14px;color:var(--text-2)}
+
+.bigcta{margin:30px 0 80px;padding:56px;border-radius:18px;text-align:center;
+  background:var(--teal-bg);border:.5px solid var(--teal-border)}
+.bigcta h2{font-size:30px;letter-spacing:-.5px;margin-bottom:12px}
+.bigcta p{color:var(--text-2);margin-bottom:26px}
+
+/* =====================================================================
+   SCREEN 2 — AGENT FLOW
+   ===================================================================== */
+.agentwrap{max-width:760px;margin:0 auto;padding:40px 24px 80px}
+.stepbar{display:flex;align-items:center;gap:0;margin-bottom:36px}
+.stepbar .st{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--text-3)}
+.stepbar .st .num{width:24px;height:24px;border-radius:50%;border:.5px solid var(--border-strong);
+  display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);
+  font-size:12px}
+.stepbar .st.done .num{background:var(--teal);border-color:var(--teal);color:#04201F}
+html[data-theme="light"] .stepbar .st.done .num{color:#fff}
+.stepbar .st.now{color:var(--text-1)}
+.stepbar .st.now .num{border-color:var(--teal);color:var(--teal)}
+.stepbar .ln{flex:1;height:.5px;background:var(--border);margin:0 12px}
+.stepbar .ln.done{background:var(--teal)}
+
+/* upload */
+.drop{border:1.5px dashed var(--border-strong);border-radius:var(--radius-lg);
+  padding:54px 30px;text-align:center;background:var(--surface-1);cursor:pointer;
+  transition:.18s}
+.drop:hover{border-color:var(--teal);background:var(--teal-bg)}
+.drop .ic{font-size:38px;color:var(--text-2);margin-bottom:14px}
+.drop h3{font-size:18px;margin-bottom:6px}
+.drop p{color:var(--text-2);font-size:14px}
+.constraints{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:24px}
+.field label{display:block;font-size:13px;color:var(--text-2);margin-bottom:6px}
+.field select,.field input{width:100%;padding:10px 12px;border-radius:var(--radius);
+  border:.5px solid var(--border-strong);background:var(--surface-1);color:var(--text-1);
+  font-family:inherit;font-size:14px}
+
+/* analyzing */
+.analyzing{text-align:center;padding:50px 0}
+.pulse{width:64px;height:64px;border-radius:50%;border:3px solid var(--border);
+  border-top-color:var(--teal);margin:0 auto 26px;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.analyzing h3{font-size:20px;margin-bottom:8px}
+.analyzing p{color:var(--text-2)}
+.tasklist{max-width:380px;margin:30px auto 0;text-align:left}
+.tasklist .t{display:flex;align-items:center;gap:11px;padding:9px 0;font-size:14px;
+  color:var(--text-2)}
+.tasklist .t .chk{width:18px;height:18px;border-radius:50%;background:var(--teal-bg);
+  color:var(--teal);display:flex;align-items:center;justify-content:center;font-size:11px;
+  border:.5px solid var(--teal-border)}
+.tasklist .t.run .chk{background:none;border:2px solid var(--border);
+  border-top-color:var(--teal);animation:spin 1s linear infinite}
+.tasklist .t.pending{color:var(--text-3)}
+.tasklist .t.pending .chk{background:var(--surface-2);border:.5px solid var(--border)}
+
+/* verdict (the money screen) */
+.vhead{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.vdot{width:8px;height:8px;border-radius:50%;background:var(--teal)}
+.vmeta h2{font-size:22px;letter-spacing:-.3px;margin:2px 0}
+.vmeta .sub{color:var(--text-2);font-size:14px;margin-bottom:24px}
+.erow{border-radius:var(--radius-lg);padding:16px 18px;margin-bottom:11px;
+  border:.5px solid var(--border);background:var(--surface-1)}
+.erow.win{border:1px solid var(--teal);background:var(--teal-bg)}
+.erow .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.erow .name{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:500}
+.badge-rec{font-family:var(--font-mono);font-size:11px;background:var(--amber);
+  color:var(--amber-ink);padding:3px 10px;border-radius:5px;font-weight:600;letter-spacing:.5px}
+.badge-refuse{font-family:var(--font-mono);font-size:11px;background:var(--coral-bg);
+  color:var(--coral);border:.5px solid var(--coral-border);padding:2px 9px;border-radius:5px}
+.score{font-family:var(--font-mono);font-size:20px}
+.score.win{color:var(--teal)}.score.dim{color:var(--text-2)}
+.metrics{display:flex;gap:20px;font-family:var(--font-mono);font-size:13px;color:var(--text-2)}
+.metrics b{font-weight:400}
+.metrics .ok{color:var(--green)}
+.metrics .vl{color:var(--text-1)}
+.why{margin-top:22px;padding-top:18px;border-top:.5px solid var(--border);
+  font-size:14px;color:var(--text-2);line-height:1.65}
+.why .h{color:var(--teal);font-weight:500}
+.vactions{display:flex;gap:12px;margin-top:26px}
+
+/* =====================================================================
+   SCREEN 3 — DASHBOARD
+   ===================================================================== */
+.dash{display:grid;grid-template-columns:200px 1fr;min-height:600px}
+.side{border-right:.5px solid var(--border);background:var(--surface-1);padding:20px 14px}
+.side .grp{font-family:var(--font-mono);font-size:11px;letter-spacing:1px;
+  color:var(--text-3);text-transform:uppercase;margin:18px 10px 8px}
+.side .item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:7px;
+  font-size:14px;color:var(--text-2);cursor:pointer;margin-bottom:2px}
+.side .item:hover{background:var(--surface-2);color:var(--text-1)}
+.side .item.on{background:var(--surface-2);color:var(--teal)}
+.main{padding:28px 32px}
+.main h1{font-size:24px;letter-spacing:-.4px;margin-bottom:4px}
+.main .sub{color:var(--text-2);font-size:14px;margin-bottom:26px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px}
+.stat{padding:18px;border-radius:var(--radius-lg);background:var(--surface-1);
+  border:.5px solid var(--border)}
+.stat .l{font-size:13px;color:var(--text-2);margin-bottom:8px}
+.stat .n{font-family:var(--font-mono);font-size:26px;color:var(--text-1)}
+.stat .n .u{font-size:14px;color:var(--text-2)}
+.stat .d{font-size:12px;margin-top:6px;font-family:var(--font-mono)}
+.stat .d.up{color:var(--green)}
+.panel{border-radius:var(--radius-lg);border:.5px solid var(--border);
+  background:var(--surface-1);margin-bottom:22px;overflow:hidden}
+.panel .ph{display:flex;align-items:center;justify-content:space-between;
+  padding:15px 20px;border-bottom:.5px solid var(--border)}
+.panel .ph h3{font-size:15px;font-weight:500}
+.panel .pb{padding:6px 20px 16px}
+.keyrow,.usrow{display:flex;align-items:center;justify-content:space-between;
+  padding:13px 0;border-bottom:.5px solid var(--border);font-size:14px}
+.keyrow:last-child,.usrow:last-child{border-bottom:none}
+.keyval{font-family:var(--font-mono);font-size:13px;color:var(--text-2)}
+.keytag{font-family:var(--font-mono);font-size:11px;padding:2px 8px;border-radius:5px;
+  background:var(--teal-bg);color:var(--teal);border:.5px solid var(--teal-border)}
+.copybtn{font-family:var(--font-mono);font-size:12px;color:var(--text-2);
+  border:.5px solid var(--border-strong);background:none;padding:5px 10px;border-radius:6px;
+  cursor:pointer}
+.copybtn:hover{color:var(--text-1);background:var(--surface-2)}
+/* tiny bar chart */
+.chart{display:flex;align-items:flex-end;gap:6px;height:120px;padding:10px 0 0}
+.chart .bar{flex:1;background:var(--teal);border-radius:3px 3px 0 0;min-height:4px;
+  opacity:.85;transition:.2s}
+.chart .bar:hover{opacity:1}
+.chart .bar.lo{background:var(--border-strong)}
+.xaxis{display:flex;gap:6px;margin-top:8px}
+.xaxis span{flex:1;text-align:center;font-family:var(--font-mono);font-size:10px;
+  color:var(--text-3)}
+.usagebar{display:flex;justify-content:space-between;align-items:center}
+.bartrack{flex:1;height:7px;border-radius:4px;background:var(--surface-2);margin:0 14px;
+  overflow:hidden}
+.barfill{height:100%;background:var(--teal);border-radius:4px}
+
+/* =====================================================================
+   SCREEN 4 — ENGINE CATALOGUE
+   ===================================================================== */
+.cathead{padding:36px 0 22px}
+.cathead h1{font-size:30px;letter-spacing:-.5px;margin-bottom:6px}
+.cathead p{color:var(--text-2)}
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0 26px;align-items:center}
+.search{flex:1;min-width:220px;display:flex;align-items:center;gap:9px;
+  padding:10px 14px;border-radius:var(--radius);border:.5px solid var(--border-strong);
+  background:var(--surface-1)}
+.search input{flex:1;background:none;border:none;color:var(--text-1);font-family:inherit;
+  font-size:14px;outline:none}
+.chip{font-size:13px;padding:8px 14px;border-radius:30px;border:.5px solid var(--border-strong);
+  color:var(--text-2);cursor:pointer;background:var(--surface-1)}
+.chip:hover{color:var(--text-1)}
+.chip.on{background:var(--teal-bg);color:var(--teal);border-color:var(--teal-border)}
+.egrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding-bottom:70px}
+.ecard{border-radius:var(--radius-lg);border:.5px solid var(--border);
+  background:var(--surface-1);padding:20px;transition:.15s;cursor:pointer}
+.ecard:hover{border-color:var(--border-strong);transform:translateY(-2px)}
+.ecard .etop{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.ecard .enm{font-size:16px;font-weight:600;letter-spacing:-.2px}
+.ecard .ety{font-family:var(--font-mono);font-size:11px;color:var(--text-2);margin-top:2px}
+.tier{font-family:var(--font-mono);font-size:10px;padding:3px 8px;border-radius:5px;
+  letter-spacing:.5px}
+.tier.a{background:var(--green-bg);color:var(--green);border:.5px solid var(--green-border)}
+.tier.b{background:var(--teal-bg);color:var(--teal);border:.5px solid var(--teal-border)}
+.tier.c{background:var(--surface-2);color:var(--text-2);border:.5px solid var(--border-strong)}
+.ecard .edesc{font-size:13px;color:var(--text-2);margin-bottom:16px;min-height:38px}
+.ecard .estats{display:flex;gap:16px;font-family:var(--font-mono);font-size:12px;
+  color:var(--text-2);padding-top:14px;border-top:.5px solid var(--border)}
+.ecard .estats .v{color:var(--text-1)}
+.ecard .tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tag{font-size:11px;padding:2px 8px;border-radius:5px;background:var(--surface-2);
+  color:var(--text-2);font-family:var(--font-mono)}
+
+.footnote{text-align:center;padding:30px;color:var(--text-3);font-size:12px;
+  font-family:var(--font-mono);border-top:.5px solid var(--border)}
+
+@media(max-width:860px){
+  .fgrid,.egrid{grid-template-columns:1fr 1fr}
+  .stats{grid-template-columns:1fr 1fr}
+  .dash{grid-template-columns:1fr}
+  .side{display:none}
+  .hero h1{font-size:40px}
+}
+@media(max-width:560px){
+  .fgrid,.egrid,.stats,.constraints{grid-template-columns:1fr}
+  .navbtn{padding:6px 8px;font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ MOCKUP CHROME (navigation + theme toggle) ============ -->
+<div class="chrome">
+  <div class="brandmark">
+    <svg class="logo" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="4" cy="5" r="1.4" fill="var(--text-3)"/>
+      <circle cx="4" cy="12" r="1.4" fill="var(--text-3)"/>
+      <circle cx="4" cy="19" r="1.4" fill="var(--text-3)"/>
+      <circle cx="11" cy="8" r="1.4" fill="var(--text-2)"/>
+      <circle cx="11" cy="16" r="1.4" fill="var(--text-2)"/>
+      <circle cx="20" cy="12" r="2.4" fill="var(--teal)"/>
+      <path d="M5.4 5.3 L18 11.4 M5.4 12 L18 12 M5.4 18.7 L18 12.6 M12.4 8.2 L18 11.5 M12.4 15.8 L18 12.5" stroke="var(--border-strong)" stroke-width="0.8"/>
+    </svg>
+    <span class="bname">OCRouter</span>
+  </div>
+  <button class="navbtn active" data-go="landing">Landing</button>
+  <button class="navbtn" data-go="agent">Agent flow</button>
+  <button class="navbtn" data-go="dash">Dashboard</button>
+  <button class="navbtn" data-go="catalogue">Catalogue</button>
+  <div class="spacer"></div>
+  <button class="toggle" id="themeToggle"><span id="themeIcon">◐</span> <span id="themeLabel">Dark</span></button>
+</div>
+
+<!-- ============================ SCREEN 1: LANDING ============================ -->
+<section class="screen active" id="landing">
+  <div class="dotgrid">
+    <div class="wrap">
+      <div class="hero">
+        <span class="eyebrow">◆ The OCR intelligence layer</span>
+        <h1>Every OCR engine. <span class="accent">One intelligent answer.</span></h1>
+        <p class="sub">Upload a document and our agent benchmarks every engine — open-source and commercial — on your actual data, then routes to the winner. Stop guessing which OCR to use.</p>
+        <div class="cta">
+          <button class="btn primary lg" data-go="agent">Try it on your document →</button>
+          <button class="btn lg">Read the docs</button>
+        </div>
+
+        <div class="codepeek">
+          <div class="bar">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            <span class="fn">quickstart.py</span>
+          </div>
+<pre><span class="c"># One call. We pick the best engine for each document.</span>
+<span class="k">from</span> ocrouter <span class="k">import</span> Client
+
+client = Client(api_key=<span class="s">"sk_live_..."</span>)
+
+result = client.recognize(
+    file=<span class="s">"invoice_urdu.pdf"</span>,
+    strategy=<span class="s">"auto"</span>,   <span class="c"># agent chooses + routes</span>
+    priorities={<span class="s">"accuracy"</span>: <span class="v">0.7</span>, <span class="s">"cost"</span>: <span class="v">0.3</span>}
+)
+
+print(result.engine)      <span class="c"># → "paddleocr-vl"</span>
+print(result.text)        <span class="c"># extracted text</span>
+print(result.confidence)  <span class="c"># → 0.96</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="logos">
+    <div class="wrap">
+      <div class="label">One API in front of 40+ engines</div>
+      <div class="row">
+        <span>PaddleOCR-VL</span><span>Tesseract</span><span>Surya</span>
+        <span>docTR</span><span>TrOCR</span><span>GOT-OCR</span><span>AWS Textract</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="features">
+      <h2>The brain, not just the pipe</h2>
+      <p class="lead">Aggregators hand you a catalogue and leave you to guess. We tell you which engine wins — on your documents.</p>
+      <div class="fgrid">
+        <div class="feat">
+          <div class="ic">◎</div>
+          <h3>Benchmarks on your data</h3>
+          <p>The agent runs candidate engines on your actual document, not generic leaderboard claims that go stale every six months.</p>
+        </div>
+        <div class="feat">
+          <div class="ic">⇄</div>
+          <h3>Routes automatically</h3>
+          <p>Cheap engines for simple pages, heavy VLMs only when needed. Lower blended cost per page without lifting a finger.</p>
+        </div>
+        <div class="feat">
+          <div class="ic">⛉</div>
+          <h3>Never breaks on refusals</h3>
+          <p>Some VLMs refuse IDs and passports mid-pipeline. We detect it and reroute to an engine that won't — automatically.</p>
+        </div>
+        <div class="feat">
+          <div class="ic">◱</div>
+          <h3>Open-source, self-hosted</h3>
+          <p>The best document models now ship open. We host them on serverless GPU so you don't manage a single container.</p>
+        </div>
+        <div class="feat">
+          <div class="ic">▤</div>
+          <h3>One bill, one SDK</h3>
+          <p>Commercial APIs and open-source engines behind a single key, with transparent per-engine cost attribution.</p>
+        </div>
+        <div class="feat">
+          <div class="ic">◧</div>
+          <h3>Region-pinned & private</h3>
+          <p>Data residency controls and zero-retention processing for documents you can't let leave a region.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bigcta">
+      <h2>Find your best OCR in 30 seconds</h2>
+      <p>Free for your first document. No card required.</p>
+      <button class="btn primary lg" data-go="agent">Upload a document →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ SCREEN 2: AGENT FLOW ============================ -->
+<section class="screen" id="agent">
+  <div class="agentwrap">
+    <div class="stepbar">
+      <div class="st done"><span class="num">✓</span> Upload</div>
+      <div class="ln done"></div>
+      <div class="st now" id="sbAnalyze"><span class="num">2</span> Analyze</div>
+      <div class="ln" id="sbLn2"></div>
+      <div class="st" id="sbVerdict"><span class="num">3</span> Verdict</div>
+    </div>
+
+    <!-- STATE A: upload -->
+    <div id="stateUpload">
+      <div class="drop" onclick="goAnalyze()">
+        <div class="ic">⇪</div>
+        <h3>Drop a document, or click to browse</h3>
+        <p>PDF, PNG, JPG, TIFF — up to 20MB. Or paste a sample below.</p>
+      </div>
+      <div class="constraints">
+        <div class="field">
+          <label>Document type (optional — we detect it)</label>
+          <select><option>Auto-detect</option><option>Invoice / receipt</option><option>Form</option><option>ID / passport</option><option>Handwriting</option><option>Prose / article</option></select>
+        </div>
+        <div class="field">
+          <label>Primary language</label>
+          <select><option>Auto-detect</option><option>English</option><option>Urdu</option><option>Arabic</option><option>Chinese</option><option>Multilingual</option></select>
+        </div>
+        <div class="field">
+          <label>Optimize for</label>
+          <select><option>Balanced (accuracy + cost)</option><option>Highest accuracy</option><option>Lowest cost</option><option>Lowest latency</option></select>
+        </div>
+        <div class="field">
+          <label>Max latency budget</label>
+          <select><option>No limit</option><option>Under 2s</option><option>Under 5s</option><option>Under 10s</option></select>
+        </div>
+      </div>
+      <div style="margin-top:26px"><button class="btn primary lg" onclick="goAnalyze()">Analyze document →</button></div>
+    </div>
+
+    <!-- STATE B: analyzing -->
+    <div id="stateAnalyze" style="display:none">
+      <div class="card" style="padding:40px">
+        <div class="analyzing">
+          <div class="pulse"></div>
+          <h3>Benchmarking engines on your document</h3>
+          <p>Running candidates in parallel and scoring the output</p>
+          <div class="tasklist">
+            <div class="t"><span class="chk">✓</span> Classified: Urdu handwritten form, 1 page</div>
+            <div class="t"><span class="chk">✓</span> Shortlisted 3 candidate engines</div>
+            <div class="t run"><span class="chk"></span> Running trials in parallel…</div>
+            <div class="t pending"><span class="chk"></span> Scoring accuracy × cost × latency</div>
+            <div class="t pending"><span class="chk"></span> Selecting winner</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATE C: verdict -->
+    <div id="stateVerdict" style="display:none">
+      <div class="vhead"><span class="vdot"></span><span class="label" style="color:var(--teal)">Analysis complete</span></div>
+      <div class="vmeta">
+        <h2>PaddleOCR-VL is your best engine</h2>
+        <div class="sub">Urdu handwritten form · 1 page · mixed script · 3 engines benchmarked</div>
+      </div>
+
+      <div class="erow win">
+        <div class="top">
+          <div class="name"><span class="badge-rec">RECOMMENDED</span> PaddleOCR-VL</div>
+          <div class="score win">94.2</div>
+        </div>
+        <div class="metrics">
+          <span>accuracy <b class="ok">96%</b></span>
+          <span>cost <b class="vl">$0.004</b></span>
+          <span>latency <b class="vl">1.2s</b></span>
+          <span>tier <b class="vl">B</b></span>
+        </div>
+      </div>
+
+      <div class="erow">
+        <div class="top">
+          <div class="name">Surya OCR</div>
+          <div class="score dim">88.5</div>
+        </div>
+        <div class="metrics">
+          <span>accuracy <b class="vl">91%</b></span>
+          <span>cost <b class="vl">$0.002</b></span>
+          <span>latency <b class="vl">8.1s</b></span>
+          <span>tier <b class="vl">B</b></span>
+        </div>
+      </div>
+
+      <div class="erow">
+        <div class="top">
+          <div class="name">GPT-Vision <span class="badge-refuse">refused ID fields</span></div>
+          <div class="score dim">—</div>
+        </div>
+        <div class="metrics"><span>policy block on this document class</span></div>
+      </div>
+
+      <div class="why">
+        <span class="h">Why PaddleOCR-VL:</span> highest accuracy on your handwriting samples at the lowest viable cost, well within your latency budget. Surya was close on accuracy but 6× slower. GPT-Vision was excluded — it refuses documents containing ID fields, which would break this pipeline silently in production.
+      </div>
+
+      <div class="vactions">
+        <button class="btn primary lg">Route my traffic here →</button>
+        <button class="btn lg">View extracted text</button>
+        <button class="btn lg" onclick="resetAgent()">Try another document</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ SCREEN 3: DASHBOARD ============================ -->
+<section class="screen" id="dash">
+  <div class="dash">
+    <aside class="side">
+      <div class="grp">Overview</div>
+      <div class="item on">▦ Dashboard</div>
+      <div class="item">⇄ Routing</div>
+      <div class="item">◱ Engines</div>
+      <div class="grp">Account</div>
+      <div class="item">⚿ API keys</div>
+      <div class="item">▤ Usage & billing</div>
+      <div class="item">◧ Team</div>
+      <div class="item">⚙ Settings</div>
+    </aside>
+
+    <div class="main">
+      <h1>Dashboard</h1>
+      <div class="sub">Acme Fintech · production workspace</div>
+
+      <div class="stats">
+        <div class="stat"><div class="l">Documents this month</div><div class="n">48,210</div><div class="d up">▲ 12% vs last month</div></div>
+        <div class="stat"><div class="l">Avg cost / 1k pages</div><div class="n">$6.40</div><div class="d up">▼ 8% (smart routing)</div></div>
+        <div class="stat"><div class="l">Avg latency</div><div class="n">1.8<span class="u">s</span></div><div class="d" style="color:var(--text-2)">p95: 4.2s</div></div>
+        <div class="stat"><div class="l">Spend this month</div><div class="n">$308</div><div class="d" style="color:var(--text-2)">est. $390 / mo</div></div>
+      </div>
+
+      <div class="panel">
+        <div class="ph"><h3>Documents processed — last 14 days</h3><span class="keytag">live</span></div>
+        <div class="pb">
+          <div class="chart">
+            <div class="bar lo" style="height:38%"></div><div class="bar lo" style="height:46%"></div>
+            <div class="bar lo" style="height:42%"></div><div class="bar" style="height:58%"></div>
+            <div class="bar" style="height:54%"></div><div class="bar lo" style="height:30%"></div>
+            <div class="bar lo" style="height:26%"></div><div class="bar" style="height:62%"></div>
+            <div class="bar" style="height:70%"></div><div class="bar" style="height:66%"></div>
+            <div class="bar" style="height:78%"></div><div class="bar" style="height:88%"></div>
+            <div class="bar lo" style="height:44%"></div><div class="bar lo" style="height:40%"></div>
+          </div>
+          <div class="xaxis"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="ph"><h3>API keys</h3><button class="btn" style="padding:7px 14px;font-size:13px">+ Create key</button></div>
+        <div class="pb">
+          <div class="keyrow">
+            <div><div style="margin-bottom:3px">Production</div><span class="keyval">sk_live_a4f2••••••••••••3e9b</span></div>
+            <div style="display:flex;gap:10px;align-items:center"><span class="keytag">live</span><button class="copybtn">Copy</button></div>
+          </div>
+          <div class="keyrow">
+            <div><div style="margin-bottom:3px">Staging</div><span class="keyval">sk_test_9c01••••••••••••7d22</span></div>
+            <div style="display:flex;gap:10px;align-items:center"><span class="keytag" style="background:var(--surface-2);color:var(--text-2);border-color:var(--border-strong)">test</span><button class="copybtn">Copy</button></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="ph"><h3>Plan usage</h3><span class="keyval">Scale plan · 50k included</span></div>
+        <div class="pb" style="padding-top:14px">
+          <div class="usagebar">
+            <span style="font-size:13px;color:var(--text-2)">Documents</span>
+            <div class="bartrack"><div class="barfill" style="width:96%"></div></div>
+            <span class="keyval">48,210 / 50,000</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ SCREEN 4: CATALOGUE ============================ -->
+<section class="screen" id="catalogue">
+  <div class="wrap">
+    <div class="cathead">
+      <h1>Engine catalogue</h1>
+      <p>Every OCR engine we host, with live benchmark data. The agent picks from these automatically — or call any one directly.</p>
+      <div class="filters">
+        <div class="search">⌕ <input placeholder="Search engines, e.g. handwriting, Chinese, invoices"></div>
+        <span class="chip on">All</span>
+        <span class="chip">Open-source</span>
+        <span class="chip">Commercial</span>
+        <span class="chip">Handwriting</span>
+        <span class="chip">Multilingual</span>
+      </div>
+    </div>
+
+    <div class="egrid">
+      <div class="ecard">
+        <div class="etop"><div><div class="enm">PaddleOCR-VL</div><div class="ety">open-source · 0.9B VLM</div></div><span class="tier b">TIER B</span></div>
+        <div class="tags"><span class="tag">handwriting</span><span class="tag">multilingual</span><span class="tag">tables</span></div>
+        <div class="edesc">SOTA document parsing at tiny size. Strong on mixed scripts and complex layouts.</div>
+        <div class="estats"><span>acc <span class="v">94.5</span></span><span>$<span class="v">0.004</span>/pg</span><span><span class="v">1.2s</span></span></div>
+      </div>
+
+      <div class="ecard">
+        <div class="etop"><div><div class="enm">Tesseract</div><div class="ety">open-source · classic</div></div><span class="tier a">TIER A</span></div>
+        <div class="tags"><span class="tag">printed</span><span class="tag">fast</span><span class="tag">cheap</span></div>
+        <div class="edesc">Battle-tested on clean printed text. Always warm, near-zero latency, lowest cost.</div>
+        <div class="estats"><span>acc <span class="v">82</span></span><span>$<span class="v">0.001</span>/pg</span><span><span class="v">0.3s</span></span></div>
+      </div>
+
+      <div class="ecard">
+        <div class="etop"><div><div class="enm">Surya OCR</div><div class="ety">open-source · VLM</div></div><span class="tier b">TIER B</span></div>
+        <div class="tags"><span class="tag">90+ langs</span><span class="tag">layout</span><span class="tag">reading order</span></div>
+        <div class="edesc">Excellent multilingual coverage with strong layout and reading-order detection.</div>
+        <div class="estats"><span>acc <span class="v">91</span></span><span>$<span class="v">0.002</span>/pg</span><span><span class="v">8.1s</span></span></div>
+      </div>
+
+      <div class="ecard">
+        <div class="etop"><div><div class="enm">TrOCR</div><div class="ety">open-source · transformer</div></div><span class="tier b">TIER B</span></div>
+        <div class="tags"><span class="tag">handwriting</span><span class="tag">cursive</span></div>
+        <div class="edesc">Transformer model specialized for handwritten text recognition.</div>
+        <div class="estats"><span>acc <span class="v">89</span></span><span>$<span class="v">0.003</span>/pg</span><span><span class="v">5.4s</span></span></div>
+      </div>
+
+      <div class="ecard">
+        <div class="etop"><div><div class="enm">AWS Textract</div><div class="ety">commercial · API</div></div><span class="tier c">TIER C</span></div>
+        <div class="tags"><span class="tag">forms</span><span class="tag">tables</span><span class="tag">SLA</span></div>
+        <div class="edesc">Robust on structured forms and tables. Vendor-managed, no cold start.</div>
+        <div class="estats"><span>acc <span class="v">93</span></span><span>$<span class="v">0.015</span>/pg</span><span><span class="v">1.5s</span></span></div>
+      </div>
+
+      <div class="ecard">
+        <div class="etop"><div><div class="enm">GOT-OCR 2.0</div><div class="ety">open-source · VLM</div></div><span class="tier b">TIER B</span></div>
+        <div class="tags"><span class="tag">formulas</span><span class="tag">math</span><span class="tag">dense</span></div>
+        <div class="edesc">Unified end-to-end model strong on formulas, sheet music and dense pages.</div>
+        <div class="estats"><span>acc <span class="v">90</span></span><span>$<span class="v">0.005</span>/pg</span><span><span class="v">9.0s</span></span></div>
+      </div>
+
+      <div class="ecard">
+        <div class="etop"><div><div class="enm">Google Document AI</div><div class="ety">commercial · API</div></div><span class="tier c">TIER C</span></div>
+        <div class="tags"><span class="tag">forms</span><span class="tag">enterprise</span></div>
+        <div class="edesc">High accuracy on common document types with strong enterprise tooling.</div>
+        <div class="estats"><span>acc <span class="v">94</span></span><span>$<span class="v">0.018</span>/pg</span><span><span class="v">1.4s</span></span></div>
+      </div>
+
+      <div class="ecard">
+        <div class="etop"><div><div class="enm">docTR</div><div class="ety">open-source · two-stage</div></div><span class="tier b">TIER B</span></div>
+        <div class="tags"><span class="tag">detection</span><span class="tag">printed</span></div>
+        <div class="edesc">Modular detection-plus-recognition pipeline, reliable on printed documents.</div>
+        <div class="estats"><span>acc <span class="v">87</span></span><span>$<span class="v">0.002</span>/pg</span><span><span class="v">3.2s</span></span></div>
+      </div>
+
+      <div class="ecard" style="border-style:dashed;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--text-2)">
+        <div><div style="font-size:24px;margin-bottom:8px">+</div><div style="font-size:14px">32 more engines</div><div class="ety" style="margin-top:4px">new models added weekly</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="footnote">Benchmark figures are illustrative placeholders for layout · replace with live data at build time</div>
+</section>
+
+<script>
+/* ---- screen navigation ---- */
+const screens = document.querySelectorAll('.screen');
+const navbtns = document.querySelectorAll('.navbtn');
+function show(id){
+  screens.forEach(s=>s.classList.toggle('active',s.id===id));
+  navbtns.forEach(b=>b.classList.toggle('active',b.dataset.go===id));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('[data-go]').forEach(el=>{
+  el.addEventListener('click',()=>show(el.dataset.go));
+});
+
+/* ---- theme toggle ---- */
+const root=document.documentElement, tl=document.getElementById('themeLabel');
+document.getElementById('themeToggle').addEventListener('click',()=>{
+  const dark = root.getAttribute('data-theme')==='dark';
+  root.setAttribute('data-theme', dark?'light':'dark');
+  tl.textContent = dark?'Light':'Dark';
+});
+
+/* ---- agent flow state machine (demo) ---- */
+function goAnalyze(){
+  document.getElementById('stateUpload').style.display='none';
+  document.getElementById('stateAnalyze').style.display='block';
+  document.getElementById('stateVerdict').style.display='none';
+  setTimeout(goVerdict, 2600);
+}
+function goVerdict(){
+  document.getElementById('stateAnalyze').style.display='none';
+  document.getElementById('stateVerdict').style.display='block';
+  document.getElementById('sbAnalyze').classList.remove('now');
+  document.getElementById('sbAnalyze').classList.add('done');
+  document.getElementById('sbAnalyze').querySelector('.num').textContent='✓';
+  document.getElementById('sbLn2').classList.add('done');
+  document.getElementById('sbVerdict').classList.add('now');
+}
+function resetAgent(){
+  document.getElementById('stateUpload').style.display='block';
+  document.getElementById('stateAnalyze').style.display='none';
+  document.getElementById('stateVerdict').style.display='none';
+  document.getElementById('sbAnalyze').classList.add('now');
+  document.getElementById('sbAnalyze').classList.remove('done');
+  document.getElementById('sbAnalyze').querySelector('.num').textContent='2';
+  document.getElementById('sbLn2').classList.remove('done');
+  document.getElementById('sbVerdict').classList.remove('now');
+}
+</script>
+</body>
+</html>

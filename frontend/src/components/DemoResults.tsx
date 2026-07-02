@@ -61,14 +61,27 @@ export function DemoResults({ status, result, tierName, engineName }: DemoResult
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <div
-            className={cn(
-              "flex size-7 items-center justify-center rounded-lg text-white shadow-md",
-              status === "completed"
-                ? "bg-gradient-to-br from-emerald-500 to-cyan-500 shadow-emerald-500/30"
-                : status === "failed"
-                  ? "bg-gradient-to-br from-rose-500 to-orange-500 shadow-rose-500/30"
-                  : "bg-gradient-to-br from-fuchsia-500 to-rose-500 shadow-fuchsia-500/30"
-            )}
+            className="flex size-7 items-center justify-center rounded-lg"
+            style={{
+              background:
+                status === "completed"
+                  ? "rgb(var(--green-bg))"
+                  : status === "failed"
+                    ? "rgb(var(--coral-bg))"
+                    : "rgb(var(--teal-bg))",
+              border:
+                status === "completed"
+                  ? "0.5px solid rgb(var(--green-border))"
+                  : status === "failed"
+                    ? "0.5px solid rgb(var(--coral-border))"
+                    : "0.5px solid rgb(var(--teal-border))",
+              color:
+                status === "completed"
+                  ? "rgb(var(--green))"
+                  : status === "failed"
+                    ? "rgb(var(--coral))"
+                    : "rgb(var(--teal))",
+            }}
           >
             {status === "completed" ? (
               <CheckCircle2 className="size-4" />
@@ -79,32 +92,45 @@ export function DemoResults({ status, result, tierName, engineName }: DemoResult
             )}
           </div>
           <div>
-            <h3 className="text-base font-bold text-foreground">Live OCR demo</h3>
+            <h3 className="text-base font-bold" style={{ color: "rgb(var(--text-1))" }}>
+              Live OCR demo
+            </h3>
             {engineName ? (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs" style={{ color: "rgb(var(--text-2))" }}>
                 {tierName ? `${tierName} · ` : ""}
                 {engineName}
               </p>
             ) : (
-              tierName && <p className="text-xs text-muted-foreground">{tierName} engine</p>
+              tierName && <p className="text-xs" style={{ color: "rgb(var(--text-2))" }}>{tierName} engine</p>
             )}
           </div>
         </div>
         {status === "running" && (
-          <Loader2 className="size-4 animate-spin text-fuchsia-500" />
+          <Loader2 className="size-4 animate-spin" style={{ color: "rgb(var(--teal))" }} />
         )}
       </div>
 
       {status === "running" && (
-        <div className="space-y-3 rounded-2xl border border-border/60 bg-gradient-to-br from-fuchsia-500/8 to-rose-500/5 p-5">
+        <div
+          className="space-y-3 rounded-2xl p-5"
+          style={{
+            border: "0.5px solid rgb(var(--teal-border))",
+            background: "rgb(var(--teal-bg))",
+          }}
+        >
           <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="absolute inset-0 animate-ping rounded-full bg-fuchsia-500/40" />
-              <div className="relative flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500 to-rose-500 text-white shadow-md">
-                <Sparkles className="size-4" />
-              </div>
+            <div
+              className="flex size-8 items-center justify-center rounded-full"
+              style={{
+                background: "rgb(var(--teal))",
+                color: "rgb(var(--primary-foreground))",
+              }}
+            >
+              <Sparkles className="size-4 animate-pulse" />
             </div>
-            <p className="text-sm font-medium text-foreground">Processing your document…</p>
+            <p className="text-sm font-medium" style={{ color: "rgb(var(--text-1))" }}>
+              Processing your document…
+            </p>
           </div>
           <Skeleton className="h-4 w-3/4" />
           <Skeleton className="h-4 w-full" />
@@ -120,7 +146,6 @@ export function DemoResults({ status, result, tierName, engineName }: DemoResult
             <StatTile
               label="Confidence"
               value={result.confidence != null ? `${(result.confidence * 100).toFixed(0)}%` : "—"}
-              accent="emerald"
             />
             <StatTile
               label="Time"
@@ -131,10 +156,9 @@ export function DemoResults({ status, result, tierName, engineName }: DemoResult
                     : `${(result.timing_ms / 1000).toFixed(2)}s`
                   : "—"
               }
-              accent="cyan"
             />
-            <StatTile label="Words" value={stats.words.toLocaleString()} accent="indigo" />
-            <StatTile label="Chars" value={stats.chars.toLocaleString()} accent="fuchsia" />
+            <StatTile label="Words" value={stats.words.toLocaleString()} />
+            <StatTile label="Chars" value={stats.chars.toLocaleString()} />
           </div>
 
           {/* ACTIONS */}
@@ -160,18 +184,44 @@ export function DemoResults({ status, result, tierName, engineName }: DemoResult
           </div>
 
           {/* OUTPUT IDE-STYLE */}
-          <div className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-950 shadow-xl">
-            <div className="flex items-center justify-between gap-2 border-b border-slate-800 bg-slate-900 px-3 py-2">
+          <div
+            className="overflow-hidden rounded-2xl shadow-xl"
+            style={{
+              background: "rgb(var(--surface-1))",
+              border: "0.5px solid rgb(var(--border))",
+            }}
+          >
+            <div
+              className="flex items-center justify-between gap-2 px-3 py-2"
+              style={{
+                borderBottom: "0.5px solid rgb(var(--border))",
+                background: "rgb(var(--surface-2))",
+              }}
+            >
               <div className="flex items-center gap-1.5">
-                <span className="size-2.5 rounded-full bg-rose-400" />
-                <span className="size-2.5 rounded-full bg-amber-400" />
-                <span className="size-2.5 rounded-full bg-emerald-400" />
+                <span
+                  className="size-2.5 rounded-full"
+                  style={{ background: "rgb(var(--coral))" }}
+                />
+                <span
+                  className="size-2.5 rounded-full"
+                  style={{ background: "rgb(var(--amber))" }}
+                />
+                <span
+                  className="size-2.5 rounded-full"
+                  style={{ background: "rgb(var(--green))" }}
+                />
               </div>
-              <span className="font-mono text-[10px] text-slate-400">output.txt</span>
+              <span className="font-mono text-[10px]" style={{ color: "rgb(var(--text-3))" }}>
+                output.txt
+              </span>
               <div className="size-4" />
             </div>
             <ScrollArea className="h-64 p-4">
-              <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-emerald-300">
+              <pre
+                className="whitespace-pre-wrap font-mono text-xs leading-relaxed"
+                style={{ color: "rgb(var(--text-1))" }}
+              >
                 {result.text}
               </pre>
             </ScrollArea>
@@ -180,14 +230,28 @@ export function DemoResults({ status, result, tierName, engineName }: DemoResult
       )}
 
       {status === "failed" && (
-        <div className="rounded-2xl border-2 border-rose-500/30 bg-gradient-to-br from-rose-500/10 to-orange-500/5 p-5 text-sm">
+        <div
+          className="rounded-2xl p-5 text-sm"
+          style={{
+            border: "1px solid rgb(var(--coral-border))",
+            background: "rgb(var(--coral-bg))",
+          }}
+        >
           <div className="flex items-start gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-orange-500 text-white shadow-md">
+            <div
+              className="flex size-8 shrink-0 items-center justify-center rounded-lg"
+              style={{
+                background: "rgb(var(--coral))",
+                color: "rgb(var(--primary-foreground))",
+              }}
+            >
               <XCircle className="size-4" />
             </div>
             <div>
-              <p className="font-bold text-rose-700 dark:text-rose-300">Demo processing failed</p>
-              <p className="mt-1 text-rose-700/80 dark:text-rose-300/80">
+              <p className="font-bold" style={{ color: "rgb(var(--coral))" }}>
+                Demo processing failed
+              </p>
+              <p className="mt-1" style={{ color: "rgb(var(--text-2))" }}>
                 Try again or upload a different document. If this persists, contact support.
               </p>
             </div>
@@ -198,31 +262,27 @@ export function DemoResults({ status, result, tierName, engineName }: DemoResult
   );
 }
 
-function StatTile({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string;
-  accent: "emerald" | "cyan" | "indigo" | "fuchsia";
-}) {
-  const colors = {
-    emerald: "from-emerald-500/15 to-emerald-500/5 text-emerald-700 dark:text-emerald-300",
-    cyan: "from-cyan-500/15 to-cyan-500/5 text-cyan-700 dark:text-cyan-300",
-    indigo: "from-indigo-500/15 to-indigo-500/5 text-indigo-700 dark:text-indigo-300",
-    fuchsia: "from-fuchsia-500/15 to-fuchsia-500/5 text-fuchsia-700 dark:text-fuchsia-300",
-  } as const;
-
+function StatTile({ label, value }: { label: string; value: string }) {
   return (
     <div
-      className={cn(
-        "rounded-xl border border-border/60 bg-gradient-to-br px-3 py-2.5 shadow-sm",
-        colors[accent]
-      )}
+      className="rounded-xl px-3 py-2.5"
+      style={{
+        border: "0.5px solid rgb(var(--border))",
+        background: "rgb(var(--surface-1))",
+      }}
     >
-      <p className="text-[9px] font-bold uppercase tracking-wider opacity-80">{label}</p>
-      <p className="mt-0.5 text-lg font-extrabold tracking-tight">{value}</p>
+      <p
+        className="text-[9px] font-bold uppercase tracking-wider"
+        style={{ color: "rgb(var(--text-3))" }}
+      >
+        {label}
+      </p>
+      <p
+        className="mt-0.5 text-lg font-extrabold tracking-tight"
+        style={{ color: "rgb(var(--text-1))" }}
+      >
+        {value}
+      </p>
     </div>
   );
 }

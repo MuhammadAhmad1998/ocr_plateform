@@ -40,15 +40,21 @@ const csp = [
   "base-uri 'self'",
   "form-action 'self'",
   "object-src 'none'",
-  "upgrade-insecure-requests",
+  // Only upgrade to HTTPS in production — breaks LAN dev over http://192.168.x.x:3000
+  ...(isDev ? [] : ["upgrade-insecure-requests"]),
 ].join("; ");
 
 const securityHeaders = [
   { key: "Content-Security-Policy", value: csp },
-  {
-    key: "Strict-Transport-Security",
-    value: "max-age=63072000; includeSubDomains; preload",
-  },
+  // HSTS over plain HTTP dev (and LAN IPs) blocks assets after first visit
+  ...(isDev
+    ? []
+    : [
+        {
+          key: "Strict-Transport-Security",
+          value: "max-age=63072000; includeSubDomains; preload",
+        },
+      ]),
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
@@ -56,16 +62,41 @@ const securityHeaders = [
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
   },
-  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-  { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+  // CORP same-origin blocks cross-host dev (e.g. phone loading from LAN IP)
+  ...(isDev
+    ? []
+    : [
+        { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+        { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+      ]),
 ];
 
 const noindexHeader = [{ key: "X-Robots-Tag", value: "noindex, nofollow" }];
+
+// LAN dev access (e.g. Mac on same network) — Next.js blocks /_next/* without this
+const allowedDevOrigins = (() => {
+  const fromEnv =
+    process.env.ALLOWED_DEV_ORIGINS?.split(",")
+      .map((s) => s.trim())
+      .filter(Boolean) ?? [];
+  try {
+    const { hostname } = new URL(apiUrl);
+    if (hostname && hostname !== "localhost" && hostname !== "127.0.0.1") {
+      // Next may match host with or without port (see dev-server cross-origin guard)
+      const lanPatterns = ["192.168.*", "10.*"];
+      return [hostname, `${hostname}:3000`, ...lanPatterns, ...fromEnv];
+    }
+  } catch {
+    /* ignore */
+  }
+  return fromEnv.length > 0 ? fromEnv : ["192.168.18.6", "192.168.18.6:3000", "192.168.*"];
+})();
 
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
   poweredByHeader: false,
+  allowedDevOrigins,
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },

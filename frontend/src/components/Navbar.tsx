@@ -6,7 +6,6 @@ import { Menu, X, LogOut } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Button, buttonVariants } from "@/components/ui/button";
 import { clearTokens, isLoggedIn } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -53,104 +52,120 @@ export function Navbar({ variant = "app" }: { variant?: "marketing" | "app" }) {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 border-b border-border/80 backdrop-blur-xl",
-        variant === "marketing" ? "bg-background/80" : "bg-card/90"
+        "sticky top-0 z-50 border-b backdrop-blur-xl",
+        "border-[rgb(var(--border))] bg-[rgb(var(--surface-1))/90]"
       )}
     >
-      <div className="flex h-16 items-center justify-between px-4 lg:h-18 lg:px-8">
-        <div className="flex items-center gap-8">
-          <Logo href={loggedIn ? "/dashboard" : "/"} />
-          <nav className="hidden items-center gap-1 lg:flex">
-            {navItems.map((item) => (
+      {/* Main bar */}
+      <div className="flex h-14 items-center gap-4 px-4 lg:px-8">
+        {/* Brandmark */}
+        <Logo href={loggedIn ? "/dashboard" : "/"} />
+
+        {/* Desktop nav */}
+        <nav className="ml-2 hidden items-center gap-0.5 lg:flex">
+          {navItems.map((item) => {
+            const active = isActive(pathname, item.href);
+            return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "relative rounded-lg px-4 py-2 text-sm font-semibold transition-all",
-                  isActive(pathname, item.href)
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
+                  "rounded-md px-3 py-1.5 text-sm transition-colors",
+                  active
+                    ? "bg-[rgb(var(--surface-2))] text-[rgb(var(--teal))]"
+                    : "text-[rgb(var(--text-2))] hover:bg-[rgb(var(--surface-2))] hover:text-[rgb(var(--text-1))]"
                 )}
               >
                 {item.label}
-                {isActive(pathname, item.href) && (
-                  <span className="absolute inset-x-1 -bottom-[17px] h-0.5 rounded-t-full bg-primary" />
-                )}
               </Link>
-            ))}
-          </nav>
-        </div>
+            );
+          })}
+        </nav>
 
-        <div className="flex items-center gap-3">
+        {/* Right side */}
+        <div className="ml-auto flex items-center gap-2">
           <ThemeToggle />
+
           {!authReady ? (
-            <div className="h-9 w-24" aria-hidden />
+            <div className="h-8 w-20" aria-hidden />
           ) : loggedIn ? (
             <>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="hidden gap-2 text-muted-foreground hover:text-foreground lg:flex"
+              <button
+                type="button"
                 onClick={handleSignOut}
+                className={cn(
+                  "hidden items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm transition-colors lg:flex",
+                  "border-[rgb(var(--border-strong))] text-[rgb(var(--text-2))] hover:text-[rgb(var(--text-1))]"
+                )}
               >
-                <LogOut className="size-4" />
-                Sign Out
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="lg:hidden"
+                <LogOut className="size-3.5" />
+                Sign out
+              </button>
+              <button
+                type="button"
+                className="flex size-8 items-center justify-center rounded-md text-[rgb(var(--text-2))] hover:text-[rgb(var(--text-1))] lg:hidden"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
               >
-                {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-              </Button>
+                {mobileMenuOpen ? <X className="size-4" /> : <Menu className="size-4" />}
+              </button>
             </>
           ) : (
             <div className="flex items-center gap-2">
-              <Link href="/login" className={buttonVariants({ variant: "ghost", size: "sm" })}>
-                Sign In
+              <Link
+                href="/login"
+                className="rounded-md px-3 py-1.5 text-sm text-[rgb(var(--text-2))] hover:text-[rgb(var(--text-1))] transition-colors"
+              >
+                Sign in
               </Link>
               <Link
                 href="/register"
                 className={cn(
-                  buttonVariants({ size: "sm" }),
-                  "bg-primary shadow-sm transition-all hover:scale-105 hover:shadow-md"
+                  "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                  "bg-[rgb(var(--teal))] text-[rgb(var(--primary-foreground))]",
+                  "hover:brightness-110"
                 )}
               >
-                Get Started
+                Get started
               </Link>
             </div>
           )}
         </div>
       </div>
 
+      {/* Mobile drawer */}
       {loggedIn && mobileMenuOpen && (
-        <div className="border-t border-border bg-background lg:hidden">
-          <nav className="space-y-1 px-4 py-4">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className={cn(
-                  "block rounded-lg px-4 py-3 text-base font-semibold transition-colors",
-                  isActive(pathname, item.href)
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive"
+        <div
+          className="border-t lg:hidden"
+          style={{ borderColor: "rgb(var(--border))", background: "rgb(var(--surface-1))" }}
+        >
+          <nav className="space-y-0.5 px-4 py-3">
+            {navItems.map((item) => {
+              const active = isActive(pathname, item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={cn(
+                    "block rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                    active
+                      ? "bg-[rgb(var(--surface-2))] text-[rgb(var(--teal))]"
+                      : "text-[rgb(var(--text-2))] hover:bg-[rgb(var(--surface-2))] hover:text-[rgb(var(--text-1))]"
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+            <button
+              type="button"
               onClick={handleSignOut}
+              className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-sm text-[rgb(var(--text-2))] hover:text-[rgb(var(--coral))] transition-colors"
             >
-              <LogOut className="size-4" />
-              Sign Out
-            </Button>
+              <LogOut className="size-3.5" />
+              Sign out
+            </button>
           </nav>
         </div>
       )}

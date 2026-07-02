@@ -677,7 +677,7 @@ function SubscriptionPanel({
         ? "cyan"
         : sub.status === "past_due"
           ? "amber"
-          : sub.status === "canceled" || sub.status === "incomplete_expired"
+          : sub.status === "canceled" || sub.status === "cancelled" || sub.status === "incomplete_expired"
             ? "rose"
             : "indigo";
   const statusC = PALETTE[statusAcc];
@@ -766,6 +766,34 @@ function SubscriptionPanel({
             style={{ width: `${Math.max(2, quotaPct)}%` }}
           />
         </div>
+      </div>
+
+      {/* Stripe billing linkage */}
+      <div className="rounded-2xl border border-border/60 bg-background/50 p-4 backdrop-blur">
+        <div className="mb-3 flex items-center gap-2">
+          <CreditCard className="size-4 text-indigo-500" />
+          <div className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">
+            Stripe billing
+          </div>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <StripeIdField label="Customer ID" value={sub.stripe_customer_id} stripePath="customers" />
+          <StripeIdField label="Subscription ID" value={sub.stripe_subscription_id} stripePath="subscriptions" />
+          <StripeIdField label="Price ID" value={sub.stripe_price_id} stripePath="prices" />
+          {sub.updated_at && (
+            <div className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Last synced</div>
+              <div className="mt-0.5 text-sm font-medium text-foreground">
+                {new Date(sub.updated_at).toLocaleString()}
+              </div>
+            </div>
+          )}
+        </div>
+        {!sub.stripe_customer_id && !sub.stripe_subscription_id && (
+          <p className="mt-3 text-xs text-muted-foreground">
+            No Stripe billing account yet — user is on a local/free plan or has not completed checkout.
+          </p>
+        )}
       </div>
 
       {/* Admin actions */}
@@ -861,16 +889,53 @@ function SubscriptionPanel({
 
       {sub.stripe_customer_id && (
         <Link
-          href={`https://dashboard.stripe.com/customers/${sub.stripe_customer_id}`}
+          href={`https://dashboard.stripe.com/test/customers/${sub.stripe_customer_id}`}
           target="_blank"
           rel="noopener noreferrer"
           className="group inline-flex items-center gap-2 rounded-full border-2 border-indigo-500/40 bg-indigo-500/10 px-3.5 py-2 text-sm font-bold text-indigo-700 transition-all hover:scale-[1.02] hover:bg-indigo-500/15 dark:text-indigo-300"
         >
           <CreditCard className="size-4" />
-          View in Stripe
+          Open customer in Stripe
           <ExternalLink className="size-3.5 transition-transform group-hover:translate-x-0.5" />
         </Link>
       )}
+    </div>
+  );
+}
+
+function StripeIdField({
+  label,
+  value,
+  stripePath,
+}: {
+  label: string;
+  value: string | null;
+  stripePath: "customers" | "subscriptions" | "prices";
+}) {
+  if (!value) {
+    return (
+      <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 px-3 py-2">
+        <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{label}</div>
+        <div className="mt-0.5 text-sm text-muted-foreground">—</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="mt-0.5 flex items-center justify-between gap-2">
+        <code className="truncate font-mono text-[11px] text-foreground" title={value}>{value}</code>
+        <Link
+          href={`https://dashboard.stripe.com/test/${stripePath}/${value}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="shrink-0 text-indigo-600 hover:text-indigo-500 dark:text-indigo-300"
+          aria-label={`Open ${label} in Stripe`}
+        >
+          <ExternalLink className="size-3.5" />
+        </Link>
+      </div>
     </div>
   );
 }

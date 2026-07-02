@@ -1,11 +1,11 @@
 import { v1 } from "./v1";
 import { v2 } from "./v2";
 
-/** Unified API client — flat v1 methods for backward compatibility + namespaced v2. */
-export const api = {
-  ...v1,
-  v2,
-};
+/**
+ * Unified API client — v1 methods at top level + namespaced v2.
+ * Uses Object.assign so new v1 methods are always visible (spread snapshot breaks HMR).
+ */
+export const api = Object.assign(v1, { v2 });
 
 export { v1, v2 };
 

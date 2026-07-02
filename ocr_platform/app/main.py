@@ -154,19 +154,24 @@ app = FastAPI(
 )
 
 register_exception_handlers(app)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
+_cors_middleware_kwargs: dict = {
+    "allow_credentials": True,
+    "allow_methods": ["*"],
+    "allow_headers": ["*"],
+    "allow_origins": settings.cors_origins_list,
+}
+if settings.cors_origin_regex:
+    _cors_middleware_kwargs["allow_origin_regex"] = settings.cors_origin_regex
+
+# Other middleware first; CORS added last so it is outermost (handles OPTIONS preflight)
 app.add_middleware(RequestBodySizeLimitMiddleware)
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(DeprecationMiddleware)
 app.add_middleware(ProcessingTimeMiddleware)
 app.add_middleware(StructuredLoggingMiddleware)
 app.add_middleware(RequestIdMiddleware)
+app.add_middleware(CORSMiddleware, **_cors_middleware_kwargs)
 
 app.include_router(api_v1_router, prefix=settings.API_V1_PREFIX)
 app.include_router(api_v2_router, prefix=settings.API_V2_PREFIX)

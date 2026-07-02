@@ -80,35 +80,47 @@ export function AdvisorDemoWidget() {
 
   return (
     <div suppressHydrationWarning className="relative w-full max-w-2xl">
-      {/* Outer gradient glow */}
-      <div className="pointer-events-none absolute -inset-1 rounded-3xl bg-gradient-to-br from-indigo-500/30 via-fuchsia-500/20 to-amber-500/30 opacity-70 blur-xl" />
-
       <div
-        className="advisor-widget-root relative overflow-hidden rounded-3xl border border-border/60 bg-card/80 shadow-2xl backdrop-blur"
-        style={{ position: "relative" }}
+        className="advisor-widget-root relative overflow-hidden rounded-3xl backdrop-blur"
+        style={{
+          position: "relative",
+          border: "0.5px solid rgb(var(--border))",
+          background: "rgb(var(--surface-1))",
+        }}
       >
-        {/* Particle shimmer background */}
-        <div className="advisor-bg-particles" aria-hidden>
-          {[...Array(6)].map((_, i) => (
-            <span key={i} className="particle" />
-          ))}
-        </div>
-
         {/* Title bar */}
-        <div className="flex items-center justify-between border-b border-border/60 bg-muted/40 px-5 py-3 backdrop-blur">
+        <div
+          className="flex items-center justify-between px-5 py-3 backdrop-blur"
+          style={{
+            borderBottom: "0.5px solid rgb(var(--border))",
+            background: "rgb(var(--surface-2))",
+          }}
+        >
           <div className="flex items-center gap-2">
-            <div className="size-2.5 rounded-full bg-rose-400" />
-            <div className="size-2.5 rounded-full bg-amber-400" />
-            <div className="size-2.5 rounded-full bg-emerald-400" />
+            <div className="size-2.5 rounded-full" style={{ background: "rgb(var(--coral))" }} />
+            <div className="size-2.5 rounded-full" style={{ background: "rgb(var(--amber))" }} />
+            <div className="size-2.5 rounded-full" style={{ background: "rgb(var(--green))" }} />
           </div>
-          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            <Sparkles className="size-3.5 text-fuchsia-500" />
+          <div className="flex items-center gap-2 text-xs font-medium" style={{ color: "rgb(var(--text-2))" }}>
+            <Sparkles className="size-3.5" style={{ color: "rgb(var(--teal))" }} />
             Live advisor session
           </div>
-          <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+          <div
+            className="flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+            style={{
+              background: "rgb(var(--green-bg))",
+              color: "rgb(var(--green))",
+            }}
+          >
             <span className="relative flex size-1.5">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-              <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
+              <span
+                className="absolute inline-flex size-full animate-ping rounded-full opacity-60"
+                style={{ background: "rgb(var(--green))" }}
+              />
+              <span
+                className="relative inline-flex size-1.5 rounded-full"
+                style={{ background: "rgb(var(--green))" }}
+              />
             </span>
             Online
           </div>
@@ -118,18 +130,28 @@ export function AdvisorDemoWidget() {
         <div className="space-y-3 p-5 text-sm">
           {/* Upload status */}
           <div
-            className="advisor-msg flex items-center gap-3 rounded-2xl border border-border/50 bg-muted/60 px-4 py-3 text-foreground/80 backdrop-blur"
+            className="advisor-msg flex items-center gap-3 rounded-2xl px-4 py-3 backdrop-blur"
             style={{
               opacity: phase === "idle" ? 0 : 1,
               transition: "opacity 0.3s ease",
+              border: "0.5px solid rgb(var(--border))",
+              background: "rgb(var(--surface-2))",
+              color: "rgb(var(--text-1))",
             }}
           >
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/30">
+            <div
+              className="flex size-9 shrink-0 items-center justify-center rounded-xl"
+              style={{
+                background: "rgb(var(--teal-bg))",
+                border: "0.5px solid rgb(var(--teal-border))",
+                color: "rgb(var(--teal))",
+              }}
+            >
               <FileText className="size-4" />
             </div>
             <div className="flex-1">
               <div className="font-medium">Invoice_Q3.pdf</div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs" style={{ color: "rgb(var(--text-2))" }}>
                 4 pages · mixed tables detected
               </div>
             </div>
@@ -139,12 +161,12 @@ export function AdvisorDemoWidget() {
           {(phase === "streaming" || phase === "done" || phase === "live") && (
             <div className="ml-auto flex max-w-[85%] items-start gap-2.5">
               <div
-                className={`flex-1 rounded-2xl px-4 py-3 text-white shadow-lg shadow-fuchsia-500/30 ${
+                className={`flex-1 rounded-2xl px-4 py-3 ${
                   phase === "streaming" ? "typing-bubble" : ""
                 }`}
                 style={{
-                  background:
-                    "linear-gradient(135deg, #6366f1, #a855f7 45%, #ec4899)",
+                  background: "rgb(var(--teal))",
+                  color: "rgb(var(--primary-foreground))",
                 }}
               >
                 <span>{typedText}</span>
@@ -155,7 +177,14 @@ export function AdvisorDemoWidget() {
                   />
                 )}
               </div>
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500 via-rose-500 to-amber-500 text-white shadow-md shadow-fuchsia-500/30">
+              <div
+                className="flex size-9 shrink-0 items-center justify-center rounded-xl"
+                style={{
+                  background: "rgb(var(--teal-bg))",
+                  border: "0.5px solid rgb(var(--teal-border))",
+                  color: "rgb(var(--teal))",
+                }}
+              >
                 <Sparkles className="size-4" />
               </div>
             </div>
@@ -164,12 +193,21 @@ export function AdvisorDemoWidget() {
           {/* Live demo running */}
           {showLive && (
             <div
-              className="flex items-center gap-3 rounded-2xl border border-dashed border-emerald-500/50 bg-emerald-500/5 px-4 py-3 text-emerald-700 dark:text-emerald-300"
+              className="flex items-center gap-3 rounded-2xl border border-dashed px-4 py-3"
               style={{
                 animation: "fadeInMsg 0.3s ease forwards",
+                borderColor: "rgb(var(--green-border))",
+                background: "rgb(var(--green-bg))",
+                color: "rgb(var(--green))",
               }}
             >
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/30">
+              <div
+                className="flex size-9 shrink-0 items-center justify-center rounded-xl"
+                style={{
+                  background: "rgb(var(--green))",
+                  color: "rgb(var(--primary-foreground))",
+                }}
+              >
                 <Zap className="size-4" />
               </div>
               <div className="flex flex-1 items-center justify-between text-sm">
@@ -178,10 +216,22 @@ export function AdvisorDemoWidget() {
                   Live demo running…
                 </span>
                 <div className="flex items-center gap-2 text-xs">
-                  <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 font-bold">
+                  <span
+                    className="rounded-full px-2 py-0.5 font-bold"
+                    style={{
+                      background: "rgb(var(--surface-1))",
+                      color: "rgb(var(--green))",
+                    }}
+                  >
                     94% conf.
                   </span>
-                  <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 font-bold">
+                  <span
+                    className="rounded-full px-2 py-0.5 font-bold"
+                    style={{
+                      background: "rgb(var(--surface-1))",
+                      color: "rgb(var(--green))",
+                    }}
+                  >
                     1.2s
                   </span>
                 </div>

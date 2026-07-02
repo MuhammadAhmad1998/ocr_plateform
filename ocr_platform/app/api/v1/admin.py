@@ -9,6 +9,8 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.accounts.models import ApiKey, SubscriptionProfile, User
+from app.billing.models import StripeEvent
+from app.core.config import get_settings
 from app.core.database import get_db
 from app.core.dependencies import require_super_admin
 from app.core.exceptions import NotFoundError, ValidationError
@@ -16,6 +18,8 @@ from app.ocr_engine.models import OcrJob, UsageEvent
 from app.registry.models import Tier
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_super_admin)])
+
+_PAID_TIER_SLUGS = {"basic", "pro", "enterprise"}
 
 
 @router.get("/stats/")
@@ -61,8 +65,34 @@ def get_platform_stats(db: Session = Depends(get_db)) -> dict[str, Any]:
         ).scalar()
         users_by_tier[tier.slug] = {
             "name": tier.public_name,
-            "count": count
+            "count": count,
         }
+
+    # Billing / Stripe summary
+    settings = get_settings()
+    paid_tiers = [t for t in tiers if t.slug in _PAID_TIER_SLUGS]
+    paid_tiers_with_price = [t for t in paid_tiers if t.stripe_price_id]
+
+    billing_summary = {
+        "stripe_configured": bool(settings.STRIPE_SECRET_KEY),
+        "webhook_configured": bool(settings.STRIPE_WEBHOOK_SECRET),
+        "paid_tiers_total": len(paid_tiers),
+        "paid_tiers_with_stripe_price": len(paid_tiers_with_price),
+        "stripe_customers": db.query(func.count(SubscriptionProfile.id)).filter(
+            SubscriptionProfile.stripe_customer_id.isnot(None)
+        ).scalar(),
+        "active_stripe_subscriptions": db.query(func.count(SubscriptionProfile.id)).filter(
+            SubscriptionProfile.stripe_subscription_id.isnot(None),
+            SubscriptionProfile.status == "active",
+        ).scalar(),
+        "past_due_subscriptions": db.query(func.count(SubscriptionProfile.id)).filter(
+            SubscriptionProfile.status == "past_due"
+        ).scalar(),
+        "canceled_subscriptions": db.query(func.count(SubscriptionProfile.id)).filter(
+            SubscriptionProfile.status.in_(["canceled", "cancelled"])
+        ).scalar(),
+        "webhook_events_processed": db.query(func.count(StripeEvent.id)).scalar(),
+    }
     
     return {
         "total_users": total_users,
@@ -79,7 +109,31 @@ def get_platform_stats(db: Session = Depends(get_db)) -> dict[str, Any]:
         "failed_jobs_24h": failed_jobs,
         "pages_this_month": pages_this_month,
         "users_by_tier": users_by_tier,
+        "billing_summary": billing_summary,
     }
+
+
+@router.get("/tiers/")
+def list_tiers(db: Session = Depends(get_db)) -> dict[str, Any]:
+    """List all tiers with Stripe price configuration and subscriber counts."""
+    tiers = db.query(Tier).order_by(Tier.quota_limit).all()
+    tier_data = []
+    for tier in tiers:
+        user_count = db.query(func.count(SubscriptionProfile.id)).filter(
+            SubscriptionProfile.tier_id == tier.id
+        ).scalar()
+        tier_data.append({
+            "slug": tier.slug,
+            "name": tier.public_name,
+            "description": tier.description,
+            "quota_limit": tier.quota_limit,
+            "is_active": tier.is_active,
+            "stripe_price_id": tier.stripe_price_id,
+            "stripe_configured": bool(tier.stripe_price_id),
+            "is_paid_tier": tier.slug in _PAID_TIER_SLUGS,
+            "user_count": user_count,
+        })
+    return {"tiers": tier_data}
 
 
 @router.get("/users/")
@@ -126,6 +180,9 @@ def list_users(
                     "name": tier.public_name,
                     "quota_used": sub.quota_used,
                     "quota_limit": sub.quota_limit,
+                    "status": sub.status,
+                    "has_stripe_customer": bool(sub.stripe_customer_id),
+                    "has_stripe_subscription": bool(sub.stripe_subscription_id),
                 }
         
         # Count API keys
@@ -209,6 +266,8 @@ def get_user_detail(user_id: str, db: Session = Depends(get_db)) -> dict[str, An
             "status": sub.status,
             "stripe_customer_id": sub.stripe_customer_id,
             "stripe_subscription_id": sub.stripe_subscription_id,
+            "stripe_price_id": tier.stripe_price_id if tier else None,
+            "updated_at": sub.updated_at.isoformat() if sub.updated_at else None,
         }
     
     # API keys

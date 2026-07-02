@@ -218,6 +218,33 @@ export interface PlatformStats {
   failed_jobs_24h: number;
   pages_this_month: number;
   users_by_tier: Record<string, { name: string; count: number }>;
+  billing_summary: {
+    stripe_configured: boolean;
+    webhook_configured: boolean;
+    paid_tiers_total: number;
+    paid_tiers_with_stripe_price: number;
+    stripe_customers: number;
+    active_stripe_subscriptions: number;
+    past_due_subscriptions: number;
+    canceled_subscriptions: number;
+    webhook_events_processed: number;
+  };
+}
+
+export interface AdminTier {
+  slug: string;
+  name: string;
+  description: string | null;
+  quota_limit: number;
+  is_active: boolean;
+  stripe_price_id: string | null;
+  stripe_configured: boolean;
+  is_paid_tier: boolean;
+  user_count: number;
+}
+
+export interface AdminTiersResponse {
+  tiers: AdminTier[];
 }
 
 export interface AdminUser {
@@ -233,6 +260,9 @@ export interface AdminUser {
     name: string;
     quota_used: number;
     quota_limit: number;
+    status?: string;
+    has_stripe_customer?: boolean;
+    has_stripe_subscription?: boolean;
   } | null;
   api_key_count: number;
   jobs_this_month: number;
@@ -256,6 +286,8 @@ export interface AdminUserDetail {
     status: string;
     stripe_customer_id: string | null;
     stripe_subscription_id: string | null;
+    stripe_price_id: string | null;
+    updated_at: string | null;
   } | null;
   api_keys: Array<{
     id: string;

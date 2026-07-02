@@ -17,6 +17,19 @@ export const DEFAULT_TIER_OPTIONS: TierOption[] = [
 
 export async function fetchAdminTierOptions(): Promise<TierOption[]> {
   try {
+    const { tiers } = await api.getAdminTiers();
+    if (tiers.length > 0) {
+      return tiers.map((tier) => ({
+        slug: tier.slug,
+        name: tier.name,
+        count: tier.user_count,
+      }));
+    }
+  } catch {
+    // Fall through to stats/defaults
+  }
+
+  try {
     const stats = await api.getPlatformStats();
     const fromStats = Object.entries(stats.users_by_tier).map(([slug, data]) => ({
       slug,

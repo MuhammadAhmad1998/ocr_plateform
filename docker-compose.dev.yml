@@ -13,6 +13,11 @@ services:
       - ./ocr_platform:/app
       - ocr_storage:/app/storage
 
+  # Hot-reload Kong config without restart
+  kong:
+    volumes:
+      - ./kong/kong.yml:/kong/kong.yml:ro
+
   frontend:
     build:
       context: ./frontend
@@ -22,5 +27,6 @@ services:
       - /app/node_modules
       - /app/.next
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+      # In hot-reload mode frontend still talks to Kong (8100)
+      NEXT_PUBLIC_API_URL: http://localhost:8100/api/v1
     command: npm run dev

@@ -8,21 +8,39 @@ export function RecommendationCard({ recommendation }: { recommendation: Recomme
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-2">
-        <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-cyan-500 text-white shadow-md shadow-emerald-500/30">
+        <div
+          className="flex size-7 items-center justify-center rounded-lg"
+          style={{
+            background: "rgb(var(--teal-bg))",
+            border: "0.5px solid rgb(var(--teal-border))",
+            color: "rgb(var(--teal))",
+          }}
+        >
           <Sparkles className="size-4" />
         </div>
-        <h3 className="text-base font-bold text-foreground">Your matched plan</h3>
+        <h3 className="text-base font-bold" style={{ color: "rgb(var(--text-1))" }}>
+          Your matched plan
+        </h3>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
         {/* PRIMARY (HERO) */}
-        <div className="relative overflow-hidden rounded-3xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-500/10 via-cyan-500/8 to-indigo-500/10 p-6 shadow-xl">
-          <div className="pointer-events-none absolute -right-10 -top-10 size-40 rounded-full bg-emerald-400/25 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-12 -left-8 size-40 rounded-full bg-cyan-400/20 blur-3xl" />
-
+        <div
+          className="relative overflow-hidden rounded-3xl p-6"
+          style={{
+            border: "1px solid rgb(var(--teal-border))",
+            background: "rgb(var(--teal-bg))",
+          }}
+        >
           <div className="relative space-y-4">
             <div className="flex items-center justify-between">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-md">
+              <div
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider"
+                style={{
+                  background: "rgb(var(--amber))",
+                  color: "rgb(var(--amber-ink))",
+                }}
+              >
                 <Crown className="size-3" />
                 Recommended
               </div>
@@ -37,10 +55,20 @@ export function RecommendationCard({ recommendation }: { recommendation: Recomme
             </div>
 
             <div>
-              <p className="bg-gradient-to-br from-emerald-600 via-cyan-600 to-indigo-600 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent dark:from-emerald-300 dark:via-cyan-300 dark:to-indigo-300">
+              <p
+                className="text-4xl font-extrabold tracking-tight"
+                style={{ color: "rgb(var(--teal))" }}
+              >
                 {TIER_NAMES[recommendation.primary_tier]}
               </p>
-              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+              <div
+                className="mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+                style={{
+                  border: "0.5px solid rgb(var(--teal-border))",
+                  background: "rgb(var(--surface-1))",
+                  color: "rgb(var(--teal))",
+                }}
+              >
                 <Cpu className="size-3" />
                 {engineName}
               </div>
@@ -50,9 +78,16 @@ export function RecommendationCard({ recommendation }: { recommendation: Recomme
               {recommendation.primary_reasons.map((r) => (
                 <li
                   key={r}
-                  className="flex items-start gap-2.5 text-sm leading-relaxed text-foreground/90"
+                  className="flex items-start gap-2.5 text-sm leading-relaxed"
+                  style={{ color: "rgb(var(--text-1))" }}
                 >
-                  <div className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+                  <div
+                    className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full"
+                    style={{
+                      background: "rgb(var(--teal))",
+                      color: "rgb(var(--primary-foreground))",
+                    }}
+                  >
                     <CheckCircle2 className="size-3" />
                   </div>
                   <span>{r}</span>
@@ -63,16 +98,28 @@ export function RecommendationCard({ recommendation }: { recommendation: Recomme
         </div>
 
         {/* ALTERNATIVE */}
-        <div className="relative rounded-3xl border border-border bg-card p-6">
+        <div
+          className="relative rounded-3xl p-6"
+          style={{
+            border: "0.5px solid rgb(var(--border))",
+            background: "rgb(var(--surface-1))",
+          }}
+        >
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            <div
+              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider"
+              style={{
+                background: "rgb(var(--surface-2))",
+                color: "rgb(var(--text-2))",
+              }}
+            >
               Alternative
             </div>
             <div>
-              <p className="text-2xl font-bold tracking-tight text-foreground">
+              <p className="text-2xl font-bold tracking-tight" style={{ color: "rgb(var(--text-1))" }}>
                 {TIER_NAMES[recommendation.alternative_tier]}
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 text-xs" style={{ color: "rgb(var(--text-2))" }}>
                 Consider this if requirements change
               </p>
             </div>
@@ -80,9 +127,10 @@ export function RecommendationCard({ recommendation }: { recommendation: Recomme
               {recommendation.alternative_reasons.map((r) => (
                 <li
                   key={r}
-                  className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground"
+                  className="flex items-start gap-2 text-xs leading-relaxed"
+                  style={{ color: "rgb(var(--text-2))" }}
                 >
-                  <CheckCircle2 className="mt-0.5 size-3 shrink-0 text-muted-foreground" />
+                  <CheckCircle2 className="mt-0.5 size-3 shrink-0" style={{ color: "rgb(var(--text-3))" }} />
                   <span>{r}</span>
                 </li>
               ))}

@@ -22,3 +22,9 @@ def validate_production_settings(settings: Settings) -> None:
             "SECRET_KEY is using the default value while DEBUG=false. "
             "Generate a strong key (e.g. openssl rand -hex 32) before production deploy."
         )
+
+    if settings.CORS_ALLOW_LAN:
+        logger.warning(
+            "CORS_ALLOW_LAN=true allows private-network frontend origins. "
+            "Set CORS_ALLOW_LAN=false in production."
+        )

@@ -73,26 +73,46 @@ export function DemoUpload({
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-2">
-        <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-fuchsia-500 to-rose-500 text-white shadow-md shadow-fuchsia-500/30">
+        <div
+          className="flex size-7 items-center justify-center rounded-lg"
+          style={{
+            background: "rgb(var(--teal-bg))",
+            border: "0.5px solid rgb(var(--teal-border))",
+            color: "rgb(var(--teal))",
+          }}
+        >
           <Upload className="size-4" />
         </div>
-        <h3 className="text-base font-bold text-foreground">Upload a sample document</h3>
+        <h3 className="text-base font-bold" style={{ color: "rgb(var(--text-1))" }}>
+          Upload a sample document
+        </h3>
       </div>
 
       {documentName ? (
-        <div className="relative overflow-hidden rounded-2xl border-2 border-fuchsia-500/30 bg-gradient-to-br from-fuchsia-500/10 to-rose-500/5 p-4 shadow-md">
-          <div className="pointer-events-none absolute -right-6 -top-6 size-24 rounded-full bg-fuchsia-400/30 blur-2xl" />
+        <div
+          className="relative overflow-hidden rounded-2xl p-4"
+          style={{
+            border: "1px solid rgb(var(--teal-border))",
+            background: "rgb(var(--teal-bg))",
+          }}
+        >
           <div className="relative flex items-center gap-4">
-            <div className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500 to-rose-500 text-white shadow-lg shadow-fuchsia-500/30">
+            <div
+              className="flex size-12 items-center justify-center rounded-xl"
+              style={{
+                background: "rgb(var(--teal))",
+                color: "rgb(var(--primary-foreground))",
+              }}
+            >
               <FileText className="size-6" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-bold text-foreground">{documentName}</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="truncate text-sm font-bold" style={{ color: "rgb(var(--text-1))" }}>
+                {documentName}
+              </p>
+              <p className="text-xs" style={{ color: "rgb(var(--text-2))" }}>
                 {lastFileMeta ? `${formatBytes(lastFileMeta.size)} · ` : ""}
-                <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                  Ready to process
-                </span>
+                <span style={{ color: "rgb(var(--green))" }}>Ready to process</span>
               </p>
             </div>
             <Button
@@ -100,7 +120,7 @@ export function DemoUpload({
               size="sm"
               onClick={replaceFile}
               disabled={uploading}
-              className="shrink-0 gap-1.5 rounded-full text-muted-foreground hover:bg-background hover:text-foreground"
+              className="shrink-0 gap-1.5 rounded-full"
             >
               <RotateCcw className="size-3.5" />
               Replace
@@ -123,22 +143,23 @@ export function DemoUpload({
           onDrop={onDrop}
           className={cn(
             "group relative cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed transition-all",
-            dragOver
-              ? "scale-[1.01] border-fuchsia-400 bg-gradient-to-br from-fuchsia-500/15 to-rose-500/10 shadow-lg"
-              : "border-border bg-gradient-to-br from-muted/40 to-muted/10 hover:border-fuchsia-400/50 hover:from-fuchsia-500/8 hover:to-rose-500/5"
+            dragOver ? "scale-[1.01]" : ""
           )}
+          style={{
+            borderColor: dragOver ? "rgb(var(--teal))" : "rgb(var(--border-strong))",
+            background: dragOver ? "rgb(var(--teal-bg))" : "rgb(var(--surface-1))",
+          }}
         >
-          <div className="pointer-events-none absolute -right-8 -top-8 size-32 rounded-full bg-fuchsia-400/15 blur-3xl opacity-0 transition-opacity group-hover:opacity-100" />
-          <div className="pointer-events-none absolute -bottom-12 -left-8 size-32 rounded-full bg-rose-400/15 blur-3xl opacity-0 transition-opacity group-hover:opacity-100" />
-
           <div className="relative flex flex-col items-center justify-center gap-4 px-6 py-14">
             <div
               className={cn(
-                "flex size-16 items-center justify-center rounded-2xl shadow-lg transition-all group-hover:scale-110",
-                dragOver
-                  ? "bg-gradient-to-br from-fuchsia-500 to-rose-500 text-white shadow-fuchsia-500/40"
-                  : "bg-background text-muted-foreground group-hover:bg-gradient-to-br group-hover:from-fuchsia-500 group-hover:to-rose-500 group-hover:text-white"
+                "flex size-16 items-center justify-center rounded-2xl transition-all group-hover:scale-110"
               )}
+              style={{
+                background: dragOver ? "rgb(var(--teal))" : "rgb(var(--surface-2))",
+                color: dragOver ? "rgb(var(--primary-foreground))" : "rgb(var(--text-2))",
+                border: `0.5px solid ${dragOver ? "rgb(var(--teal))" : "rgb(var(--border-strong))"}`,
+              }}
             >
               {uploading ? (
                 <Loader2 className="size-8 animate-spin" />
@@ -147,14 +168,16 @@ export function DemoUpload({
               )}
             </div>
             <div className="text-center">
-              <p className="text-base font-bold text-foreground">
+              <p className="text-base font-bold" style={{ color: "rgb(var(--text-1))" }}>
                 {uploading
                   ? "Uploading…"
                   : dragOver
                     ? "Drop to upload"
                     : "Drag & drop or click to browse"}
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">PDF, PNG, or JPG · max 10 MB</p>
+              <p className="mt-1 text-xs" style={{ color: "rgb(var(--text-2))" }}>
+                PDF, PNG, or JPG · max 10 MB
+              </p>
             </div>
           </div>
         </div>
@@ -178,7 +201,11 @@ export function DemoUpload({
           onClick={onProcess}
           size="lg"
           disabled={uploading}
-          className="h-12 w-full gap-2 rounded-full bg-gradient-to-r from-fuchsia-500 to-rose-500 text-white shadow-lg shadow-fuchsia-500/30 transition-all hover:scale-[1.01] hover:shadow-xl"
+          className="h-12 w-full gap-2 rounded-full transition-all hover:brightness-110"
+          style={{
+            background: "rgb(var(--teal))",
+            color: "rgb(var(--primary-foreground))",
+          }}
         >
           <Zap className="size-4" />
           Run live OCR

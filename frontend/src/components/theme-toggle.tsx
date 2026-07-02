@@ -1,29 +1,44 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-export function ThemeToggle() {
+export function ThemeToggle({ className }: { className?: string }) {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-
   useEffect(() => setMounted(true), []);
 
   if (!mounted) {
-    return <Button variant="ghost" size="icon" className="size-9" aria-label="Toggle theme" />;
+    return (
+      <button
+        className={cn(
+          "inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-mono",
+          "border-[rgb(var(--border-strong))] bg-transparent text-[rgb(var(--text-2))]",
+          className
+        )}
+        aria-label="Toggle theme"
+      >
+        <span>◐</span> <span className="hidden sm:inline">Theme</span>
+      </button>
+    );
   }
 
+  const isDark = resolvedTheme === "dark";
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="size-9"
-      aria-label="Toggle theme"
-      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+    <button
+      type="button"
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-mono transition-colors",
+        "border-[rgb(var(--border-strong))] bg-transparent text-[rgb(var(--text-2))]",
+        "hover:text-[rgb(var(--text-1))]",
+        className
+      )}
     >
-      {resolvedTheme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
-    </Button>
+      <span aria-hidden>{isDark ? "◑" : "◐"}</span>
+      <span className="hidden sm:inline">{isDark ? "Dark" : "Light"}</span>
+    </button>
   );
 }

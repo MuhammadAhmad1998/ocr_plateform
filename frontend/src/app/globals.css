@@ -1,145 +1,307 @@
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* =====================================================================
+   DESIGN TOKENS — dark-first (matches mockup exactly)
+   ===================================================================== */
+:root {
+  /* Base palette — dark mode default */
+  --base: 14 17 22;           /* #0E1116 page background */
+  --surface-1: 23 27 34;      /* #171B22 cards/panels */
+  --surface-2: 31 37 48;      /* #1F2530 raised/hover */
+  --border: 42 49 60;         /* #2A313C hairline border */
+  --border-strong: 58 66 78;  /* #3A424E emphasized border */
+
+  --text-1: 230 234 240;      /* #E6EAF0 primary text */
+  --text-2: 138 151 168;      /* #8A97A8 secondary/muted */
+  --text-3: 92 103 118;       /* #5C6776 hints/disabled */
+
+  --teal: 31 184 181;         /* #1FB8B5 brand accent */
+  --teal-deep: 14 124 123;    /* #0E7C7B */
+  --teal-bg: 16 36 31;        /* #10241F teal tint surface */
+  --teal-border: 29 110 86;   /* #1d6e56 */
+
+  --amber: 232 163 61;        /* #E8A33D verdict accent */
+  --amber-ink: 65 36 2;       /* #412402 */
+
+  --green: 93 202 165;        /* #5DCAA5 */
+  --green-bg: 16 36 31;       /* #10241F */
+  --green-border: 29 110 86;  /* #1d6e56 */
+
+  --coral: 240 153 123;       /* #F0997B */
+  --coral-bg: 42 20 16;       /* #2A1410 */
+  --coral-border: 153 60 29;  /* #993C1D */
+
+  /* Shadcn/ui mapped tokens */
+  --background: var(--base);
+  --foreground: var(--text-1);
+  --card: var(--surface-1);
+  --card-foreground: var(--text-1);
+  --popover: var(--surface-1);
+  --popover-foreground: var(--text-1);
+  --primary: var(--teal);
+  --primary-foreground: 4 32 31;
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--text-1);
+  --muted: var(--surface-2);
+  --muted-foreground: var(--text-2);
+  --accent: var(--teal-bg);
+  --accent-foreground: var(--teal);
+  --destructive: var(--coral);
+  --destructive-foreground: 255 255 255;
+  --border: var(--border);
+  --input: var(--border);
+  --ring: var(--teal);
+  --radius: 8px;
+  --success: var(--green);
+  --success-foreground: 4 32 31;
+  --warning: var(--amber);
+  --warning-foreground: var(--amber-ink);
+}
+
+/* Light mode overrides */
+html[data-theme="light"], .light {
+  --base: 250 250 248;        /* #FAFAF8 warm off-white */
+  --surface-1: 255 255 255;   /* #FFFFFF */
+  --surface-2: 242 243 240;   /* #F2F3F0 */
+  --border: 228 230 225;      /* #E4E6E1 */
+  --border-strong: 210 213 207; /* #D2D5CF */
+
+  --text-1: 22 32 43;         /* #16202B */
+  --text-2: 90 101 115;       /* #5A6573 */
+  --text-3: 146 155 166;      /* #929BA6 */
+
+  --teal: 14 124 123;         /* #0E7C7B */
+  --teal-deep: 10 92 91;      /* #0A5C5B */
+  --teal-bg: 225 245 238;     /* #E1F5EE */
+  --teal-border: 159 225 203; /* #9FE1CB */
+
+  --amber: 186 117 23;        /* #BA7517 */
+  --amber-ink: 250 238 218;   /* #FAEEDA */
+
+  --green: 59 109 17;         /* #3B6D11 */
+  --green-bg: 234 243 222;    /* #EAF3DE */
+  --green-border: 192 221 151; /* #C0DD97 */
+
+  --coral: 216 90 48;         /* #D85A30 */
+  --coral-bg: 250 236 231;    /* #FAECE7 */
+  --coral-border: 245 196 179; /* #F5C4B3 */
+
+  --background: var(--base);
+  --foreground: var(--text-1);
+  --card: var(--surface-1);
+  --card-foreground: var(--text-1);
+  --popover: var(--surface-1);
+  --popover-foreground: var(--text-1);
+  --primary: var(--teal);
+  --primary-foreground: 255 255 255;
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--text-1);
+  --muted: var(--surface-2);
+  --muted-foreground: var(--text-2);
+  --accent: var(--teal-bg);
+  --accent-foreground: var(--teal);
+  --destructive: var(--coral);
+  --destructive-foreground: 255 255 255;
+  --input: var(--border);
+  --ring: var(--teal);
+}
+
+/* =====================================================================
+   BASE RESET
+   ===================================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 @layer base {
-  .theme {
-    --font-heading: var(--font-sans);
-    --font-sans: var(--font-sans);
-  }
-
-  :root {
-    --background: 255 255 255;
-    --foreground: 22 66 91;
-    --card: 255 255 255;
-    --card-foreground: 22 66 91;
-    --popover: 255 255 255;
-    --popover-foreground: 22 66 91;
-    --primary: 58 124 165;
-    --primary-foreground: 255 255 255;
-    --secondary: 217 220 214;
-    --secondary-foreground: 22 66 91;
-    --muted: 249 250 251;
-    --muted-foreground: 107 114 128;
-    --accent: 129 195 215;
-    --accent-foreground: 22 66 91;
-    --destructive: 239 68 68;
-    --destructive-foreground: 255 255 255;
-    --success: 34 197 94;
-    --success-foreground: 255 255 255;
-    --warning: 251 146 60;
-    --warning-foreground: 255 255 255;
-    --border: 229 231 235;
-    --input: 229 231 235;
-    --ring: 58 124 165;
-    --radius: 0.75rem;
-    --sidebar: 249 250 251;
-    --sidebar-foreground: 22 66 91;
-    --sidebar-primary: 58 124 165;
-    --sidebar-primary-foreground: 255 255 255;
-    --sidebar-accent: 217 220 214;
-    --sidebar-accent-foreground: 22 66 91;
-    --sidebar-border: 229 231 235;
-    --sidebar-ring: 58 124 165;
-  }
-
-  .dark {
-    --background: 15 23 42;
-    --foreground: 248 250 252;
-    --card: 30 41 59;
-    --card-foreground: 248 250 252;
-    --popover: 30 41 59;
-    --popover-foreground: 248 250 252;
-    --primary: 129 195 215;
-    --primary-foreground: 15 23 42;
-    --secondary: 47 102 144;
-    --secondary-foreground: 248 250 252;
-    --muted: 51 65 85;
-    --muted-foreground: 148 163 184;
-    --accent: 58 124 165;
-    --accent-foreground: 255 255 255;
-    --destructive: 248 113 113;
-    --destructive-foreground: 15 23 42;
-    --success: 74 222 128;
-    --success-foreground: 15 23 42;
-    --warning: 253 186 116;
-    --warning-foreground: 15 23 42;
-    --border: 51 65 85;
-    --input: 51 65 85;
-    --ring: 129 195 215;
-    --sidebar: 30 41 59;
-    --sidebar-foreground: 248 250 252;
-    --sidebar-primary: 129 195 215;
-    --sidebar-primary-foreground: 15 23 42;
-    --sidebar-accent: 47 102 144;
-    --sidebar-accent-foreground: 248 250 252;
-    --sidebar-border: 51 65 85;
-    --sidebar-ring: 129 195 215;
-  }
-
-  * {
-    @apply border-border;
-  }
-
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background 0.25s, color 0.25s;
   }
 
-  html {
-    @apply font-sans scroll-smooth;
+  a {
+    color: inherit;
+    text-decoration: none;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight;
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
   }
-
-  h1 {
-    @apply text-4xl md:text-5xl lg:text-6xl;
+  ::-webkit-scrollbar-track {
+    background: rgb(var(--surface-1));
   }
-
-  h2 {
-    @apply text-3xl md:text-4xl;
+  ::-webkit-scrollbar-thumb {
+    background: rgb(var(--border-strong));
+    border-radius: 3px;
   }
-
-  h3 {
-    @apply text-2xl md:text-3xl;
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--text-3));
   }
 }
 
+/* =====================================================================
+   DOT GRID TEXTURE — signature "intelligence platform" backdrop
+   ===================================================================== */
+.dotgrid {
+  background-image: radial-gradient(rgb(var(--border)) 1px, transparent 1px);
+  background-size: 22px 22px;
+  background-position: center;
+}
+
+/* =====================================================================
+   MONO FONT UTILITY
+   ===================================================================== */
+.font-mono, code, pre, kbd {
+  font-family: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, Consolas, monospace;
+}
+
+/* =====================================================================
+   COMPONENT UTILITIES (matching mockup exactly)
+   ===================================================================== */
+
+/* Eyebrow badge */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: rgb(var(--teal));
+  border: 0.5px solid rgb(var(--teal-border));
+  background: rgb(var(--teal-bg));
+  padding: 6px 14px;
+  border-radius: 30px;
+}
+
+/* Teal accent tag */
+.keytag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 5px;
+  background: rgb(var(--teal-bg));
+  color: rgb(var(--teal));
+  border: 0.5px solid rgb(var(--teal-border));
+}
+
+/* Tier badge */
+.tier-a {
+  background: rgb(var(--green-bg));
+  color: rgb(var(--green));
+  border: 0.5px solid rgb(var(--green-border));
+}
+.tier-b {
+  background: rgb(var(--teal-bg));
+  color: rgb(var(--teal));
+  border: 0.5px solid rgb(var(--teal-border));
+}
+.tier-c {
+  background: rgb(var(--surface-2));
+  color: rgb(var(--text-2));
+  border: 0.5px solid transparent;
+}
+
+/* RECOMMENDED badge */
+.badge-rec {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  background: rgb(var(--amber));
+  color: rgb(var(--amber-ink));
+  padding: 3px 10px;
+  border-radius: 5px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Code peek window */
+.codepeek {
+  background: rgb(var(--surface-1));
+  border: 0.5px solid transparent;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.codepeek .bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 16px;
+  border-bottom: 0.5px solid transparent;
+  background: rgb(var(--surface-2));
+}
+.codepeek .dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: rgb(var(--border-strong));
+}
+.codepeek pre {
+  padding: 18px 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-x: auto;
+  color: rgb(var(--text-1));
+}
+
+/* Animation */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes spin-ring {
+  to { transform: rotate(360deg); }
+}
+@keyframes logo-orbit {
+  to { transform: rotate(360deg); }
+}
+@keyframes logo-globe {
+  to { transform: rotate(360deg); }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.animate-fade-up { animation: fade-up 0.35s ease both; }
+.animate-spin-ring { animation: spin-ring 1s linear infinite; }
+
+.logo-orbit {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: logo-orbit 7s linear infinite;
+}
+.logo-globe-spin {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: logo-globe 14s linear infinite;
+}
+.group:hover .logo-orbit {
+  animation-duration: 4s;
+}
+.group:hover .logo-globe-spin {
+  animation-duration: 8s;
+}
+
+/* Hide neutral grey/white hairline borders app-wide (accent borders unchanged) */
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-
-  .gradient-mesh {
-    background-image:
-      radial-gradient(at 20% 20%, rgb(129 195 215 / 0.15) 0, transparent 50%),
-      radial-gradient(at 80% 0%, rgb(58 124 165 / 0.1) 0, transparent 45%),
-      radial-gradient(at 50% 100%, rgb(217 220 214 / 0.12) 0, transparent 40%);
-  }
-
-  .dark .gradient-mesh {
-    background-image:
-      radial-gradient(at 20% 20%, rgb(129 195 215 / 0.08) 0, transparent 50%),
-      radial-gradient(at 80% 0%, rgb(58 124 165 / 0.15) 0, transparent 45%),
-      radial-gradient(at 50% 100%, rgb(47 102 144 / 0.1) 0, transparent 40%);
-  }
-
-  .glass-effect {
-    @apply bg-white/80 backdrop-blur-xl border border-white/20;
-  }
-
-  .dark .glass-effect {
-    @apply bg-slate-900/80 backdrop-blur-xl border-slate-700/50;
-  }
-
-  .hover-lift {
-    @apply transition-transform duration-300 hover:-translate-y-1 hover:shadow-lg;
-  }
-
-  .hover-scale {
-    @apply transition-transform duration-200 hover:scale-[1.02];
+  [class*="border-border"],
+  [class*="border-input"],
+  [class*="var(--border-strong)"],
+  [class*="var(--border))"],
+  [style*="var(--border-strong)"],
+  [style*="var(--border))"],
+  [data-slot="card"] {
+    border-color: transparent !important;
   }
 }

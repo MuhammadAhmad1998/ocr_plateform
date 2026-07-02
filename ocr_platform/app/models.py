@@ -1,5 +1,6 @@
 from app.accounts.models import ApiKey, SubscriptionProfile, User
 from app.advisor.models import ChatMessage, ChatSession, Document
+from app.billing.models import StripeEvent
 from app.core.idempotency import IdempotencyKey
 from app.ocr_engine.models import KnowledgeDocument, OcrJob, UsageEvent
 from app.registry.models import Engine, Tier
@@ -19,4 +20,5 @@ __all__ = [
     "KnowledgeDocument",
     "IdempotencyKey",
     "WebhookDelivery",
+    "StripeEvent",
 ]

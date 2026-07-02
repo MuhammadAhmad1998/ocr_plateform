@@ -5,6 +5,7 @@ import {
   json,
 } from "./client";
 import type {
+  AdminTiersResponse,
   AdminUserDetail,
   AdminUsersResponse,
   AdvisorCapabilities,
@@ -425,6 +426,11 @@ export const v1 = {
   getPlatformStats: async () => {
     const res = await fetchWithAuth("/admin/stats/");
     return json<PlatformStats>(res);
+  },
+
+  getAdminTiers: async () => {
+    const res = await fetchWithAuth("/admin/tiers/");
+    return json<AdminTiersResponse>(res);
   },
 
   listUsers: async (params?: {

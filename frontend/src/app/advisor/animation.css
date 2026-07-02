@@ -10,39 +10,8 @@
   50%, 100% { opacity: 0; }
 }
 
-/* ---------- Background particle shimmer ---------- */
-.advisor-bg-particles {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-  z-index: -1;
-}
-
-.advisor-bg-particles .particle {
-  position: absolute;
-  bottom: -20px;
-  width: 8px;
-  height: 8px;
-  background: radial-gradient(circle, rgba(138, 92, 255, 0.4) 0%, transparent 70%);
-  border-radius: 50%;
-  opacity: 0.15;
-  animation: floatUp 6s linear infinite;
-}
-
-/* create several particles with different left positions and delays */
-.advisor-bg-particles .particle:nth-child(1) { left: 10%; animation-delay: 0s; }
-.advisor-bg-particles .particle:nth-child(2) { left: 25%; animation-delay: 1s; }
-.advisor-bg-particles .particle:nth-child(3) { left: 40%; animation-delay: 2.5s; }
-.advisor-bg-particles .particle:nth-child(4) { left: 55%; animation-delay: 3s; }
-.advisor-bg-particles .particle:nth-child(5) { left: 70%; animation-delay: 4.2s; }
-.advisor-bg-particles .particle:nth-child(6) { left: 85%; animation-delay: 5s; }
-
-@keyframes floatUp {
-  0% { transform: translateY(0); opacity: 0.15; }
-  50% { opacity: 0.2; }
-  100% { transform: translateY(-120vh); opacity: 0; }
-}
+/* ---------- Background effects removed ---------- */
+/* Removed particle animations to match clean mockup design with solid colors only */
 
 /* ---------- Live demo running message spinner ---------- */
 .live-demo-spinner {

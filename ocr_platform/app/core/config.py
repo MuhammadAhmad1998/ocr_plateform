@@ -66,8 +66,12 @@ class Settings(BaseSettings):
     STRIPE_SECRET_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
     STRIPE_PUBLISHABLE_KEY: str = ""
+    # Base URL of the frontend — used for Stripe success/cancel/portal redirects
+    FRONTEND_URL: str = "http://localhost:3000"
 
-    CORS_ORIGINS: str = "http://localhost:3000"
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
+    # Allow private-LAN frontend origins in dev (http://192.168.x.x:3000, etc.)
+    CORS_ALLOW_LAN: bool = True
 
     # AI Platform marketplace integration
     PLATFORM_API_KEY: str = ""
@@ -139,6 +143,20 @@ class Settings(BaseSettings):
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
+
+    @property
+    def cors_origin_regex(self) -> str | None:
+        """Regex for LAN dev frontends when explicit CORS_ORIGINS is not enough."""
+        if not self.CORS_ALLOW_LAN:
+            return None
+        return (
+            r"https?://("
+            r"localhost|127\.0\.0\.1"
+            r"|192\.168\.\d{1,3}\.\d{1,3}"
+            r"|10\.\d{1,3}\.\d{1,3}\.\d{1,3}"
+            r"|172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}"
+            r")(:\d+)?"
+        )
 
 
 @lru_cache

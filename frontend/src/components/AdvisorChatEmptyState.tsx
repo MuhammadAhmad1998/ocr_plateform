@@ -14,8 +14,6 @@ type PromptGroup = {
   id: string;
   label: string;
   icon: LucideIcon;
-  gradient: string;
-  iconBg: string;
   prompts: string[];
 };
 
@@ -24,8 +22,6 @@ const PROMPT_GROUPS: PromptGroup[] = [
     id: "documents",
     label: "Document types",
     icon: FileText,
-    gradient: "from-indigo-500/15 to-violet-500/5",
-    iconBg: "bg-gradient-to-br from-indigo-500 to-violet-500",
     prompts: [
       "I process invoices and receipts",
       "Mostly contracts and legal PDFs",
@@ -37,8 +33,6 @@ const PROMPT_GROUPS: PromptGroup[] = [
     id: "volume",
     label: "Monthly volume",
     icon: Gauge,
-    gradient: "from-cyan-500/15 to-sky-500/5",
-    iconBg: "bg-gradient-to-br from-cyan-500 to-sky-500",
     prompts: [
       "Around 100 pages / month",
       "About 1,000 pages / month",
@@ -49,8 +43,6 @@ const PROMPT_GROUPS: PromptGroup[] = [
     id: "needs",
     label: "Special needs",
     icon: Table,
-    gradient: "from-emerald-500/15 to-teal-500/5",
-    iconBg: "bg-gradient-to-br from-emerald-500 to-teal-500",
     prompts: [
       "Tables and forms",
       "Equations and math",
@@ -61,8 +53,6 @@ const PROMPT_GROUPS: PromptGroup[] = [
     id: "language",
     label: "Languages",
     icon: Languages,
-    gradient: "from-fuchsia-500/15 to-rose-500/5",
-    iconBg: "bg-gradient-to-br from-fuchsia-500 to-rose-500",
     prompts: [
       "English and Spanish",
       "Arabic, RTL scripts",
@@ -94,23 +84,26 @@ export function AdvisorChatEmptyState({
         }
       }}
       className={cn(
-        "flex min-h-[280px] cursor-text flex-col items-center gap-8 rounded-lg px-2 py-6 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "flex cursor-text flex-col items-center gap-6 rounded-lg px-2 py-4 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         className
       )}
     >
       {/* HERO */}
       <div className="flex flex-col items-center gap-4">
-        <div className="relative">
-          <div className="absolute inset-0 -z-10 animate-pulse rounded-full bg-gradient-to-br from-indigo-500/30 to-cyan-500/30 blur-2xl" />
-          <div className="flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-cyan-500 shadow-xl shadow-indigo-500/30">
-            <Sparkles className="size-7 text-white" />
-          </div>
+        <div
+          className="flex size-16 items-center justify-center rounded-2xl"
+          style={{
+            background: "rgb(var(--teal-bg))",
+            border: "0.5px solid rgb(var(--teal-border))",
+          }}
+        >
+          <Sparkles className="size-7" style={{ color: "rgb(var(--teal))" }} />
         </div>
         <div className="space-y-2">
-          <h3 className="bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
+          <h3 className="text-2xl font-bold tracking-tight" style={{ color: "rgb(var(--text-1))" }}>
             Let&apos;s find your perfect OCR setup
           </h3>
-          <p className="mx-auto max-w-md text-sm leading-relaxed text-muted-foreground">
+          <p className="mx-auto max-w-md text-sm leading-relaxed" style={{ color: "rgb(var(--text-2))" }}>
             Tap a starter chip below, mix a few, or type your own message — I&apos;ll match you with
             the right tier in seconds.
           </p>
@@ -123,24 +116,27 @@ export function AdvisorChatEmptyState({
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
-        {PROMPT_GROUPS.map(({ id, label, icon: Icon, gradient, iconBg, prompts }) => (
+        {PROMPT_GROUPS.map(({ id, label, icon: Icon, prompts }) => (
           <div
             key={id}
-            className={cn(
-              "group rounded-2xl border border-border/60 bg-gradient-to-br p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md",
-              gradient
-            )}
+            className="group rounded-2xl p-4 transition-all hover:-translate-y-0.5"
+            style={{
+              background: "rgb(var(--surface-1))",
+              border: "0.5px solid rgb(var(--border))",
+            }}
           >
             <div className="mb-3 flex items-center gap-2.5">
               <div
-                className={cn(
-                  "flex size-8 items-center justify-center rounded-xl text-white shadow-md transition-transform group-hover:scale-110",
-                  iconBg
-                )}
+                className="flex size-8 items-center justify-center rounded-xl transition-transform group-hover:scale-110"
+                style={{
+                  background: "rgb(var(--teal-bg))",
+                  color: "rgb(var(--teal))",
+                  border: "0.5px solid rgb(var(--teal-border))",
+                }}
               >
                 <Icon className="size-4" />
               </div>
-              <p className="text-xs font-bold uppercase tracking-wider text-foreground/80">
+              <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "rgb(var(--text-2))" }}>
                 {label}
               </p>
             </div>
@@ -150,7 +146,12 @@ export function AdvisorChatEmptyState({
                   key={prompt}
                   type="button"
                   onClick={() => onSelectPrompt(prompt)}
-                  className="rounded-full border border-border/60 bg-background/70 px-3 py-1.5 text-xs font-medium text-foreground/80 backdrop-blur transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-background hover:text-foreground hover:shadow-sm"
+                  className="rounded-full px-3 py-1.5 text-xs font-medium transition-all hover:-translate-y-0.5"
+                  style={{
+                    border: "0.5px solid rgb(var(--border-strong))",
+                    background: "rgb(var(--surface-2))",
+                    color: "rgb(var(--text-2))",
+                  }}
                 >
                   {prompt}
                 </button>
@@ -160,8 +161,15 @@ export function AdvisorChatEmptyState({
         ))}
       </div>
 
-      <div className="flex items-center gap-2 rounded-full border border-border/60 bg-muted/40 px-3 py-1.5 text-[11px] text-muted-foreground">
-        <Sparkles className="size-3 text-indigo-500" />
+      <div
+        className="flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px]"
+        style={{
+          border: "0.5px solid rgb(var(--border))",
+          background: "rgb(var(--surface-2))",
+          color: "rgb(var(--text-2))",
+        }}
+      >
+        <Sparkles className="size-3" style={{ color: "rgb(var(--teal))" }} />
         <span>Tip: mix a few starters into one message for a more accurate match.</span>
       </div>
     </div>

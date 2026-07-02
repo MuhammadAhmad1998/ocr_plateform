@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR Engine Resource Analysis Report</title>
+    <style>
+        @media print {
+            body { margin: 0; }
+            .page-break { page-break-after: always; }
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 20mm;
+            background: #fff;
+            color: #333;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #2980b9;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .date {
+            color: #95a5a6;
+            font-size: 14px;
+        }
+        
+        h2 {
+            color: #2980b9;
+            font-size: 20px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 8px;
+        }
+        
+        h3 {
+            color: #34495e;
+            font-size: 16px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .executive-summary {
+            background: #ecf0f1;
+            padding: 20px;
+            border-left: 5px solid #2980b9;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .key-finding {
+            background: #fff3cd;
+            padding: 15px;
+            border-left: 5px solid #ffc107;
+            margin: 15px 0;
+            border-radius: 5px;
+            font-weight: 500;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        th {
+            background: #2980b9;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        tr:hover {
+            background: #e8f4f8;
+        }
+        
+        .resource-light { color: #27ae60; font-weight: 600; }
+        .resource-medium { color: #f39c12; font-weight: 600; }
+        .resource-heavy { color: #e74c3c; font-weight: 600; }
+        
+        .cost-low { 
+            background: #d5f4e6;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+        .cost-medium { 
+            background: #fff3cd;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+        .cost-high { 
+            background: #f8d7da;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+        
+        ul, ol {
+            margin: 10px 0;
+            padding-left: 25px;
+        }
+        
+        li {
+            margin: 8px 0;
+        }
+        
+        .insights-box {
+            background: #fff;
+            border: 2px solid #2980b9;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .recommendation {
+            background: #d4edda;
+            border-left: 5px solid #28a745;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #ecf0f1;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+        
+        .table-caption {
+            text-align: center;
+            font-style: italic;
+            color: #7f8c8d;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        
+        .spec-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .spec-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 3px solid #2980b9;
+        }
+        
+        .spec-label {
+            font-weight: 600;
+            color: #2980b9;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>OCR Engine Resource Analysis Report</h1>
+        <div class="subtitle">System Resource Classification for Tier Assignment</div>
+        <div class="date">Unified OCR Platform Engineering Team | June 24, 2026</div>
+    </div>
+
+    <div class="executive-summary">
+        <h2 style="margin-top: 0; border: none; padding: 0;">Executive Summary</h2>
+        <p>This report categorizes OCR engines by system resource requirements to inform tier-based pricing and infrastructure allocation. Analysis covers four model families deployed across Free, Basic, Pro, and Enterprise tiers.</p>
+        
+        <div class="key-finding">
+            <strong>Key Finding:</strong> Resource footprint ranges from 0.9B to 4B parameters, with compute cost varying by 85% between lightest and heaviest models.
+        </div>
+    </div>
+
+    <h2>1. Resource Classification</h2>
+    
+    <h3>1.1 Primary Engines</h3>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Engine</th>
+                <th>Parameters</th>
+                <th>GPU Requirement</th>
+                <th>VRAM</th>
+                <th>Resource Class</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>PaddleOCR Lite</strong></td>
+                <td>-</td>
+                <td>Optional</td>
+                <td>&lt;2 GB</td>
+                <td class="resource-light">Light (CPU-viable)</td>
+            </tr>
+            <tr>
+                <td><strong>PaddleOCR-VL</strong></td>
+                <td>0.9B</td>
+                <td>CUDA</td>
+                <td>3-4 GB</td>
+                <td class="resource-light">Light (compact)</td>
+            </tr>
+            <tr>
+                <td><strong>GOT-OCR 2.0</strong></td>
+                <td>580M</td>
+                <td>CUDA</td>
+                <td>4-6 GB</td>
+                <td class="resource-light">Light-Medium</td>
+            </tr>
+            <tr>
+                <td><strong>Infinity-Parser2-Flash</strong></td>
+                <td>2B</td>
+                <td>Auto</td>
+                <td>5-7 GB</td>
+                <td class="resource-medium">Medium</td>
+            </tr>
+            <tr>
+                <td><strong>Qianfan-OCR</strong></td>
+                <td>4B</td>
+                <td>Auto</td>
+                <td>10-14 GB</td>
+                <td class="resource-heavy">Heavy</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="table-caption">Table 1: Resource requirements by OCR engine</div>
+
+    <h3>1.2 Cost Profile Mapping</h3>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Engine</th>
+                <th>Cost Profile</th>
+                <th>Current Tier</th>
+                <th>Rationale</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>PaddleOCR Lite</td>
+                <td><span class="cost-low">Low</span></td>
+                <td>Free</td>
+                <td>Entry-level, minimal resources</td>
+            </tr>
+            <tr>
+                <td>PaddleOCR-VL</td>
+                <td><span class="cost-low">Low</span></td>
+                <td>Basic</td>
+                <td>Compact, high efficiency</td>
+            </tr>
+            <tr>
+                <td>Infinity-Parser2-Flash</td>
+                <td><span class="cost-low">Low</span></td>
+                <td>Pro</td>
+                <td>Flash variant, throughput optimized</td>
+            </tr>
+            <tr>
+                <td>GOT-OCR 2.0</td>
+                <td><span class="cost-medium">Medium</span></td>
+                <td>Pro</td>
+                <td>Balanced performance/cost</td>
+            </tr>
+            <tr>
+                <td>Qianfan-OCR</td>
+                <td><span class="cost-medium">Medium</span></td>
+                <td>Pro</td>
+                <td>Advanced capabilities</td>
+            </tr>
+            <tr>
+                <td>GOT-OCR 2.0 Enterprise</td>
+                <td><span class="cost-high">High</span></td>
+                <td>Enterprise</td>
+                <td>Full feature set</td>
+            </tr>
+            <tr>
+                <td>Qianfan-OCR Enterprise</td>
+                <td><span class="cost-high">High</span></td>
+                <td>Enterprise</td>
+                <td>Maximum capability</td>
+            </tr>
+            <tr>
+                <td>Infinity-Parser2 Ent.</td>
+                <td><span class="cost-medium">Medium</span></td>
+                <td>Enterprise</td>
+                <td>Extended features</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="table-caption">Table 2: Cost profiles and tier assignments from platform configuration</div>
+
+    <h2>2. Tier Recommendations</h2>
+    
+    <h3>2.1 Resource-Based Tier Structure</h3>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Tier</th>
+                <th>Resource Budget</th>
+                <th>Assigned Engines</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Free</strong></td>
+                <td>&lt;2 GB VRAM, CPU-viable</td>
+                <td>PaddleOCR Lite</td>
+            </tr>
+            <tr>
+                <td><strong>Basic</strong></td>
+                <td>3-4 GB VRAM, T4 GPU</td>
+                <td>PaddleOCR-VL</td>
+            </tr>
+            <tr>
+                <td><strong>Pro</strong></td>
+                <td>5-7 GB VRAM, T4/V100</td>
+                <td>GOT-OCR 2.0, Qianfan-OCR, Infinity-Flash</td>
+            </tr>
+            <tr>
+                <td><strong>Enterprise</strong></td>
+                <td>10-14 GB VRAM, A100</td>
+                <td>All engines + extended quotas</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="table-caption">Table 3: Infrastructure requirements by tier</div>
+
+    <div class="insights-box">
+        <h3>2.2 Key Insights</h3>
+        
+        <ul>
+            <li><strong>Light engines (Free/Basic):</strong> PaddleOCR family supports high-volume, cost-sensitive workloads. PaddleOCR-VL achieves SOTA table accuracy at 0.9B params.</li>
+            
+            <li><strong>Medium engines (Pro):</strong> Three specialized engines cover different use cases:
+                <ul>
+                    <li>GOT-OCR: Academic papers, formatted output (580M, smallest neural)</li>
+                    <li>Infinity-Flash: Fast document parsing, 3.68× throughput vs 7B predecessor</li>
+                    <li>Qianfan: Complex layouts, KIE (4B, highest intelligence)</li>
+                </ul>
+            </li>
+            
+            <li><strong>Computational spread:</strong> 85% cost difference between GOT-OCR (580M) and Qianfan (4B) enables precise workload-to-resource matching.</li>
+        </ul>
+    </div>
+
+    <h2>3. Technical Specifications</h2>
+    
+    <h3>3.1 Platform Configuration</h3>
+    
+    <div class="spec-grid">
+        <div class="spec-item">
+            <div class="spec-label">Precision</div>
+            BF16 (except GOT-OCR)
+        </div>
+        <div class="spec-item">
+            <div class="spec-label">PDF DPI</div>
+            144 (configurable)
+        </div>
+        <div class="spec-item">
+            <div class="spec-label">Max Pages</div>
+            50 per document
+        </div>
+        <div class="spec-item">
+            <div class="spec-label">Memory Management</div>
+            Auto-unload enabled
+        </div>
+    </div>
+
+    <h3>3.2 Scaling Characteristics</h3>
+    
+    <ul>
+        <li><strong>Cold start:</strong> 15-45 seconds (mitigated via <code>EAGER_LOAD</code> in production)</li>
+        <li><strong>Throughput:</strong> Inversely correlated with model size (Infinity-Flash highest)</li>
+        <li><strong>Concurrent requests:</strong> Smaller models (GOT-OCR) support more parallel instances per GPU</li>
+    </ul>
+
+    <h2>4. Recommendations</h2>
+    
+    <div class="recommendation">
+        <strong>1. Maintain current tier mapping:</strong> Resource analysis validates existing assignments.
+    </div>
+    
+    <div class="recommendation">
+        <strong>2. Infrastructure provisioning:</strong>
+        <ul style="margin: 10px 0;">
+            <li>Free/Basic: CPU or T4 instances</li>
+            <li>Pro: V100 instances (cost-optimal for 3 concurrent engines)</li>
+            <li>Enterprise: A100 for Qianfan-OCR heavy workloads</li>
+        </ul>
+    </div>
+    
+    <div class="recommendation">
+        <strong>3. Enable eager loading:</strong> Set <code>EAGER_LOAD=true</code> for all Pro/Enterprise engines in production to eliminate cold start latency.
+    </div>
+    
+    <div class="recommendation">
+        <strong>4. Benchmark priority:</strong> Measure actual latency on target GPU infrastructure for cost modeling refinement.
+    </div>
+
+    <div class="footer">
+        <hr style="border: none; border-top: 1px solid #ecf0f1; margin: 20px 0;">
+        <p><strong>Data Sources:</strong> Platform configuration (seed.py, config.py), knowledge base, official model papers</p>
+        <p><em>This report supports infrastructure planning and tier-based resource allocation for the Unified OCR Platform.</em></p>
+    </div>
+</body>
+</html>

@@ -82,7 +82,7 @@ function PlatformEndpointCard({ endpoint }: { endpoint: ApiEndpoint }) {
       id={`platform-${endpoint.id}`}
       className="scroll-mt-32 overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm"
     >
-      <div className="border-b border-border/60 bg-gradient-to-r from-muted/40 to-transparent px-5 py-4">
+      <div className="border-b border-border/60 bg-muted/40 px-5 py-4">
         <div className="flex flex-wrap items-center gap-2">
           <span
             className={cn(
@@ -164,7 +164,7 @@ export function PlatformApiReference() {
     <section id="platform-api" className="scroll-mt-32 space-y-6">
       <div className="space-y-2">
         <div className="flex items-center gap-3">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/30">
+          <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Server className="size-4" />
           </div>
           <p className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground">

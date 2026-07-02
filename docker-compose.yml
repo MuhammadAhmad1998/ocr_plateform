@@ -81,15 +81,53 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # ── Kong API Gateway ────────────────────────────────────────────────────
+  # Public entry point for all API traffic.
+  # HTTP  proxy  → host:8100  (instead of hitting FastAPI:8000 directly)
+  # HTTPS proxy  → host:8443  (add TLS cert via KONG_SSL_* env vars or a reverse proxy)
+  # Admin API    → internal only (127.0.0.1:8001 inside the container)
+  kong:
+    image: kong:3.7
+    environment:
+      KONG_DATABASE: "off"                   # DB-less declarative mode
+      KONG_DECLARATIVE_CONFIG: /kong/kong.yml
+      KONG_PROXY_LISTEN: "0.0.0.0:8000, 0.0.0.0:8443 ssl"
+      KONG_ADMIN_LISTEN: "127.0.0.1:8001"
+      KONG_LOG_LEVEL: warn
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ACCESS_LOG: /dev/null
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      # Allow Kong to use the shared Redis for rate-limiting
+      KONG_NGINX_WORKER_PROCESSES: auto
+    volumes:
+      - ./kong/kong.yml:/kong/kong.yml:ro
+    ports:
+      - "8100:8000"    # HTTP  — frontend/clients call http://localhost:8100/api/v1
+      - "8443:8443"    # HTTPS — add TLS cert for production
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./frontend
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+        # Frontend talks to Kong (8100), not FastAPI (8000) directly
+        NEXT_PUBLIC_API_URL: http://localhost:8100/api/v1
     ports:
       - "3000:3000"
     depends_on:
-      api:
+      kong:
         condition: service_healthy
     restart: unless-stopped
 
